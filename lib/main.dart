@@ -8,14 +8,23 @@ import 'package:flutter/foundation.dart';
 // field. The field is of the type `SingingCharacter`, an enum.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import 'dart:ui' as ui;
+import 'piece.dart';
+import 'board.dart';
 
 import 'hex.dart';
 
 void main() => runApp(HexApp());
 
-Point movement;
+class GameState {
+  Board board = Board.sample();
+  Hex pointer = Hex.origin();
+  Piece piece = EdgePiece();
+
+}
+
 
 /// This is the main application widget.
 class HexApp extends StatelessWidget {
@@ -40,17 +49,17 @@ class HexWidget extends StatefulWidget {
 }
 
 class _HexWidgetState extends State<HexWidget> {
-  ValueNotifier<Hex> _hex;
+  ValueNotifier<GameState> _gameState;
 
   @override
   void initState() {
-    _hex = ValueNotifier<Hex>(Hex.origin());
+    _gameState = ValueNotifier<GameState>(GameState());
     super.initState();
   }
 
   @override
   void dispose() {
-    _hex.dispose();
+    _gameState.dispose();
     super.dispose();
   }
 
@@ -59,21 +68,24 @@ class _HexWidgetState extends State<HexWidget> {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-        valueListenable: _hex,
+        valueListenable: _gameState,
         builder: (context, value, child) =>
-        InteractiveViewer(
-            boundaryMargin: EdgeInsets.all(20.0),
-            minScale:0.5,
-            maxScale:1.5,
-            child: GestureDetector(
+        ListView(
+          children: [
+            GestureDetector(
                 behavior: HitTestBehavior.translucent,
 
-                  onTapUp: (details) {
-                    Point p = new Point(details.localPosition.dx, details.localPosition.dy);
-                    Hex h = Hex.GetHexPartFromPoint(p);
-                    _hex.value = h;
-                  },
-                  /*
+                onTapUp: (details) {
+                  Point p = new Point(details.localPosition.dx, details.localPosition.dy);
+                  Hex h = Hex.GetHexPartFromPoint(p);
+                  //_gameState.value.pointer = h;
+                  setState(() => _gameState.value.pointer = h);
+                },
+                onLongPressEnd: (details) {
+                  _gameState.value.board.putPiece(_gameState.value.pointer, _gameState.value.piece);
+                  setState(() => _gameState);
+                },
+                /*
                   onPanStart: (details) {
 
                     movement = new Point.origin();
@@ -102,9 +114,34 @@ class _HexWidgetState extends State<HexWidget> {
                     movement += vector;
                   },
                   */
-                  child:
-                      CustomPaint(size: Size(500,500), painter: HexPainter(_hex.value))
+                child:
+                  new Container(
+                      height: 500,
+                      width: 500,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.blueAccent),
+                      ),
+                      child:
+                          CustomPaint(painter: HexPainter(_gameState.value))
+
+                  ),
+
+
+            ),
+            SizedBox(
+              height: 100,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  RaisedButton(
+                    child: Text(
+                      'Fill'
+                    )
+                  )
+                ]
               )
+            )
+          ]
         )
     );
 
@@ -178,15 +215,33 @@ CustomPaint( //                       <-- CustomPaint widget
 
 class HexPainter extends CustomPainter {
   //         <-- CustomPainter class
-  HexPainter(this._hex);
-  Hex _hex = new Hex.origin();
+
+  GameState _gameState;
+  HexPainter(this._gameState);
   @override
   void paint(Canvas canvas, Size size) {
+
+
+    for(Hex hex in _gameState.board.keys) {
+      for(var piece in _gameState.board.getPiecesAt(hex)) {
+        if (piece is EdgePiece) {
+          final piecePaint = Paint()
+            ..color = Colors.blueGrey
+            ..strokeWidth = 8
+            ..strokeCap = StrokeCap.round;
+          List<Offset> pieceOffset = <Offset>[];
+          hex.vertices.forEach((Point p) => pieceOffset.add(new Offset(hex.point.x + p.x, hex.point.y + p.y)));
+          canvas.drawLine(pieceOffset[0],pieceOffset[1], piecePaint);
+        }
+      }
+    }
+
+    canvas.clipRect(new Rect.fromLTWH(0,0,size.width, size.height));
     print("Painting...");
     final pointMode = ui.PointMode.points;
-    List<Offset> offsets = new List<Offset>();
-    for (var vertex in _hex.vertices) {
-      offsets.add(new Offset(_hex.point.x + vertex.x, _hex.point.y - vertex.y));
+    List<Offset> offsets = <Offset>[];
+    for (var vertex in _gameState.pointer.vertices) {
+      offsets.add(new Offset(_gameState.pointer.point.x + vertex.x, _gameState.pointer.point.y - vertex.y));
     }
     /*
     var east = _hex.point + vertex[VertexDirection.East];
@@ -206,9 +261,20 @@ class HexPainter extends CustomPainter {
     */
     final paint = Paint()
       ..color = Colors.lightBlueAccent
-      ..strokeWidth = 6
-      ..strokeCap = StrokeCap.round;
-    canvas.drawPoints(pointMode, offsets, paint);
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+    offsets.forEach((Offset offset) => canvas.drawCircle(offset, 5, paint));
+    offsets.forEach((Offset offset) => canvas.drawCircle(offset, 10, paint));
+
+
+    /*
+    final fill = Paint()
+      ..color = Colors.yellowAccent
+      ..style = PaintingStyle.stroke;
+    canvas.drawRect(Offset.zero & size, fill);
+    */
+
+
   }
 
   @override
