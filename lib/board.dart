@@ -15,10 +15,12 @@ class Board {
   void putPiece(Hex hex, Piece piece) {
         _map.putIfAbsent(hex, () => new List<Piece>.empty(growable: true));
         var pieces = _map[hex];
-        if (hex.runtimeType == Hex && piece is EdgePiece) {
+        if ((hex.runtimeType == Hex || hex.runtimeType == Vertex) && piece is EdgePiece) {
           hex.edges.forEach((Edge e) => putPiece(e, piece));
+          return;
         }
         pieces.removeWhere((p) => p.runtimeType == piece.runtimeType);
+        print(hex);
         pieces.add(piece);
   }
 

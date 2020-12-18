@@ -70,148 +70,116 @@ class _HexWidgetState extends State<HexWidget> {
     return ValueListenableBuilder(
         valueListenable: _gameState,
         builder: (context, value, child) =>
-        ListView(
-          children: [
-            GestureDetector(
-                behavior: HitTestBehavior.translucent,
-
-                onTapUp: (details) {
-                  Point p = new Point(details.localPosition.dx, details.localPosition.dy);
-                  Hex h = Hex.GetHexPartFromPoint(p);
-                  //_gameState.value.pointer = h;
-                  setState(() => _gameState.value.pointer = h);
-                },
-                onLongPressEnd: (details) {
-                  _gameState.value.board.putPiece(_gameState.value.pointer, _gameState.value.piece);
-                  setState(() => _gameState);
-                },
-                /*
-                  onPanStart: (details) {
-
-                    movement = new Point.origin();
-
-                  },
-                  onPanEnd: (details) {
-
-                    var vector = movement;
-                    if (vector != null && vector.magnitude > 10) {
-                      var closest = vector.closest(edge.values.toList());
-                      var direction = edge.entries
-                          .singleWhere((element) => element.value == closest)
-                          .key;
-                      print(direction);
-                      print("${_hex.value.q},${_hex.value.r}");
-                      _hex.value += direction;
-                      print("${_hex.value.q},${_hex.value.r}");
-                    } else {
-                      print("Move was too small");
-                    }
-                    movement = null;
-
-                  },
-                  onPanUpdate: (details) {
-                    var vector = new Point(details.delta.dx, -details.delta.dy);
-                    movement += vector;
-                  },
-                  */
-                child:
-                  new Container(
-                      height: 500,
-                      width: 500,
+            Scaffold(
+              appBar: AppBar(title: Text('Hex Game')),
+              drawer: Drawer(
+                child:ListView(
+                  // Important: Remove any padding from the ListView.
+                  padding: EdgeInsets.zero,
+                  children: <Widget>[
+                    DrawerHeader(
+                      child: Text('Drawer Header'),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.blueAccent),
+                        color: Colors.blue,
                       ),
+                    ),
+                    ListTile(
+                      title: Text('Item 1'),
+                      onTap: () {
+                        // Update the state of the app.
+                        // ...
+                      },
+                    ),
+                    ListTile(
+                      title: Text('Item 2'),
+                      onTap: () {
+                        // Update the state of the app.
+                        // ...
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              body: ListView(
+                children: [
+                  GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+
+                      onTapUp: (details) {
+                        Point p = new Point(details.localPosition.dx, details.localPosition.dy);
+                        Hex h = Hex.getHexPartFromPoint(p);
+                        print("${h.q},${h.r}");
+                        //_gameState.value.pointer = h;
+                        setState(() => _gameState.value.pointer = h);
+                      },
+                      onLongPressEnd: (details) {
+                        _gameState.value.board.putPiece(_gameState.value.pointer, _gameState.value.piece);
+                        setState(() => _gameState);
+                      },
+                      /*
+                        onPanStart: (details) {
+
+                          movement = new Point.origin();
+
+                        },
+                        onPanEnd: (details) {
+
+                          var vector = movement;
+                          if (vector != null && vector.magnitude > 10) {
+                            var closest = vector.closest(edge.values.toList());
+                            var direction = edge.entries
+                                .singleWhere((element) => element.value == closest)
+                                .key;
+                            print(direction);
+                            print("${_hex.value.q},${_hex.value.r}");
+                            _hex.value += direction;
+                            print("${_hex.value.q},${_hex.value.r}");
+                          } else {
+                            print("Move was too small");
+                          }
+                          movement = null;
+
+                        },
+                        onPanUpdate: (details) {
+                          var vector = new Point(details.delta.dx, -details.delta.dy);
+                          movement += vector;
+                        },
+                        */
                       child:
-                          CustomPaint(painter: HexPainter(_gameState.value))
+                        new Container(
+                            height: 500,
+                            width: 500,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.blueAccent),
+                            ),
+                            child:
+                                CustomPaint(painter: HexPainter(_gameState.value))
+
+                        ),
+
 
                   ),
-
-
-            ),
-            SizedBox(
-              height: 100,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  RaisedButton(
-                    child: Text(
-                      'Fill'
+                  SizedBox(
+                    height: 100,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        RaisedButton(
+                          child: Text(
+                            'Fill'
+                          )
+                        )
+                      ]
                     )
                   )
                 ]
               )
             )
-          ]
-        )
+        //
     );
 
   }
 }
-
-enum NavigationMode { Face, Edge, Vertex }
-
-/// This is the stateful widget that the main application instantiates.
-class NavigationWidget extends StatefulWidget {
-  NavigationWidget({Key key}) : super(key: key);
-  //NavigationWidget();
-
-
-  @override
-  _NavigationWidgetState createState() => _NavigationWidgetState();
-}
-
-/// This is the private State class that goes with MyStatefulWidget.
-class _NavigationWidgetState extends State<NavigationWidget> {
-  _NavigationWidgetState();
-
-  NavigationMode _mode = NavigationMode.Face;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        RadioListTile<NavigationMode>(
-          title: const Text('Face'),
-          value: NavigationMode.Face,
-          groupValue: _mode,
-          onChanged: (NavigationMode value) {
-            setState(() {
-              _mode = value;
-            });
-          },
-        ),
-        RadioListTile<NavigationMode>(
-          title: const Text('Edge'),
-          value: NavigationMode.Edge,
-          groupValue: _mode,
-          onChanged: (NavigationMode value) {
-            setState(() {
-              _mode = value;
-            });
-          },
-        ),
-        RadioListTile<NavigationMode>(
-          title: const Text('Vertex'),
-          value: NavigationMode.Vertex,
-          groupValue: _mode,
-          onChanged: (NavigationMode value) {
-            setState(() {
-              _mode = value;
-            });
-          },
-        ),
-      ],
-    );
-  }
-}
-
-/*
-
-CustomPaint( //                       <-- CustomPaint widget
-            size: Size(300, 300),
-            painter: MyPainter(),
-          ),
- */
 
 class HexPainter extends CustomPainter {
   //         <-- CustomPainter class
@@ -230,7 +198,7 @@ class HexPainter extends CustomPainter {
             ..strokeWidth = 8
             ..strokeCap = StrokeCap.round;
           List<Offset> pieceOffset = <Offset>[];
-          hex.vertices.forEach((Point p) => pieceOffset.add(new Offset(hex.point.x + p.x, hex.point.y + p.y)));
+          hex.vertices.forEach((Point p) => pieceOffset.add(new Offset(hex.point.x + p.x, hex.point.y - p.y)));
           canvas.drawLine(pieceOffset[0],pieceOffset[1], piecePaint);
         }
       }

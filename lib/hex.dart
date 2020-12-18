@@ -44,6 +44,7 @@ enum VertexDirection { East, NorthEast, NorthWest, West, SouthWest, SouthEast }
 class Hex {
   int q = 0;
   int r = 0;
+
   get point =>
       new Point((3.0 * width / 4.0) * q, height * r + height / 2.0 * q);
 
@@ -52,6 +53,12 @@ class Hex {
   Hex.position(this.q, this.r);
 
   Hex.origin() : this();
+
+  Hex.from(Hex h, [int q = 0, int r = 0]) {
+    this.q = h.q + q;
+    this.r = h.r + r;
+  }
+
 
   get vertices => vertex.values.toList();
 
@@ -66,7 +73,7 @@ class Hex {
     ];
   }
 
-  static Hex GetHexPartFromPoint(Point p) {
+  static Hex getHexPartFromPoint(Point p) {
     int q = math.round((2.0 / 3.0 * p.x) / size);
     int r = math.round((-1.0 / 3.0 * p.x + math.sqrt(3) / 3 * p.y) / size);
     Hex currHex = new Hex.position(q, r);
@@ -258,12 +265,37 @@ class Edge extends Hex {
         break;
     };
   }
+
+  @override
+  String toString() {
+    return super.toString() + edgeType.toString();
+  }
 }
 
 enum VertexType { East, West }
 
 class Vertex extends Hex {
   VertexType vertexType = VertexType.East;
+
+  @override
+  get edges {
+      switch (vertexType) {
+        case VertexType.East:
+          return [
+            Edge.from(EdgeDirection.North, Hex.from(this, 1, 0)),
+            Edge.from(EdgeDirection.NorthEast, this),
+            Edge.from(EdgeDirection.SouthEast, this)
+          ];
+          break;
+        case VertexType.West:
+          return [
+            Edge.from(EdgeDirection.NorthWest, this),
+            Edge.from(EdgeDirection.North, Hex.from(this, -1, 1)),
+            Edge.from(EdgeDirection.SouthWest, this)
+          ];
+          break;
+      }
+  }
 
   @override
   get vertices {
