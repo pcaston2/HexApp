@@ -13,15 +13,27 @@ class Board {
   }
 
   void putPiece(Hex hex, Piece piece) {
-        _map.putIfAbsent(hex, () => new List<Piece>.empty(growable: true));
-        var pieces = _map[hex];
-        if ((hex.runtimeType == Hex || hex.runtimeType == Vertex) && piece is EdgePiece) {
-          hex.edges.forEach((Edge e) => putPiece(e, piece));
-          return;
-        }
-        pieces.removeWhere((p) => p.runtimeType == piece.runtimeType);
-        print(hex);
-        pieces.add(piece);
+    if (piece.runtimeType == ClearPiece) {
+      _map.clear();
+      return;
+    } else if (piece.runtimeType == StartPiece && hex.runtimeType == Hex) {
+      return;
+    } else if (piece.runtimeType == ErasePiece) {
+      if (_map.containsKey(hex)) {
+        _map.remove(hex);
+        return;
+      }
+    } else {
+      if ((hex.runtimeType == Hex || hex.runtimeType == Vertex) &&
+          piece is EdgePiece) {
+        hex.edges.forEach((Edge e) => putPiece(e, piece));
+        return;
+      }
+      _map.putIfAbsent(hex, () => new List<Piece>.empty(growable: true));
+      var pieces = _map[hex];
+      pieces.removeWhere((p) => p.runtimeType == piece.runtimeType);
+      pieces.add(piece);
+    }
   }
 
   List<Piece> getPiecesAt(Hex hex) {

@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 
 import 'math.dart' as math;
 
-const size = 50;
-get width => size * 2;
-get height => math.sqrt(3) * size;
+const double hexSize = 50.0;
+get width => hexSize * 2;
+get height => math.sqrt(3) * hexSize;
 
 Map<VertexDirection, Point> get vertex => {
       VertexDirection.East: new Point(width / 2.0, 0.0),
@@ -62,6 +62,8 @@ class Hex {
 
   get vertices => vertex.values.toList();
 
+  get midpoint => Point.origin();
+
   get edges {
     return [
       Edge.from(EdgeDirection.NorthEast, this),
@@ -74,23 +76,20 @@ class Hex {
   }
 
   static Hex getHexPartFromPoint(Point p) {
-    int q = math.round((2.0 / 3.0 * p.x) / size);
-    int r = math.round((-1.0 / 3.0 * p.x + math.sqrt(3) / 3 * p.y) / size);
+    int q = math.round((2.0 / 3.0 * p.x) / hexSize);
+    int r = math.round((-1.0 / 3.0 * p.x + math.sqrt(3) / 3 * p.y) / hexSize);
     Hex currHex = new Hex.position(q, r);
     var offset = new Point(-(currHex.point.x - p.x), currHex.point.y - p.y);
-    if (offset.magnitude < size / 3) {
-      print("middle");
+    if (offset.magnitude < hexSize / 3) {
       return currHex;
     } else {
       var closestEdge = offset.closest(edge.values.toList());
       var closestEdgeDirection =
           edge.entries.firstWhere((e) => e.value == closestEdge).key;
       var hexOffset = new Hex.direction(closestEdgeDirection);
-      //print("${newHex.q},${newHex.r}");
       var closestVertex = offset.closest(vertex.values.toList());
       if ((offset - closestEdge).magnitude <
           (offset - closestVertex).magnitude) {
-        print(closestEdgeDirection);
         switch (closestEdgeDirection) {
           case EdgeDirection.NorthEast:
             //return currHex;
@@ -123,7 +122,6 @@ class Hex {
       } else {
         var closestVertexDirection =
             vertex.entries.firstWhere((e) => e.value == closestVertex).key;
-        print(closestVertexDirection);
         switch (closestVertexDirection) {
           case VertexDirection.East:
             return new Vertex(VertexType.East, currHex.q, currHex.r);
@@ -210,6 +208,20 @@ class Hex {
     }
     return new Hex.position(this.q + hex.q, this.r + hex.r);
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other.runtimeType != runtimeType) {
+      return false;
+    }
+    return other is Hex && other.q == q && other.r == r;
+  }
+
+  @override
+  int get hashCode => q + r;
 }
 
 enum EdgeType { East, North, West }
@@ -235,6 +247,9 @@ class Edge extends Hex {
     }
     return points;
   }
+
+  @override
+  get midpoint => (vertices[0] + vertices[1]) / 2.0;
 
   Edge(this.edgeType, q, r) : super.position(q, r);
   Edge.from(EdgeDirection edgeDirection, Hex hex) {
@@ -268,7 +283,18 @@ class Edge extends Hex {
 
   @override
   String toString() {
-    return super.toString() + edgeType.toString();
+    return "($q,$r) " + edgeType.toString();
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other.runtimeType != runtimeType) {
+      return false;
+    }
+    return other is Edge && other.q == q && other.r == r && other.edgeType == edgeType;
   }
 }
 
@@ -309,6 +335,20 @@ class Vertex extends Hex {
         break;
     }
     return points;
+  }
+
+  @override
+  get midpoint => vertices[0];
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other.runtimeType != runtimeType) {
+      return false;
+    }
+    return other is Vertex && other.q == q && other.r == r && other.vertexType == vertexType;
   }
 
   Vertex(this.vertexType, q, r) : super.position(q, r);
