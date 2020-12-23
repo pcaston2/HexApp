@@ -36,6 +36,17 @@ class Board {
     }
   }
 
+
+  List<MapEntry<Hex, Piece>> flatten() {
+    var entries = new List<MapEntry<Hex, Piece>>.empty(growable: true);
+    for (Hex hex in _map.keys) {
+      for (Piece piece in getPiecesAt(hex)) {
+        entries.add(new MapEntry<Hex, Piece>(hex, piece));
+      }
+    }
+    return entries;
+  }
+
   List<Piece> getPiecesAt(Hex hex) {
     if (_map.containsKey(hex)) {
       return _map[hex];
