@@ -72,6 +72,17 @@ class Edge extends Hex {
     }
     return other is Edge && other.q == q && other.r == r && other.edgeType == edgeType;
   }
+  @override
+  List<Hex> get faces {
+    switch (edgeType) {
+      case EdgeType.East:
+        return [ this, Hex.from(this, 1, -1) ];
+      case EdgeType.North:
+        return [ this, Hex.from(this, 0, -1) ];
+      case EdgeType.West:
+        return [ this, Hex.from(this, -1, 0) ];
+    }
+  }
 
   @override
   get hashCode => super.hashCode + edgeType.index;

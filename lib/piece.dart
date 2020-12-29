@@ -37,4 +37,3 @@ class ClearPiece extends Piece {
   @override
   num get order => -1;
 }
-

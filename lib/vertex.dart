@@ -57,4 +57,14 @@ class Vertex extends Hex {
   get hashCode => super.hashCode + vertexType.index;
 
   Vertex(this.vertexType, q, r) : super.position(q, r);
+
+  @override
+  List<Hex> get faces {
+    switch (vertexType) {
+      case VertexType.East:
+        return [ this, Hex.from(this, 1, -1), Hex.from(this, 1, 0) ];
+      case VertexType.West:
+        return [ this, Hex.from(this, -1, 0), Hex.from(this, -1, 1) ];
+    }
+  }
 }

@@ -8,16 +8,16 @@ part 'point.dart';
 
 
 const double hexSize = 50.0;
-get width => hexSize * 2;
-get height => math.sqrt(3) * hexSize;
+get hexWidth => hexSize * 2;
+get hexHeight => math.sqrt(3) * hexSize;
 
 Map<VertexDirection, Point> get vertex => {
-      VertexDirection.East: new Point(width / 2.0, 0.0),
-      VertexDirection.NorthEast: new Point(width / 4.0, height / 2.0),
-      VertexDirection.NorthWest: new Point(-width / 4.0, height / 2.0),
-      VertexDirection.West: new Point(-width / 2.0, 0.0),
-      VertexDirection.SouthWest: new Point(-width / 4.0, -height / 2.0),
-      VertexDirection.SouthEast: new Point(width / 4.0, -height / 2.0)
+      VertexDirection.East: new Point(hexWidth / 2.0, 0.0),
+      VertexDirection.NorthEast: new Point(hexWidth / 4.0, hexHeight / 2.0),
+      VertexDirection.NorthWest: new Point(-hexWidth / 4.0, hexHeight / 2.0),
+      VertexDirection.West: new Point(-hexWidth / 2.0, 0.0),
+      VertexDirection.SouthWest: new Point(-hexWidth / 4.0, -hexHeight / 2.0),
+      VertexDirection.SouthEast: new Point(hexWidth / 4.0, -hexHeight / 2.0)
     };
 
 Map<EdgeDirection, Point> get edge => {
@@ -49,7 +49,7 @@ class Hex {
   int r = 0;
 
   get point =>
-      new Point((3.0 * width / 4.0) * q, height * r + height / 2.0 * q);
+      new Point((3.0 * hexWidth / 4.0) * q, hexHeight * r + hexHeight / 2.0 * q);
 
   Hex();
 
@@ -78,9 +78,21 @@ class Hex {
     ];
   }
 
+  List<Hex> get faces {
+    return [
+      this,
+    ];
+  }
+
+  num distanceFromOrigin() {
+    return ((q).abs()
+        + (q + r).abs()
+        + (r).abs()) / 2;
+  }
+
   static Hex getHexPartFromPoint(Point p) {
-    int q = math.round((2.0 / 3.0 * p.x) / hexSize);
-    int r = math.round((-1.0 / 3.0 * p.x + math.sqrt(3) / 3 * p.y) / hexSize);
+    int q = ((2.0 / 3.0 * p.x) / hexSize).round();
+    int r = ((-1.0 / 3.0 * p.x + math.sqrt(3) / 3 * p.y) / hexSize).round();
     Hex currHex = new Hex.position(q, r);
     var offset = new Point(-(currHex.point.x - p.x), currHex.point.y - p.y);
     if (offset.magnitude < hexSize / 3) {
