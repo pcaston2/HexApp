@@ -2,11 +2,14 @@ part of 'hex.dart';
 
 enum VertexType { East, West }
 
+enum VertexDirection { East, NorthEast, NorthWest, West, SouthWest, SouthEast }
+
+
 class Vertex extends Hex {
   VertexType vertexType = VertexType.East;
 
   @override
-  get edges {
+  List<Edge> get edges {
     switch (vertexType) {
       case VertexType.East:
         return [
@@ -25,8 +28,16 @@ class Vertex extends Hex {
     }
   }
 
+  Vertex.from(this.vertexType, Hex hex) {
+    q = hex.q;
+    r = hex.r;
+  }
+
   @override
-  get vertices {
+  List<Vertex> get vertices => [this];
+
+  @override
+  get vertexOffsets {
     var points = List.empty(growable: true);
     switch (vertexType) {
       case VertexType.East:
@@ -40,7 +51,7 @@ class Vertex extends Hex {
   }
 
   @override
-  get midpoint => vertices[0];
+  get midpoint => vertexOffsets[0];
 
   @override
   bool operator ==(Object other) {
@@ -65,6 +76,8 @@ class Vertex extends Hex {
         return [ this, Hex.from(this, 1, -1), Hex.from(this, 1, 0) ];
       case VertexType.West:
         return [ this, Hex.from(this, -1, 0), Hex.from(this, -1, 1) ];
+      default:
+        throw new Exception("Couldn't find correct vertex type");
     }
   }
 }

@@ -2,10 +2,13 @@ part of 'hex.dart';
 
 enum EdgeType { East, North, West }
 
+
+enum EdgeDirection { NorthEast, North, NorthWest, SouthWest, South, SouthEast }
+
 class Edge extends Hex {
   EdgeType edgeType = EdgeType.East;
   @override
-  get vertices {
+  get vertexOffsets {
     var points = new List<Point>.empty(growable: true);
     switch (edgeType) {
       case EdgeType.East:
@@ -25,7 +28,33 @@ class Edge extends Hex {
   }
 
   @override
-  get midpoint => (vertices[0] + vertices[1]) / 2.0;
+  List<Vertex> get vertices {
+
+     switch (edgeType) {
+       case EdgeType.East:
+         return [
+            Vertex.from(VertexType.East, this),
+            Vertex.from(VertexType.West, Hex.from(this, 1, -1))
+            ];
+       case EdgeType.North:
+         return [
+            Vertex.from(VertexType.West, Hex.from(this, 1, -1)),
+            Vertex.from(VertexType.East, Hex.from(this, -1, 0))
+           ];
+       case EdgeType.West:
+        return [
+            Vertex.from(VertexType.East, Hex.from(this, -1, 0)),
+            Vertex.from(VertexType.West, this)
+            ];
+         default:
+           throw new Exception("No vertexes defined for given edge type");
+    }
+  }
+  @override
+  List<Edge> get edges => [this];
+
+  @override
+  get midpoint => (vertexOffsets[0] + vertexOffsets[1]) / 2.0;
 
   Edge(this.edgeType, q, r) : super.position(q, r);
   Edge.from(EdgeDirection edgeDirection, Hex hex) {
@@ -81,6 +110,8 @@ class Edge extends Hex {
         return [ this, Hex.from(this, 0, -1) ];
       case EdgeType.West:
         return [ this, Hex.from(this, -1, 0) ];
+      default:
+        return null;
     }
   }
 

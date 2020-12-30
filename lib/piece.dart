@@ -30,10 +30,3 @@ class EndPiece extends Piece {
   @override
   num get order => 200;
 }
-
-class ClearPiece extends Piece {
-  @override
-  String get name => "Clear";
-  @override
-  num get order => -1;
-}

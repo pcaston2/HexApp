@@ -41,9 +41,6 @@ Map<EdgeDirection, Point> get edge => {
               2.0
     };
 
-enum EdgeDirection { NorthEast, North, NorthWest, SouthWest, South, SouthEast }
-enum VertexDirection { East, NorthEast, NorthWest, West, SouthWest, SouthEast }
-
 class Hex {
   int q = 0;
   int r = 0;
@@ -63,11 +60,20 @@ class Hex {
   }
 
 
-  get vertices => vertex.values.toList();
+  get vertexOffsets => vertex.values.toList();
+
+  List<Vertex> get vertices => [
+      Vertex.from(VertexType.East, this),
+      Vertex.from(VertexType.West, Hex.from(this, 1, -1)),
+      Vertex.from(VertexType.East, Hex.from(this, -1, 0)),
+      Vertex.from(VertexType.West, this),
+      Vertex.from(VertexType.East, Hex.from(this, -1, 1)),
+      Vertex.from(VertexType.West, Hex.from(this, 1, 0))
+    ];
 
   get midpoint => Point.origin();
 
-  get edges {
+  List<Edge> get edges {
     return [
       Edge.from(EdgeDirection.NorthEast, this),
       Edge.from(EdgeDirection.North, this),
@@ -133,6 +139,8 @@ class Hex {
             return new Edge(EdgeType.East, currHex.q + hexOffset.q,
                 currHex.r + hexOffset.r);
             break;
+          default:
+            throw new Exception("Couldn't find correct edge type");
         }
       } else {
         var closestVertexDirection =
@@ -161,6 +169,8 @@ class Hex {
             //return currHex;
             return new Vertex(VertexType.West, currHex.q + 1, currHex.r);
             break;
+          default:
+            throw new Exception("Couldn't find correct vertex type");
         }
       }
     }
@@ -194,10 +204,10 @@ class Hex {
         break;
     }
 
-    @override
-    String toString() {
-      return "Point ($q, $r)";
-    }
+    // @override
+    // String toString() {
+    //   return "Hex ($q, $r)";
+    // }
   }
 
   Hex operator -(Object other) {

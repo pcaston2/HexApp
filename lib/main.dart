@@ -21,9 +21,7 @@ Offset focalStart = Offset.zero;
 void main() => runApp(HexApp());
 
 get screenSize => Offset(
-    hexWidth * maxBoardSize * 2 * 1.25,
-    hexHeight * maxBoardSize * 2 * 1.25
-);
+    hexWidth * maxBoardSize * 2 * 1.25, hexHeight * maxBoardSize * 2 * 1.25);
 
 get screenCenter => Offset(screenSize.dx / 2, screenSize.dy / 2);
 
@@ -33,7 +31,6 @@ class GameState {
   Piece piece = EdgePiece();
   Matrix4 transform = Matrix4.identity();
 }
-
 
 /// This is the main application widget.
 class HexApp extends StatelessWidget {
@@ -78,7 +75,6 @@ class _HexWidgetState extends State<HexWidget> {
   EdgePiece edgePiece = new EdgePiece();
   ErasePiece erasePiece = new ErasePiece();
   StartPiece startPiece = new StartPiece();
-  ClearPiece clearPiece = new ClearPiece();
   EndPiece endPiece = new EndPiece();
 
   @override
@@ -87,35 +83,99 @@ class _HexWidgetState extends State<HexWidget> {
         valueListenable: _gameState,
         builder: (context, value, child) => Scaffold(
             appBar: AppBar(title: Text('Hex Game')),
-            floatingActionButton: FloatingActionButton(
-                onPressed: () => setState(() {
-                      _gameState.value.transform = Matrix4.identity();
-                    }),
-                tooltip: 'Re-Center',
-                child: const Icon(Icons.home)),
-            drawer: Drawer(
-              child: ListView(
-                // Important: Remove any padding from the ListView.
-                padding: EdgeInsets.zero,
-                children: <Widget>[
-                  DrawerHeader(
-                    child: Text('Tools'),
-                    decoration: BoxDecoration(
-                      color: Colors.blue,
-                    ),
-                  ),
-                  PieceTile(edgePiece,
-                      () => _choosePiece(context, edgePiece, _gameState)),
-                  PieceTile(startPiece,
-                      () => _choosePiece(context, startPiece, _gameState)),
-                  PieceTile(endPiece,
-                      () => _choosePiece(context, endPiece, _gameState)),
-                  PieceTile(erasePiece,
-                      () => _choosePiece(context, erasePiece, _gameState)),
-                  PieceTile(clearPiece,
-                      () => _choosePiece(context, clearPiece, _gameState)),
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.startFloat,
+            floatingActionButton:
+                Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    //crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                  FloatingActionButton(
+                      onPressed: () => setState(() {
+                            if (_gameState.value.board.mode == BoardMode.play) {
+                              setState(() => _gameState.value.board.mode =
+                                  BoardMode.designer);
+                            } else {
+                              setState(() =>
+                                  _gameState.value.board.mode = BoardMode.play);
+                            }
+                          }),
+                      tooltip: _gameState.value.board.mode == BoardMode.play
+                          ? 'Designer Mode'
+                          : 'Play Mode',
+                      child: _gameState.value.board.mode == BoardMode.play
+                          ? Icon(Icons.build_rounded)
+                          : Icon(Icons.play_arrow_rounded)),
+                  FloatingActionButton(
+                      onPressed: () => setState(() {
+                            _gameState.value.transform = Matrix4.identity();
+                          }),
+                      tooltip: 'Re-Center',
+                      child: const Icon(Icons.home))
+                ]),
+            drawer: _gameState.value.board.mode == BoardMode.play
+                ? null
+                : Drawer(
+                    child: ListView(
+                      // Important: Remove any padding from the ListView.
+                      padding: EdgeInsets.zero,
+                      children: <Widget>[
+                        DrawerHeader(
+                          child: Text('Tools'),
+                          decoration: BoxDecoration(
+                            color: Colors.blue,
+                          ),
+                        ),
+                        PieceTile(edgePiece,
+                            () => _choosePiece(context, edgePiece, _gameState)),
+                        PieceTile(
+                            startPiece,
+                            () =>
+                                _choosePiece(context, startPiece, _gameState)),
+                        PieceTile(endPiece,
+                            () => _choosePiece(context, endPiece, _gameState)),
+                        PieceTile(
+                            erasePiece,
+                            () =>
+                                _choosePiece(context, erasePiece, _gameState)),
+                        ListTile(
+                            title: Text("Clear All"),
+                            onTap: () {
+                              Navigator.pop(context);
 
-                  /*
+                              showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) =>
+                                      AlertDialog(
+                                        title: Text('Clear board?'),
+                                        content: SingleChildScrollView(
+                                          child: ListBody(
+                                            children: <Widget>[
+                                              Text(
+                                                  'Clearing the board will erase everything.'),
+                                              Text(
+                                                  'Are you sure you want to clear the board?'),
+                                            ],
+                                          ),
+                                        ),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            child: Text('Heck no!'),
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                          ),
+                                          Spacer(flex: 3),
+                                          TextButton(
+                                              child: Text('You bet!'),
+                                              onPressed: () {
+                                                _gameState.value.board.clear();
+                                                Navigator.of(context).pop();
+                                              })
+                                        ],
+                                      ));
+                            }),
+
+                        /*
                       title: Text('Item 2'),
                       onTap: () {
                         // Update the state of the app.
@@ -123,9 +183,9 @@ class _HexWidgetState extends State<HexWidget> {
                       },
                     ),
                       */
-                ],
-              ),
-            ),
+                      ],
+                    ),
+                  ),
             body: OverflowBox(
                 maxHeight: screenSize.dy,
                 maxWidth: screenSize.dx,
@@ -135,22 +195,35 @@ class _HexWidgetState extends State<HexWidget> {
                         transformHitTests: true,
                         child: GestureDetector(
                             behavior: HitTestBehavior.translucent,
+                            onLongPressEnd: (details) {},
                             onTapUp: (details) {
-                              var offset = details.localPosition;
                               var p = Point(
                                   details.localPosition.dx - screenCenter.dx,
-                                  details.localPosition.dy - screenCenter.dy
-                              );
+                                  details.localPosition.dy - screenCenter.dy);
                               var h = Hex.getHexPartFromPoint(p);
-                              if (_gameState.value.board.pieceOnBoard(h)) {
-                                setState(() => _gameState.value.pointer = h);
+                              if (_gameState.value.board.mode ==
+                                  BoardMode.designer) {
+                                var p = Point(
+                                    details.localPosition.dx - screenCenter.dx,
+                                    details.localPosition.dy - screenCenter.dy);
+                                var h = Hex.getHexPartFromPoint(p);
+                                if (_gameState.value.board.pieceOnBoard(h)) {
+                                  setState(() => _gameState.value.pointer = h);
+                                }
+                              } else {
+                                setState(() => _gameState.value.board.startAt(h));
                               }
                             },
                             onDoubleTap: () {
-                              _gameState.value.board.putPiece(
-                                  _gameState.value.pointer,
-                                  _gameState.value.piece);
-                              setState(() => _gameState);
+                              if (_gameState.value.board.mode ==
+                                  BoardMode.designer) {
+                                _gameState.value.board.putPiece(
+                                    _gameState.value.pointer,
+                                    _gameState.value.piece);
+                                setState(() => _gameState);
+                              } else {
+                                //set state try to start
+                              }
                             },
                             /*
                         onPanStart: (details) {
@@ -179,31 +252,56 @@ class _HexWidgetState extends State<HexWidget> {
                          */
                             onScaleStart: (details) {
                               focalStart = details.focalPoint;
+                              if (_gameState.value.board.mode ==
+                                  BoardMode.play) {
+                                var p = Point(
+                                    details.localFocalPoint.dx -
+                                        screenCenter.dx,
+                                    details.localFocalPoint.dy -
+                                        screenCenter.dy);
+                                var h = Hex.getHexPartFromPoint(p);
+                                setState(
+                                    () => _gameState.value.board.startAt(h));
+                              }
                             },
                             onScaleUpdate: (details) {
-                              var offsetDelta = details.focalPoint - focalStart;
-                              //print("Offset: $offsetDelta");
-                              //print("Rotation: ${details.rotation}");
-                              //print("Scale: ${details.scale}");
-                              focalStart = details.focalPoint;
-                              setState(() {
-                                var transform = _gameState.value.transform;
-                                //var current = transform.getTranslation();
-                                //print('current: $current');
-                                //transform.translate(-current.x, -current.y);
-                                //var focal = details.localFocalPoint;
-                                //print('focal: $focal');
+                              if (!_gameState.value.board.hasStarted) {
+                                var offsetDelta =
+                                    details.focalPoint - focalStart;
 
-                                //transform.translate(focal.dx, focal.dy);
-                                // transform.scale(
-                                //     1 - (1 - details.scale) / 150.0,
-                                //     1 - (1 - details.scale) / 150.0
-                                // );
-                                //transform.rotateZ(details.rotation / 90);
-                                //transform.translate(-focal.dx, -focal.dy);
-                                //transform.translate(current.x, current.y);
-                                transform.translate( offsetDelta.dx, offsetDelta.dy);
-                              });
+                                focalStart = details.focalPoint;
+                                setState(() {
+                                  var transform = _gameState.value.transform;
+                                  //var current = transform.getTranslation();
+                                  //print('current: $current');
+                                  //transform.translate(-current.x, -current.y);
+                                  //var focal = details.localFocalPoint;
+                                  //print('focal: $focal');
+
+                                  //transform.translate(focal.dx, focal.dy);
+                                  // transform.scale(
+                                  //     1 - (1 - details.scale) / 150.0,
+                                  //     1 - (1 - details.scale) / 150.0
+                                  // );
+                                  //transform.rotateZ(details.rotation / 90);
+                                  //transform.translate(-focal.dx, -focal.dy);
+                                  //transform.translate(current.x, current.y);
+                                  transform.translate(
+                                      offsetDelta.dx, offsetDelta.dy);
+                                });
+                              } else {
+                                var p = Point(
+                                    details.localFocalPoint.dx -
+                                        screenCenter.dx,
+                                    details.localFocalPoint.dy -
+                                        screenCenter.dy);
+                                var h = Hex.getHexPartFromPoint(p);
+                                if (h.runtimeType == Vertex) {
+                                  if (_gameState.value.board.moveTo(h)) {
+                                    setState(() => _gameState.value.board);
+                                  }
+                                }
+                              }
                             },
                             child: CustomPaint(
                                 painter: HexPainter(_gameState.value))))))));
@@ -224,7 +322,6 @@ class HexPainter extends CustomPainter {
 
     drawBoard(center, canvas);
 
-
     var entries = _gameState.board.flatten();
     entries.sort((a, b) => a.value.order.compareTo(b.value.order));
     for (var entry in entries) {
@@ -240,12 +337,16 @@ class HexPainter extends CustomPainter {
         drawErrorPiece(hex, center, piece, canvas);
       }
     }
-    drawSelection(center, canvas);
+    if (_gameState.board.mode == BoardMode.designer) {
+      drawDesignSelection(center, canvas);
+    } else {
+      drawTrail(center, canvas);
+    }
   }
 
-  void drawSelection(Point center, Canvas canvas) {
+  void drawDesignSelection(Point center, Canvas canvas) {
     List<Offset> offsets = <Offset>[];
-    for (var vertex in _gameState.pointer.vertices) {
+    for (var vertex in _gameState.pointer.vertexOffsets) {
       offsets.add(new Offset(center.x + _gameState.pointer.point.x + vertex.x,
           center.y + _gameState.pointer.point.y - vertex.y));
     }
@@ -259,10 +360,8 @@ class HexPainter extends CustomPainter {
   }
 
   void drawEndPiece(Hex hex, Point center, Canvas canvas) {
-    var offset = new Offset(
-        center.x + hex.point.x + hex.midpoint.x,
-        center.y + hex.point.y - hex.midpoint.y
-    );
+    var offset = new Offset(center.x + hex.point.x + hex.midpoint.x,
+        center.y + hex.point.y - hex.midpoint.y);
     final endPaint = Paint()
       ..color = Colors.blueGrey
       ..style = PaintingStyle.fill
@@ -280,17 +379,15 @@ class HexPainter extends CustomPainter {
   }
 
   void drawErrorPiece(Hex hex, Point center, Piece piece, Canvas canvas) {
-    TextSpan errorSpan = new TextSpan(
-        style: new TextStyle(color: Colors.red), text: piece.name);
+    TextSpan errorSpan =
+        new TextSpan(style: new TextStyle(color: Colors.red), text: piece.name);
     TextPainter errorPainter = new TextPainter(
         text: errorSpan,
         textAlign: TextAlign.center,
         textDirection: TextDirection.ltr);
     errorPainter.layout();
-    Offset offset = new Offset(
-        center.x + hex.point.x + hex.midpoint.x,
-        center.y + hex.point.y - hex.midpoint.y
-    );
+    Offset offset = new Offset(center.x + hex.point.x + hex.midpoint.x,
+        center.y + hex.point.y - hex.midpoint.y);
     errorPainter.paint(canvas, offset);
   }
 
@@ -309,7 +406,7 @@ class HexPainter extends CustomPainter {
         radius: hexSize / 4.0,
       ));
     List<Offset> pieceOffset = <Offset>[];
-    for (var vertex in Hex.origin().vertices) {
+    for (var vertex in Hex.origin().vertexOffsets) {
       pieceOffset.add(new Offset(
           center.x + hex.point.x + hex.midpoint.x + vertex.y / 3.5,
           center.y + hex.point.y - hex.midpoint.y - vertex.x / 3.5));
@@ -327,34 +424,26 @@ class HexPainter extends CustomPainter {
       ..strokeWidth = 8
       ..strokeCap = StrokeCap.round;
     List<Offset> pieceOffset = <Offset>[];
-    hex.vertices.forEach((Point p) => pieceOffset.add(new Offset(
-        center.x + hex.point.x + p.x,
-        center.y + hex.point.y - p.y)));
+    hex.vertexOffsets.forEach((Point p) => pieceOffset.add(new Offset(
+        center.x + hex.point.x + p.x, center.y + hex.point.y - p.y)));
     canvas.drawLine(pieceOffset[0], pieceOffset[1], edgePaint);
   }
 
   void drawBoard(Point center, Canvas canvas) {
     List<Offset> boardOffset = <Offset>[];
     var vertexes = vertex.values;
-    vertexes.forEach((Point p) => boardOffset.add(Offset (
+    vertexes.forEach((Point p) => boardOffset.add(Offset(
         center.x + p.x * 2 * _gameState.board.size,
-        center.y + p.y * 2 * (_gameState.board.size)
-      )));
+        center.y + p.y * 2 * (_gameState.board.size))));
     var boardPath = Path();
     boardPath.addPolygon(boardOffset, true);
     final boardFillPaint = Paint()
       ..color = Colors.blueGrey
       ..style = PaintingStyle.fill
       ..shader = RadialGradient(
-        colors: [
-          Colors.lightBlueAccent[100],
-          Colors.lightBlue
-        ],
+        colors: [Colors.lightBlueAccent[100], Colors.lightBlue],
       ).createShader(Rect.fromCircle(
-        center: new Offset(
-            center.x,
-            center.y
-        ),
+        center: new Offset(center.x, center.y),
         radius: hexSize * 2 * _gameState.board.size,
       ));
     canvas.drawPath(boardPath, boardFillPaint);
@@ -372,13 +461,10 @@ class HexPainter extends CustomPainter {
           Colors.black,
         ],
       ).createShader(Rect.fromCircle(
-        center: new Offset(
-            center.x,
-            center.y
-        ),
+        center: new Offset(center.x, center.y),
         radius: hexSize + hexSize * 2 * (_gameState.board.size - 1),
       ));
-      canvas.drawPath(boardPath, boardEdgePaint);
+    canvas.drawPath(boardPath, boardEdgePaint);
   }
 
   void paintFill(Canvas canvas, Size size) {
@@ -392,7 +478,7 @@ class HexPainter extends CustomPainter {
     tp.layout();
     tp.paint(canvas, new Offset(5.0, 5.0));*/
 
-    var fillRect = Rect.fromLTWH(0,0,size.width, size.height);
+    var fillRect = Rect.fromLTWH(0, 0, size.width, size.height);
 
     // final fillPaint = Paint()..color = Colors.grey[200];
     // canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), fillPaint);
@@ -400,21 +486,99 @@ class HexPainter extends CustomPainter {
     final fillPaint = Paint()
       ..style = PaintingStyle.fill
       ..shader = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Colors.white,
-          Colors.grey[200],
-          Colors.white,
-        ],
-        stops: [
-          0.4,
-          0.5,
-          0.6,
-        ]
-      ).createShader(Rect.fromLTWH(0,0,size.width, size.height));
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white,
+            Colors.grey[200],
+            Colors.white,
+          ],
+          stops: [
+            0.4,
+            0.5,
+            0.6,
+          ]).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
     canvas.drawRect(fillRect, fillPaint);
+  }
 
+  void drawTrail(Point center, Canvas canvas) {
+    drawCurrentTrail(_gameState.board, center, canvas);
+    drawTrailStartPiece(_gameState.board, center, canvas);
+    drawTrailEndPiece(_gameState.board, center, canvas);
+  }
+
+  void drawCurrentTrail(Board board, Point center, Canvas canvas) {
+    if (board.trail.length > 1) {
+      final trailPaint = Paint()
+        ..color = Colors.amber
+        ..strokeWidth = 8
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
+      List<Offset> trailOffset = <Offset>[];
+      board.trail.forEach((Vertex v) =>
+          trailOffset.add(new Offset(
+              center.x + v.point.x + v.midpoint.x,
+              center.y + v.point.y -  v.midpoint.y
+          )));
+      Path trailPath = Path();
+      trailPath.addPolygon(trailOffset, false);
+      canvas.drawPath(trailPath, trailPaint);
+    }
+  }
+
+  void drawTrailEndPiece(Board board, Point center, Canvas canvas) {
+    if (board.hasEnded) {
+      var offset = new Offset(center.x + board.tail.point.x + board.tail.midpoint.x,
+          center.y + board.tail.point.y - board.tail.midpoint.y);
+      final endPaint = Paint()
+        ..color = Colors.blueGrey
+        ..style = PaintingStyle.fill
+        ..shader = RadialGradient(
+          colors: [
+            Colors.amber[100],
+            Colors.amber[600],
+            Colors.amber,
+          ],
+        ).createShader(Rect.fromCircle(
+          center: offset,
+          radius: hexSize / 5.0,
+        ));
+      canvas.drawCircle(offset, hexSize / 4.0, endPaint);
+    }
+  }
+
+  void drawTrailStartPiece(Board board, Point center, Canvas canvas) {
+    if (board.trail.length > 0) {
+      final startPaint = Paint()
+        ..style = PaintingStyle.fill
+        ..shader = RadialGradient(
+          colors: [
+            Colors.amber[800],
+            Colors.amber[700],
+            Colors.amber,
+          ],
+        ).createShader(Rect.fromCircle(
+          center: new Offset(
+              center.x + board.head.point.x + board.head.midpoint.x,
+              center.y + board.head.point.y - board.head.midpoint.y),
+          radius: hexSize / 4.0,
+        ));
+      List<Offset> pieceOffset = <Offset>[];
+      for (var vertex in Hex
+          .origin()
+          .vertexOffsets) {
+        pieceOffset.add(new Offset(
+            center.x + board.head.point.x + board.head.midpoint.x +
+                vertex.y / 3.5,
+            center.y + board.head.point.y - board.head.midpoint.y -
+                vertex.x / 3.5));
+      }
+      Path path = Path();
+      path.addPolygon(pieceOffset, true);
+
+      //hex.vertices.forEach((Point p) => pieceOffset.add(new Offset(hex.point.x + hex.midpoint.x + p.x, hex.point.y + hex.midpoint.y - p.y)));
+      canvas.drawPath(path, startPaint);
+    }
   }
 
   @override
