@@ -32,6 +32,8 @@ class GameState {
   Matrix4 transform = Matrix4.identity();
 }
 
+bool tracing = false;
+
 /// This is the main application widget.
 class HexApp extends StatelessWidget {
   static const String _title = 'Hex App';
@@ -76,6 +78,7 @@ class _HexWidgetState extends State<HexWidget> {
   ErasePiece erasePiece = new ErasePiece();
   StartPiece startPiece = new StartPiece();
   EndPiece endPiece = new EndPiece();
+  DotPiece dotPiece = new DotPiece();
 
   @override
   Widget build(BuildContext context) {
@@ -125,23 +128,21 @@ class _HexWidgetState extends State<HexWidget> {
                             color: Colors.blue,
                           ),
                         ),
+
+                        PieceTile(startPiece,
+                            () => _choosePiece(context, startPiece, _gameState)),
                         PieceTile(edgePiece,
                             () => _choosePiece(context, edgePiece, _gameState)),
-                        PieceTile(
-                            startPiece,
-                            () =>
-                                _choosePiece(context, startPiece, _gameState)),
                         PieceTile(endPiece,
                             () => _choosePiece(context, endPiece, _gameState)),
-                        PieceTile(
-                            erasePiece,
-                            () =>
-                                _choosePiece(context, erasePiece, _gameState)),
+                        PieceTile(dotPiece,
+                            () => _choosePiece(context, dotPiece, _gameState)),
+                        PieceTile(erasePiece,
+                            () => _choosePiece(context, erasePiece, _gameState)),
                         ListTile(
                             title: Text("Clear All"),
                             onTap: () {
                               Navigator.pop(context);
-
                               showDialog(
                                   context: context,
                                   builder: (BuildContext context) =>
@@ -164,7 +165,6 @@ class _HexWidgetState extends State<HexWidget> {
                                               Navigator.of(context).pop();
                                             },
                                           ),
-                                          Spacer(flex: 3),
                                           TextButton(
                                               child: Text('You bet!'),
                                               onPressed: () {
@@ -211,7 +211,9 @@ class _HexWidgetState extends State<HexWidget> {
                                   setState(() => _gameState.value.pointer = h);
                                 }
                               } else {
+                                /*
                                 setState(() => _gameState.value.board.startAt(h));
+                                 */
                               }
                             },
                             onDoubleTap: () {
@@ -250,6 +252,13 @@ class _HexWidgetState extends State<HexWidget> {
 
                         },
                          */
+                            onScaleEnd: (details) {
+                              if (_gameState.value.board.hasEnded) {
+                                setState(
+                                    () => _gameState.value.board.trySolve());
+                                tracing = false;
+                              }
+                            },
                             onScaleStart: (details) {
                               focalStart = details.focalPoint;
                               if (_gameState.value.board.mode ==
@@ -260,15 +269,25 @@ class _HexWidgetState extends State<HexWidget> {
                                     details.localFocalPoint.dy -
                                         screenCenter.dy);
                                 var h = Hex.getHexPartFromPoint(p);
-                                setState(
-                                    () => _gameState.value.board.startAt(h));
+                                if  (_gameState.value.board.isTail(h)) {
+                                  _gameState.value.board.startAt(h);
+                                  tracing = true;
+                                } else if (_gameState.value.board.isEnd(h)) {
+                                  tracing = true;
+                                } else if (_gameState.value.board.isStart(h)) {
+                                  _gameState.value.board.startAt(h);
+                                  tracing = true;
+                                } else {
+                                  tracing = false;
+                                }
                               }
+                              setState(() {});
                             },
                             onScaleUpdate: (details) {
-                              if (!_gameState.value.board.hasStarted) {
+                              if (!_gameState.value.board.hasStarted ||
+                                  !tracing) {
                                 var offsetDelta =
                                     details.focalPoint - focalStart;
-
                                 focalStart = details.focalPoint;
                                 setState(() {
                                   var transform = _gameState.value.transform;
@@ -333,6 +352,8 @@ class HexPainter extends CustomPainter {
         drawStartPiece(hex, center, canvas);
       } else if (piece is EndPiece) {
         drawEndPiece(hex, center, canvas);
+      } else if (piece is DotPiece) {
+        drawDotPiece(hex, center, canvas);
       } else {
         drawErrorPiece(hex, center, piece, canvas);
       }
@@ -410,6 +431,24 @@ class HexPainter extends CustomPainter {
       pieceOffset.add(new Offset(
           center.x + hex.point.x + hex.midpoint.x + vertex.y / 3.5,
           center.y + hex.point.y - hex.midpoint.y - vertex.x / 3.5));
+    }
+    Path path = Path();
+    path.addPolygon(pieceOffset, true);
+
+    //hex.vertices.forEach((Point p) => pieceOffset.add(new Offset(hex.point.x + hex.midpoint.x + p.x, hex.point.y + hex.midpoint.y - p.y)));
+    canvas.drawPath(path, startPaint);
+  }
+
+
+  void drawDotPiece(Hex hex, Point center, Canvas canvas) {
+    final startPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    List<Offset> pieceOffset = <Offset>[];
+    for (var vertex in Hex.origin().vertexOffsets) {
+      pieceOffset.add(new Offset(
+          center.x + hex.point.x + hex.midpoint.x + vertex.x / 14,
+          center.y + hex.point.y - hex.midpoint.y - vertex.y / 14));
     }
     Path path = Path();
     path.addPolygon(pieceOffset, true);
@@ -510,16 +549,16 @@ class HexPainter extends CustomPainter {
   void drawCurrentTrail(Board board, Point center, Canvas canvas) {
     if (board.trail.length > 1) {
       final trailPaint = Paint()
-        ..color = Colors.amber
+        ..color = board.isFinished
+            ? (board.isSuccess ? Colors.amber[200] : Colors.amber[900])
+            : Colors.amber
         ..strokeWidth = 8
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round;
       List<Offset> trailOffset = <Offset>[];
-      board.trail.forEach((Vertex v) =>
-          trailOffset.add(new Offset(
-              center.x + v.point.x + v.midpoint.x,
-              center.y + v.point.y -  v.midpoint.y
-          )));
+      board.trail.forEach((Vertex v) => trailOffset.add(new Offset(
+          center.x + v.point.x + v.midpoint.x,
+          center.y + v.point.y - v.midpoint.y)));
       Path trailPath = Path();
       trailPath.addPolygon(trailOffset, false);
       canvas.drawPath(trailPath, trailPaint);
@@ -528,7 +567,8 @@ class HexPainter extends CustomPainter {
 
   void drawTrailEndPiece(Board board, Point center, Canvas canvas) {
     if (board.hasEnded) {
-      var offset = new Offset(center.x + board.tail.point.x + board.tail.midpoint.x,
+      var offset = new Offset(
+          center.x + board.tail.point.x + board.tail.midpoint.x,
           center.y + board.tail.point.y - board.tail.midpoint.y);
       final endPaint = Paint()
         ..color = Colors.blueGrey
@@ -537,7 +577,9 @@ class HexPainter extends CustomPainter {
           colors: [
             Colors.amber[100],
             Colors.amber[600],
-            Colors.amber,
+            board.isFinished
+                ? (board.isSuccess ? Colors.amber[200] : Colors.amber[900])
+                : Colors.amber,
           ],
         ).createShader(Rect.fromCircle(
           center: offset,
@@ -555,7 +597,9 @@ class HexPainter extends CustomPainter {
           colors: [
             Colors.amber[800],
             Colors.amber[700],
-            Colors.amber,
+            board.isFinished
+                ? (board.isSuccess ? Colors.amber[200] : Colors.amber[900])
+                : Colors.amber,
           ],
         ).createShader(Rect.fromCircle(
           center: new Offset(
@@ -564,13 +608,15 @@ class HexPainter extends CustomPainter {
           radius: hexSize / 4.0,
         ));
       List<Offset> pieceOffset = <Offset>[];
-      for (var vertex in Hex
-          .origin()
-          .vertexOffsets) {
+      for (var vertex in Hex.origin().vertexOffsets) {
         pieceOffset.add(new Offset(
-            center.x + board.head.point.x + board.head.midpoint.x +
+            center.x +
+                board.head.point.x +
+                board.head.midpoint.x +
                 vertex.y / 3.5,
-            center.y + board.head.point.y - board.head.midpoint.y -
+            center.y +
+                board.head.point.y -
+                board.head.midpoint.y -
                 vertex.x / 3.5));
       }
       Path path = Path();

@@ -16,6 +16,8 @@ class Board {
 
   int _size = 3;
 
+  bool _finished = false;
+
   get size => _size;
 
   BoardMode _mode;
@@ -37,7 +39,7 @@ class Board {
 
   Vertex get head => trail.first;
 
-  Vertex get tail => trail.last;
+  Vertex get tail => trail.isEmpty ? null : trail.last;
 
   Vertex get previous {
     if (trail.length < 2) {
@@ -47,18 +49,28 @@ class Board {
     }
   }
 
-  bool startAt(Vertex vertex) {
-    if (hasPieceAt(vertex, StartPiece())) {
-      bool startFromSameSpot = false;
+  bool isStart(Hex start) {
+    return hasPieceAt(start, StartPiece());
+  }
+
+  bool isEnd(Hex end) {
+    return hasPieceAt(end, EndPiece());
+  }
+
+  bool isTail(Hex current) {
+    if (current == null) {
+      return false;
+    } else {
+      return current == tail;
+    }
+  }
+
+  bool startAt(Hex start) {
+    if (isStart(start)) {
       if (hasStarted) {
-        if (head == vertex) {
-          startFromSameSpot = true;
-        }
         resetStart();
       }
-      if (!startFromSameSpot) {
-        _trail.addFirst(vertex);
-      }
+      _trail.addFirst(start);
       return true;
     } else {
       resetStart();
@@ -66,13 +78,32 @@ class Board {
     }
   }
 
+  bool get isFinished {
+    return _finished;
+  }
+
+  bool get isSuccess {
+    return hasEnded && isFinished && isFollowingRules;
+  }
+
+  bool get isFollowingRules {
+    return
+      hasPieceAt(head, StartPiece()) &&
+      hasPieceAt(tail, EndPiece()) &&
+      //TODO: Check that path is valid and doesn't loop
+      hasValidDotPath;
+  }
+
+  bool trySolve() {
+    _finished = true;
+    return isSuccess;
+  }
+
   bool get hasEnded {
     if (tail == null) {
       return false;
-    } else if (_map.containsKey(tail)) {
-      return _map[tail].any((Piece p) => p.runtimeType == EndPiece);
     } else {
-      return false;
+      return isEnd(tail);
     }
   }
 
@@ -97,6 +128,7 @@ class Board {
 
   void resetStart() {
     _trail.clear();
+    _finished = false;
   }
 
   get hasStarted => _trail.isNotEmpty;
@@ -198,6 +230,18 @@ class Board {
       return true;
     } else {
       return false;
+    }
+  }
+
+  bool get hasDots {
+    return flatten().any((MapEntry<Hex, Piece> entry) => entry.value.runtimeType == DotPiece);
+  }
+
+  bool get hasValidDotPath {
+    if (hasDots) {
+      return false;
+    } else {
+      return true;
     }
   }
 }

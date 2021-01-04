@@ -30,3 +30,12 @@ class EndPiece extends Piece {
   @override
   num get order => 200;
 }
+
+class DotPiece extends Piece {
+  @override
+  String get name => "Dot";
+
+  @override
+  num get order => 300;
+
+}
