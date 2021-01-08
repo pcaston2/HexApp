@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 
 /// Flutter code sample for RadioListTile
@@ -28,7 +30,7 @@ get screenCenter => Offset(screenSize.dx / 2, screenSize.dy / 2);
 class GameState {
   Board board = Board.sample();
   Hex pointer = Hex.origin();
-  Piece piece = EdgePiece();
+  Piece piece = PathPiece();
   Matrix4 transform = Matrix4.identity();
 }
 
@@ -74,11 +76,13 @@ class _HexWidgetState extends State<HexWidget> {
     setState(() => _gameState.value.piece = piece);
   }
 
-  EdgePiece edgePiece = new EdgePiece();
+  PathPiece pathPiece = new PathPiece();
   ErasePiece erasePiece = new ErasePiece();
   StartPiece startPiece = new StartPiece();
   EndPiece endPiece = new EndPiece();
-  DotPiece dotPiece = new DotPiece();
+  DotRulePiece dotPiece = new DotRulePiece();
+  BreakRulePiece breakPiece = new BreakRulePiece();
+  EdgeRulePiece edgePiece = new EdgeRulePiece();
 
   @override
   Widget build(BuildContext context) {
@@ -128,17 +132,37 @@ class _HexWidgetState extends State<HexWidget> {
                             color: Colors.blue,
                           ),
                         ),
-
-                        PieceTile(startPiece,
-                            () => _choosePiece(context, startPiece, _gameState)),
-                        PieceTile(edgePiece,
-                            () => _choosePiece(context, edgePiece, _gameState)),
+                        Text("Design"),
+                        PieceTile(pathPiece,
+                            () => _choosePiece(context, pathPiece, _gameState)),
+                        Text("Terminals"),
+                        PieceTile(
+                            startPiece,
+                            () =>
+                                _choosePiece(context, startPiece, _gameState)),
                         PieceTile(endPiece,
                             () => _choosePiece(context, endPiece, _gameState)),
+                        Text("Rules"),
                         PieceTile(dotPiece,
                             () => _choosePiece(context, dotPiece, _gameState)),
-                        PieceTile(erasePiece,
-                            () => _choosePiece(context, erasePiece, _gameState)),
+                        PieceTile(breakPiece,
+                                () => _choosePiece(context, breakPiece, _gameState)),
+                        PieceTile(edgePiece,
+                                () => _choosePiece(context, edgePiece, _gameState)),
+                        Text("Editing"),
+                        PieceTile(
+                            erasePiece,
+                            () =>
+                                _choosePiece(context, erasePiece, _gameState)),
+                        ListTile(
+                            title: Text("JSON MUNGER"),
+                            onTap: () {
+                              setState(() {
+                                //var json = Board.sample().toJson();
+                                //print(json);
+                                //_gameState.value.board = Board.fromJson(json);
+                              });
+                            }),
                         ListTile(
                             title: Text("Clear All"),
                             onTap: () {
@@ -203,10 +227,6 @@ class _HexWidgetState extends State<HexWidget> {
                               var h = Hex.getHexPartFromPoint(p);
                               if (_gameState.value.board.mode ==
                                   BoardMode.designer) {
-                                var p = Point(
-                                    details.localPosition.dx - screenCenter.dx,
-                                    details.localPosition.dy - screenCenter.dy);
-                                var h = Hex.getHexPartFromPoint(p);
                                 if (_gameState.value.board.pieceOnBoard(h)) {
                                   setState(() => _gameState.value.pointer = h);
                                 }
@@ -269,7 +289,7 @@ class _HexWidgetState extends State<HexWidget> {
                                     details.localFocalPoint.dy -
                                         screenCenter.dy);
                                 var h = Hex.getHexPartFromPoint(p);
-                                if  (_gameState.value.board.isTail(h)) {
+                                if (_gameState.value.board.isTail(h)) {
                                   _gameState.value.board.startAt(h);
                                   tracing = true;
                                 } else if (_gameState.value.board.isEnd(h)) {
@@ -315,10 +335,8 @@ class _HexWidgetState extends State<HexWidget> {
                                     details.localFocalPoint.dy -
                                         screenCenter.dy);
                                 var h = Hex.getHexPartFromPoint(p);
-                                if (h.runtimeType == Vertex) {
-                                  if (_gameState.value.board.moveTo(h)) {
-                                    setState(() => _gameState.value.board);
-                                  }
+                                if (_gameState.value.board.moveTo(h)) {
+                                  setState(() => _gameState.value.board);
                                 }
                               }
                             },
@@ -346,14 +364,18 @@ class HexPainter extends CustomPainter {
     for (var entry in entries) {
       var hex = entry.key;
       var piece = entry.value;
-      if (piece is EdgePiece) {
-        drawEdgePiece(hex, center, canvas);
+      if (piece is PathPiece) {
+        drawPathPiece(hex, center, canvas);
       } else if (piece is StartPiece) {
         drawStartPiece(hex, center, canvas);
       } else if (piece is EndPiece) {
         drawEndPiece(hex, center, canvas);
-      } else if (piece is DotPiece) {
-        drawDotPiece(hex, center, canvas);
+      } else if (piece is DotRulePiece) {
+        drawDotRulePiece(hex, center, canvas);
+      } else if (piece is BreakRulePiece) {
+        drawBreakRulePiece(hex, center, canvas);
+      } else if (piece is EdgeRulePiece) {
+        drawEdgeRulePiece(hex, center, canvas);
       } else {
         drawErrorPiece(hex, center, piece, canvas);
       }
@@ -440,7 +462,44 @@ class HexPainter extends CustomPainter {
   }
 
 
-  void drawDotPiece(Hex hex, Point center, Canvas canvas) {
+  void drawBreakRulePiece(Hex hex, Point center, Canvas canvas) {
+    final breakPaint = Paint()
+      ..color = Colors.grey[800]
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round
+      //..blendMode = BlendMode.hardLight
+       ..style = PaintingStyle.stroke;
+      // ..shader = RadialGradient(
+      //   colors: [
+      //     Colors.black.withAlpha(0),
+      //     Colors.black.withAlpha(200),
+      //     Colors.black.withAlpha(0),
+      //   ],
+      //   stops: [
+      //     0.7,
+      //     0.75,
+      //     0.8
+      //   ]
+      // ).createShader(Rect.fromCircle(
+      //   center: new Offset(center.x + hex.point.x, center.y + hex.point.y),
+      //   radius: hexSize,
+      // ));
+    List<Offset> pieceOffset = <Offset>[];
+    for (var vertex in Hex.origin().vertexOffsets) {
+      pieceOffset.add(new Offset(
+          center.x + hex.point.x + hex.midpoint.x + vertex.x * 0.85,
+          center.y + hex.point.y - hex.midpoint.y - vertex.y * 0.85));
+    }
+    pieceOffset.add(pieceOffset.first);
+    pieceOffset.removeAt(0);
+    Path path = Path();
+    path.addPolygon(pieceOffset, true);
+    //canvas.drawPoints(PointMode.lines, pieceOffset, breakPaint);
+    //hex.vertices.forEach((Point p) => pieceOffset.add(new Offset(hex.point.x + hex.midpoint.x + p.x, hex.point.y + hex.midpoint.y - p.y)));
+    canvas.drawPath(path, breakPaint);
+  }
+
+  void drawDotRulePiece(Hex hex, Point center, Canvas canvas) {
     final startPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
@@ -457,15 +516,39 @@ class HexPainter extends CustomPainter {
     canvas.drawPath(path, startPaint);
   }
 
-  void drawEdgePiece(Hex hex, Point center, Canvas canvas) {
+
+  void drawEdgeRulePiece(Hex hex, Point center, Canvas canvas) {
     final edgePaint = Paint()
+      ..color = Colors.blueGrey[600]
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+    List<Offset> pieceOffset = <Offset>[];
+    for (var vertex in hex.vertices) {
+      pieceOffset.add(new Offset(
+          center.x + vertex.midpoint.x + vertex.point.x,
+          center.y - vertex.midpoint.y + vertex.point.y));
+    }
+    //canvas.drawCircle(Offset(center.x + hex.midpoint.x + hex.point.x, center.y - hex.midpoint.y + hex.point.y), 25, edgePaint);
+
+    canvas.drawLine(
+        Offset(center.x + hex.point.x + hex.midpoint.x * 0.6, center.y + hex.point.y - hex.midpoint.y * 0.6),
+        Offset(center.x+ hex.point.x - hex.midpoint.x * 0.6, center.y + hex.point.y + hex.midpoint.y * 0.6),
+        edgePaint);
+    //Path path = Path();
+    //path.addPolygon(pieceOffset, true);
+    //canvas.drawPath(path, edgePaint);
+  }
+
+
+  void drawPathPiece(Hex hex, Point center, Canvas canvas) {
+    final pathPaint = Paint()
       ..color = Colors.blueGrey
       ..strokeWidth = 8
       ..strokeCap = StrokeCap.round;
     List<Offset> pieceOffset = <Offset>[];
     hex.vertexOffsets.forEach((Point p) => pieceOffset.add(new Offset(
         center.x + hex.point.x + p.x, center.y + hex.point.y - p.y)));
-    canvas.drawLine(pieceOffset[0], pieceOffset[1], edgePaint);
+    canvas.drawLine(pieceOffset[0], pieceOffset[1], pathPaint);
   }
 
   void drawBoard(Point center, Canvas canvas) {
@@ -556,9 +639,9 @@ class HexPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round;
       List<Offset> trailOffset = <Offset>[];
-      board.trail.forEach((Vertex v) => trailOffset.add(new Offset(
-          center.x + v.point.x + v.midpoint.x,
-          center.y + v.point.y - v.midpoint.y)));
+      board.trail.forEach((Hex h) => trailOffset.add(new Offset(
+          center.x + h.point.x + h.midpoint.x,
+          center.y + h.point.y - h.midpoint.y)));
       Path trailPath = Path();
       trailPath.addPolygon(trailOffset, false);
       canvas.drawPath(trailPath, trailPaint);
@@ -631,4 +714,5 @@ class HexPainter extends CustomPainter {
   bool shouldRepaint(CustomPainter old) {
     return true;
   }
+
 }

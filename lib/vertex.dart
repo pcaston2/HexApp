@@ -25,6 +25,8 @@ class Vertex extends Hex {
           Edge.from(EdgeDirection.SouthWest, this)
         ];
         break;
+      default:
+        throw new Exception("Couldn't find correct vertex type");
     }
   }
 

@@ -1,8 +1,9 @@
-import 'dart:collection';
 import 'dart:core';
 
 import 'hex.dart';
 import 'piece.dart';
+
+part 'boardValidator.dart';
 
 const maxBoardSize = 10;
 
@@ -11,14 +12,27 @@ enum BoardMode {
   designer,
 }
 
+
+
 class Board {
-  var _map = new HashMap<Hex, List<Piece>>();
+  Map<Hex, List<Piece>> map = new Map<Hex, List<Piece>>();
+
 
   int _size = 3;
 
   bool _finished = false;
 
-  get size => _size;
+  int get size {
+    return _size;
+  }
+
+  set size(int newSize) {
+    if (newSize < 1 || newSize > 10) {
+      throw new Exception("Cannot create a board of size $newSize");
+    } else {
+      _size = newSize;
+    }
+  }
 
   BoardMode _mode;
 
@@ -33,19 +47,19 @@ class Board {
     _mode = currentMode;
   }
 
-  ListQueue<Vertex> _trail = ListQueue<Vertex>();
+  List<Hex> _trail = [];
 
-  ListQueue<Vertex> get trail => _trail;
+  List<Hex> get trail => _trail;
 
-  Vertex get head => trail.first;
+  Hex get head => trail.first;
 
-  Vertex get tail => trail.isEmpty ? null : trail.last;
+  Hex get tail => trail.isEmpty ? null : trail.last;
 
-  Vertex get previous {
+  Hex get previous {
     if (trail.length < 2) {
       return null;
     } else {
-      return trail.elementAt(trail.length -2);
+      return trail.elementAt(trail.length - 2);
     }
   }
 
@@ -70,7 +84,7 @@ class Board {
       if (hasStarted) {
         resetStart();
       }
-      _trail.addFirst(start);
+      _trail.add(start);
       return true;
     } else {
       resetStart();
@@ -83,15 +97,11 @@ class Board {
   }
 
   bool get isSuccess {
-    return hasEnded && isFinished && isFollowingRules;
-  }
-
-  bool get isFollowingRules {
-    return
-      hasPieceAt(head, StartPiece()) &&
-      hasPieceAt(tail, EndPiece()) &&
-      //TODO: Check that path is valid and doesn't loop
-      hasValidDotPath;
+    if (hasEnded && isFinished) {
+      var boardValidator = new BoardValidator(this);
+      return boardValidator.isSuccessful;
+    }
+    return false;
   }
 
   bool trySolve() {
@@ -107,23 +117,29 @@ class Board {
     }
   }
 
-  List<Vertex> get adjacent {
-    var validVertices = <Vertex>[];
+  List<Hex> get adjacent {
+    var validMoves = <Hex>[];
     if (hasEnded) {
       return [previous];
     }
-    var edges = tail.edges;
-    for (Edge edge in edges) {
-      if (_map.containsKey(edge)) {
-        if (_map[edge].any((Piece p) => p.runtimeType == EdgePiece)) {
-          var correspondingVertex = edge.vertices.singleWhere((Vertex v) => v != tail);
-          if (!trail.contains(correspondingVertex) || correspondingVertex == previous) {
-            validVertices.add(correspondingVertex);
+    if (tail.runtimeType == Edge) {
+      return tail.vertices.where((Vertex v) =>
+      !trail.contains(v) || v == previous).toList();
+    } else if (tail.runtimeType == Vertex) {
+      var edges = tail.edges;
+      for (Edge edge in edges) {
+        if (map.containsKey(edge)) {
+          if (map[edge].any((Piece p) => p.runtimeType == PathPiece)) {
+            // var correspondingVertex =
+            //     edge.vertices.singleWhere((Vertex v) => v != tail);
+            if (!trail.contains(edge) || edge == previous) {
+              validMoves.add(edge);
+            }
           }
         }
       }
     }
-    return validVertices;
+    return validMoves;
   }
 
   void resetStart() {
@@ -149,58 +165,78 @@ class Board {
     return closestValue <= _size - 1;
   }
 
-  Iterable<Hex> get keys => _map.keys;
+  Iterable<Hex> get keys => map.keys;
+
+  Board() {
+    _size = 3;
+  }
 
   Board.sample() {
-    _size = 2;
+    _size = 3;
 
-    putPiece(Hex.origin(), EdgePiece());
-    putPiece(Hex.position(0, 1), EdgePiece());
+    putPiece(Hex.origin(), PathPiece());
+    putPiece(Hex.position(0, 1), PathPiece());
     putPiece(Vertex(VertexType.West, 1, 1), StartPiece());
     putPiece(Vertex(VertexType.East, -1, 0), EndPiece());
     mode = BoardMode.designer;
   }
 
-  void putPiece(Hex hex, Piece piece) {
+  bool putPiece(Hex hex, Piece piece) {
+    //TODO: Move this to the pieces
     if (!pieceOnBoard(hex)) {
-      return;
+      return false;
     }
-    if ((piece.runtimeType == StartPiece || piece.runtimeType == EndPiece) &&
-        hex.runtimeType != Vertex) {
-      return;
+    if (piece.runtimeType == BreakRulePiece && hex.runtimeType != Hex) {
+      return false;
+    }
+    if (piece.runtimeType == EdgeRulePiece && hex.runtimeType != Edge) {
+      return false;
+    }
+    if ((piece.runtimeType == StartPiece || piece.runtimeType == EndPiece || piece.runtimeType == DotRulePiece) &&
+        hex.runtimeType == Hex) {
+      return false;
     } else if (piece.runtimeType == ErasePiece) {
-      if (_map.containsKey(hex)) {
-        _map.remove(hex);
-        return;
+      if (map.containsKey(hex)) {
+        map.remove(hex);
+        return true;
+      } else {
+        return false;
       }
     } else {
       if ((hex.runtimeType == Hex || hex.runtimeType == Vertex) &&
-          piece is EdgePiece) {
+          piece is PathPiece) {
+        bool any = false;
+        for (var e in hex.edges) {
+          if (putPiece(e, piece) ){
+            any = true;
+          }
+        }
         hex.edges.forEach((Edge e) => putPiece(e, piece));
-        return;
+        return any;
       }
-      _map.putIfAbsent(hex, () => new List<Piece>.empty(growable: true));
-      var pieces = _map[hex];
+      map.putIfAbsent(hex, () => new List<Piece>.empty(growable: true));
+      var pieces = map[hex];
       pieces.removeWhere((p) => p.runtimeType == piece.runtimeType);
       if (piece.runtimeType == StartPiece || piece.runtimeType == EndPiece) {
         pieces.removeWhere(
             (p) => p.runtimeType == StartPiece || p.runtimeType == EndPiece);
       }
       pieces.add(piece);
+      return true;
     }
   }
 
   bool hasPieceAt(Hex h, Piece piece) {
-    if (!_map.containsKey(h)) {
+    if (!map.containsKey(h)) {
       return false;
     } else {
-      return _map[h].any((Piece p) => p.runtimeType == piece.runtimeType);
+      return map[h].any((Piece p) => p.runtimeType == piece.runtimeType);
     }
   }
 
   List<MapEntry<Hex, Piece>> flatten() {
     var entries = new List<MapEntry<Hex, Piece>>.empty(growable: true);
-    for (Hex hex in _map.keys) {
+    for (Hex hex in map.keys) {
       for (Piece piece in getPiecesAt(hex)) {
         entries.add(new MapEntry<Hex, Piece>(hex, piece));
       }
@@ -209,23 +245,23 @@ class Board {
   }
 
   List<Piece> getPiecesAt(Hex hex) {
-    if (_map.containsKey(hex)) {
-      return _map[hex];
+    if (map.containsKey(hex)) {
+      return map[hex];
     } else {
       return new List<Piece>.empty();
     }
   }
 
   void clear() {
-    _map.clear();
+    map.clear();
   }
 
-  bool moveTo(Vertex vertex) {
-    if (adjacent.contains(vertex)) {
-      if (vertex == previous){
+  bool moveTo(Hex hex) {
+    if (adjacent.contains(hex)) {
+      if (hex == previous) {
         trail.removeLast();
       } else {
-        trail.add(vertex);
+        trail.add(hex);
       }
       return true;
     } else {
@@ -233,15 +269,8 @@ class Board {
     }
   }
 
-  bool get hasDots {
-    return flatten().any((MapEntry<Hex, Piece> entry) => entry.value.runtimeType == DotPiece);
-  }
+  List<MapEntry<Hex, Piece>> getPiece(Piece p){
+  return flatten().where((MapEntry<Hex, Piece> entry) => entry.value.runtimeType == p.runtimeType).toList();
+}
 
-  bool get hasValidDotPath {
-    if (hasDots) {
-      return false;
-    } else {
-      return true;
-    }
-  }
 }

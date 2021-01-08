@@ -6,7 +6,6 @@ part 'edge.dart';
 part 'point.dart';
 
 
-
 const double hexSize = 50.0;
 get hexWidth => hexSize * 2;
 get hexHeight => math.sqrt(3) * hexSize;
@@ -71,7 +70,7 @@ class Hex {
       Vertex.from(VertexType.West, Hex.from(this, 1, 0))
     ];
 
-  get midpoint => Point.origin();
+  Point get midpoint => Point.origin();
 
   List<Edge> get edges {
     return [
@@ -247,6 +246,9 @@ class Hex {
 
   @override
   int get hashCode => q + r;
+
+
+
 }
 
 
