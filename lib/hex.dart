@@ -1,4 +1,3 @@
-library hex;
 import 'math.dart' as math;
 
 part 'vertex.dart';
