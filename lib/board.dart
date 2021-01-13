@@ -42,7 +42,7 @@ class Board {
 
   set mode(BoardMode currentMode) {
     if (currentMode == BoardMode.designer) {
-      resetStart();
+      resetTrail();
     }
     _mode = currentMode;
   }
@@ -82,12 +82,12 @@ class Board {
   bool startAt(Hex start) {
     if (isStart(start)) {
       if (hasStarted) {
-        resetStart();
+        resetTrail();
       }
       _trail.add(start);
       return true;
     } else {
-      resetStart();
+      resetTrail();
       return false;
     }
   }
@@ -142,7 +142,7 @@ class Board {
     return validMoves;
   }
 
-  void resetStart() {
+  void resetTrail() {
     _trail.clear();
     _finished = false;
   }
@@ -176,8 +176,10 @@ class Board {
 
     putPiece(Hex.origin(), PathPiece());
     putPiece(Hex.position(0, 1), PathPiece());
-    putPiece(Vertex(VertexType.West, 1, 1), StartPiece());
+    putPiece(Edge(EdgeType.North, 0, 2), StartPiece());
     putPiece(Vertex(VertexType.East, -1, 0), EndPiece());
+    putPiece(Vertex(VertexType.West, 1, 0), DotRulePiece());
+    putPiece(Edge(EdgeType.East, 0, 0), DotRulePiece());
     mode = BoardMode.designer;
   }
 

@@ -1,5 +1,5 @@
-name: my_first_flutter_app
-description: A test flutter application
+name: hex_game
+description: A Puzzle Game Envolving Hexs and Puzzles!
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
@@ -25,7 +25,7 @@ dependencies:
   flutter:
     sdk: flutter
   spritewidget:
-  audioplayers: ^0.17.2
+  audioplayers: ^0.16.2
 
 
   # The following adds the Cupertino Icons font to your application.

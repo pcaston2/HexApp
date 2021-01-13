@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:flutter/foundation.dart';
 import 'package:audioplayers/audioplayers.dart';
 
@@ -37,12 +36,6 @@ class GameState {
   Matrix4 transform = Matrix4.identity();
 }
 
-AudioPlayer audioPlayer = new AudioPlayer();
-
-play() {
-  audioPlayer.play('assets/panel_start_tracing.wav', isLocal: true);
-}
-
 bool tracing = false;
 
 /// This is the main application widget.
@@ -64,12 +57,14 @@ class HexWidget extends StatefulWidget {
 
 class _HexWidgetState extends State<HexWidget> {
   ValueNotifier<GameState> _gameState;
+  AudioPlayer audioPlayer = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
+    AudioPlayer.logEnabled = true;
+    audioPlayer.mode = PlayerMode.LOW_LATENCY;
     _gameState = ValueNotifier<GameState>(GameState());
-
   }
 
   @override
@@ -144,8 +139,9 @@ class _HexWidgetState extends State<HexWidget> {
                         ),
                         ListTile(
                             title: Text("Play Sound"),
-                            onTap: () {
-                              play();
+                            onTap: () async {
+                              audioPlayer
+                                  .play('panel_start_tracing.mp3');
                             }),
                         Text("Design"),
                         PieceTile(pathPiece,
@@ -160,10 +156,12 @@ class _HexWidgetState extends State<HexWidget> {
                         Text("Rules"),
                         PieceTile(dotPiece,
                             () => _choosePiece(context, dotPiece, _gameState)),
-                        PieceTile(breakPiece,
-                                () => _choosePiece(context, breakPiece, _gameState)),
+                        PieceTile(
+                            breakPiece,
+                            () =>
+                                _choosePiece(context, breakPiece, _gameState)),
                         PieceTile(edgePiece,
-                                () => _choosePiece(context, edgePiece, _gameState)),
+                            () => _choosePiece(context, edgePiece, _gameState)),
                         Text("Editing"),
                         PieceTile(
                             erasePiece,
@@ -288,10 +286,28 @@ class _HexWidgetState extends State<HexWidget> {
                         },
                          */
                             onScaleEnd: (details) {
-                              if (_gameState.value.board.hasEnded) {
-                                setState(
-                                    () => _gameState.value.board.trySolve());
-                                tracing = false;
+                              if (_gameState.value.board.mode ==
+                                  BoardMode.play) {
+                                if (_gameState.value.board.hasEnded) {
+                                  setState(() {
+                                    if (_gameState.value.board.trySolve()) {
+                                      audioPlayer.play(
+                                          'panel_success.mp3',
+                                          isLocal: true);
+                                    } else {
+                                      audioPlayer.play(
+                                          'panel_failure.mp3',
+                                          isLocal: true);
+                                    }
+                                  });
+                                  tracing = false;
+                                } else {
+                                  setState(() {
+                                    _gameState.value.board.resetTrail();
+                                    audioPlayer.play('stop_tracing.mp3',
+                                        isLocal: true);
+                                  });
+                                }
                               }
                             },
                             onScaleStart: (details) {
@@ -311,6 +327,9 @@ class _HexWidgetState extends State<HexWidget> {
                                   tracing = true;
                                 } else if (_gameState.value.board.isStart(h)) {
                                   _gameState.value.board.startAt(h);
+                                  audioPlayer
+                                      .play('assets/panel_start_tracing.mp3');
+                                  if (tracing) {}
                                   tracing = true;
                                 } else {
                                   tracing = false;
@@ -359,4 +378,3 @@ class _HexWidgetState extends State<HexWidget> {
                                 painter: HexPainter(_gameState.value))))))));
   }
 }
-
