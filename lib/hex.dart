@@ -1,8 +1,18 @@
+import 'dart:math';
 import 'math.dart' as math;
+import 'package:vector_math/vector_math.dart';
+
+
+import 'package:json_annotation/json_annotation.dart';
+
 
 part 'vertex.dart';
 part 'edge.dart';
 part 'point.dart';
+part 'hex.g.dart';
+
+
+
 
 
 const double hexSize = 50.0;
@@ -39,6 +49,14 @@ Map<EdgeDirection, Point> get edge => {
               2.0
     };
 
+    final Map<String, Hex> hexFactory = {
+      'Hex': Hex(),
+      'Edge': Edge(),
+      'Vertex': Vertex(),
+    };
+
+
+@JsonSerializable()
 class Hex {
   int q = 0;
   int r = 0;
@@ -112,29 +130,29 @@ class Hex {
         switch (closestEdgeDirection) {
           case EdgeDirection.NorthEast:
             //return currHex;
-            return new Edge(EdgeType.East, currHex.q, currHex.r);
+            return new Edge.position(EdgeType.East, currHex.q, currHex.r);
             break;
           case EdgeDirection.North:
             //return currHex;
-            return new Edge(EdgeType.North, currHex.q, currHex.r);
+            return new Edge.position(EdgeType.North, currHex.q, currHex.r);
             break;
           case EdgeDirection.NorthWest:
             //return currHex;
-            return new Edge(EdgeType.West, currHex.q, currHex.r);
+            return new Edge.position(EdgeType.West, currHex.q, currHex.r);
             break;
           case EdgeDirection.SouthEast:
             //return currHex;
-            return new Edge(EdgeType.West, currHex.q + hexOffset.q,
+            return new Edge.position(EdgeType.West, currHex.q + hexOffset.q,
                 currHex.r + hexOffset.r);
             break;
           case EdgeDirection.South:
             //return currHex;
-            return new Edge(EdgeType.North, currHex.q + hexOffset.q,
+            return new Edge.position(EdgeType.North, currHex.q + hexOffset.q,
                 currHex.r + hexOffset.r);
             break;
           case EdgeDirection.SouthWest:
             //return currHex;
-            return new Edge(EdgeType.East, currHex.q + hexOffset.q,
+            return new Edge.position(EdgeType.East, currHex.q + hexOffset.q,
                 currHex.r + hexOffset.r);
             break;
           default:
@@ -145,27 +163,27 @@ class Hex {
             vertex.entries.firstWhere((e) => e.value == closestVertex).key;
         switch (closestVertexDirection) {
           case VertexDirection.East:
-            return new Vertex(VertexType.East, currHex.q, currHex.r);
+            return new Vertex.position(VertexType.East, currHex.q, currHex.r);
             break;
           case VertexDirection.NorthEast:
             //return currHex;
-            return new Vertex(VertexType.West, currHex.q + 1, currHex.r - 1);
+            return new Vertex.position(VertexType.West, currHex.q + 1, currHex.r - 1);
             break;
           case VertexDirection.NorthWest:
             //return currHex;
-            return new Vertex(VertexType.East, currHex.q - 1, currHex.r);
+            return new Vertex.position(VertexType.East, currHex.q - 1, currHex.r);
             break;
           case VertexDirection.West:
             //return currHex;
-            return new Vertex(VertexType.West, currHex.q, currHex.r);
+            return new Vertex.position(VertexType.West, currHex.q, currHex.r);
             break;
           case VertexDirection.SouthWest:
             //return currHex;
-            return new Vertex(VertexType.East, currHex.q - 1, currHex.r + 1);
+            return new Vertex.position(VertexType.East, currHex.q - 1, currHex.r + 1);
             break;
           case VertexDirection.SouthEast:
             //return currHex;
-            return new Vertex(VertexType.West, currHex.q + 1, currHex.r);
+            return new Vertex.position(VertexType.West, currHex.q + 1, currHex.r);
             break;
           default:
             throw new Exception("Couldn't find correct vertex type");
@@ -247,7 +265,32 @@ class Hex {
   int get hashCode => q + r;
 
 
+  factory Hex.fromJson(Map<String, dynamic> json) {
+    if (json == null) {
+      return null;
+    }
+    if (json.containsKey('\$type')) {
+      var type = json['\$type'];
+      if (hexFactory.containsKey(type)) {
+        return hexFactory[type].fromJson(json);
+      } else {
+        throw new Exception("Could not deserialize piece, no factory exists for piece $type");
+      }
+    } else {
+      throw new Exception("Could not deserialize piece, it does not have a type");
+    }
+  }
 
+
+  Map<String, dynamic> toJson() {
+    var json = baseJson();
+    json['\$type'] = this.runtimeType.toString();
+    return json;
+  }
+
+  fromJson(Map<String, dynamic> json) => _$HexFromJson(json);
+
+  Map<String, dynamic> baseJson() => _$HexToJson(this);
 }
 
 

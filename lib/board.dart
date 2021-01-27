@@ -1,9 +1,18 @@
 import 'dart:core';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_guid/flutter_guid.dart';
+
+import 'boardTheme.dart';
+import 'color.dart';
 import 'hex.dart';
 import 'piece.dart';
 
+import 'package:json_annotation/json_annotation.dart';
+
 part 'boardValidator.dart';
+part 'hexPieceEntry.dart';
+part 'board.g.dart';
 
 const maxBoardSize = 10;
 
@@ -12,11 +21,26 @@ enum BoardMode {
   designer,
 }
 
-
-
+@JsonSerializable(explicitToJson: true)
 class Board {
-  Map<Hex, List<Piece>> map = new Map<Hex, List<Piece>>();
+  String name = "Board";
 
+  Color board;
+
+  Map<Hex, List<Piece>> _map = new Map<Hex, List<Piece>>();
+
+  List<HexPieceEntry> get map {
+    List<HexPieceEntry> entries = [];
+    flatten().forEach((element) =>
+        entries.add(HexPieceEntry.from(element.key, element.value)));
+    return entries;
+  }
+
+  set map(List<HexPieceEntry> entries) {
+    entries.forEach((entry) => putPiece(entry.hex, entry.piece));
+  }
+
+  BoardTheme theme;
 
   int _size = 3;
 
@@ -34,12 +58,24 @@ class Board {
     }
   }
 
+  Guid _guid;
+
+  String get guid {
+    return _guid.value;
+  }
+
+  set guid(String value) {
+    _guid = new Guid(value);
+  }
+
   BoardMode _mode;
 
+  @JsonKey(ignore: true)
   BoardMode get mode {
     return _mode;
   }
 
+  @JsonKey(ignore: true)
   set mode(BoardMode currentMode) {
     if (currentMode == BoardMode.designer) {
       resetTrail();
@@ -123,13 +159,14 @@ class Board {
       return [previous];
     }
     if (tail.runtimeType == Edge) {
-      return tail.vertices.where((Vertex v) =>
-      !trail.contains(v) || v == previous).toList();
+      return tail.vertices
+          .where((Vertex v) => !trail.contains(v) || v == previous)
+          .toList();
     } else if (tail.runtimeType == Vertex) {
       var edges = tail.edges;
       for (Edge edge in edges) {
-        if (map.containsKey(edge)) {
-          if (map[edge].any((Piece p) => p.runtimeType == PathPiece)) {
+        if (_map.containsKey(edge)) {
+          if (_map[edge].any((Piece p) => p.runtimeType == PathPiece)) {
             // var correspondingVertex =
             //     edge.vertices.singleWhere((Vertex v) => v != tail);
             if (!trail.contains(edge) || edge == previous) {
@@ -165,21 +202,28 @@ class Board {
     return closestValue <= _size - 1;
   }
 
-  Iterable<Hex> get keys => map.keys;
+  Iterable<Hex> get keys => _map.keys;
 
-  Board() {
+  Board() : this.named("Board");
+
+  Board.named(this.name) {
     _size = 3;
+    _guid = Guid.newGuid;
   }
 
   Board.sample() {
+    name = "Sample";
+
     _size = 3;
 
     putPiece(Hex.origin(), PathPiece());
     putPiece(Hex.position(0, 1), PathPiece());
-    putPiece(Edge(EdgeType.North, 0, 2), StartPiece());
-    putPiece(Vertex(VertexType.East, -1, 0), EndPiece());
-    putPiece(Vertex(VertexType.West, 1, 0), DotRulePiece());
-    putPiece(Edge(EdgeType.East, 0, 0), DotRulePiece());
+    putPiece(Edge.position(EdgeType.North, 0, 2), StartPiece());
+    putPiece(Vertex.position(VertexType.East, -1, 0), EndPiece());
+    putPiece(Vertex.position(VertexType.West, 1, 0), DotRulePiece());
+    putPiece(Edge.position(EdgeType.East, 0, 0), DotRulePiece());
+    putPiece(Hex.origin(), BreakRulePiece());
+    theme = BoardTheme();
     mode = BoardMode.designer;
   }
 
@@ -194,12 +238,21 @@ class Board {
     if (piece.runtimeType == EdgeRulePiece && hex.runtimeType != Edge) {
       return false;
     }
-    if ((piece.runtimeType == StartPiece || piece.runtimeType == EndPiece || piece.runtimeType == DotRulePiece) &&
+    if ((piece.runtimeType == StartPiece ||
+            piece.runtimeType == EndPiece ||
+            piece.runtimeType == DotRulePiece) &&
         hex.runtimeType == Hex) {
       return false;
     } else if (piece.runtimeType == ErasePiece) {
-      if (map.containsKey(hex)) {
-        map.remove(hex);
+      if (_map.containsKey(hex)) {
+        List<Piece> pieces = _map[hex];
+        if (pieces.isNotEmpty) {
+          pieces.sort((a, b) => b.order.compareTo(a.order));
+          var first = pieces.first;
+          pieces.remove(first);
+          return true;
+        }
+        _map.remove(hex);
         return true;
       } else {
         return false;
@@ -209,16 +262,27 @@ class Board {
           piece is PathPiece) {
         bool any = false;
         for (var e in hex.edges) {
-          if (putPiece(e, piece) ){
+          if (putPiece(e, piece)) {
             any = true;
           }
         }
         hex.edges.forEach((Edge e) => putPiece(e, piece));
         return any;
       }
-      map.putIfAbsent(hex, () => new List<Piece>.empty(growable: true));
-      var pieces = map[hex];
-      pieces.removeWhere((p) => p.runtimeType == piece.runtimeType);
+      _map.putIfAbsent(hex, () => new List<Piece>.empty(growable: true));
+      var pieces = _map[hex];
+      if (piece.runtimeType == EdgeRulePiece) {
+        if (pieces.any((Piece p) => p.runtimeType == EdgeRulePiece)) {
+          EdgeRulePiece existing =
+              pieces.singleWhere((Piece p) => p.runtimeType == EdgeRulePiece);
+          existing.count = existing.count == 1 ? 2 : 1;
+        } else {
+          pieces.add(EdgeRulePiece());
+        }
+        return true;
+      } else {
+        pieces.removeWhere((p) => p.runtimeType == piece.runtimeType);
+      }
       if (piece.runtimeType == StartPiece || piece.runtimeType == EndPiece) {
         pieces.removeWhere(
             (p) => p.runtimeType == StartPiece || p.runtimeType == EndPiece);
@@ -229,16 +293,16 @@ class Board {
   }
 
   bool hasPieceAt(Hex h, Piece piece) {
-    if (!map.containsKey(h)) {
+    if (!_map.containsKey(h)) {
       return false;
     } else {
-      return map[h].any((Piece p) => p.runtimeType == piece.runtimeType);
+      return _map[h].any((Piece p) => p.runtimeType == piece.runtimeType);
     }
   }
 
   List<MapEntry<Hex, Piece>> flatten() {
     var entries = new List<MapEntry<Hex, Piece>>.empty(growable: true);
-    for (Hex hex in map.keys) {
+    for (Hex hex in _map.keys) {
       for (Piece piece in getPiecesAt(hex)) {
         entries.add(new MapEntry<Hex, Piece>(hex, piece));
       }
@@ -247,15 +311,15 @@ class Board {
   }
 
   List<Piece> getPiecesAt(Hex hex) {
-    if (map.containsKey(hex)) {
-      return map[hex];
+    if (_map.containsKey(hex)) {
+      return _map[hex];
     } else {
       return new List<Piece>.empty();
     }
   }
 
   void clear() {
-    map.clear();
+    _map.clear();
   }
 
   bool moveTo(Hex hex) {
@@ -271,8 +335,14 @@ class Board {
     }
   }
 
-  List<MapEntry<Hex, Piece>> getPiece(Piece p){
-  return flatten().where((MapEntry<Hex, Piece> entry) => entry.value.runtimeType == p.runtimeType).toList();
-}
+  List<MapEntry<Hex, Piece>> getPiece(Piece p) {
+    return flatten()
+        .where((MapEntry<Hex, Piece> entry) =>
+            entry.value.runtimeType == p.runtimeType)
+        .toList();
+  }
 
+  factory Board.fromJson(Map<String, dynamic> json) => _$BoardFromJson(json);
+
+  Map<String, dynamic> toJson() => _$BoardToJson(this);
 }

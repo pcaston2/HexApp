@@ -5,6 +5,8 @@ enum EdgeType { East, North, West }
 
 enum EdgeDirection { NorthEast, North, NorthWest, SouthWest, South, SouthEast }
 
+
+@JsonSerializable()
 class Edge extends Hex {
   EdgeType edgeType = EdgeType.East;
   @override
@@ -25,6 +27,19 @@ class Edge extends Hex {
         break;
     }
     return points;
+  }
+
+  Edge get parallelEdge {
+    switch (edgeType) {
+      case EdgeType.East:
+        return Edge.from(EdgeDirection.SouthWest, this);
+      case EdgeType.North:
+        return Edge.from(EdgeDirection.South, this);
+      case EdgeType.West:
+        return Edge.from(EdgeDirection.SouthEast, this);
+      default:
+        throw new Exception("Edge type not defined");
+    }
   }
 
   @override
@@ -56,7 +71,9 @@ class Edge extends Hex {
   @override
   get midpoint => (vertexOffsets[0] + vertexOffsets[1]) / 2.0;
 
-  Edge(this.edgeType, q, r) : super.position(q, r);
+  Edge();
+
+  Edge.position(this.edgeType, q, r) : super.position(q, r);
   Edge.from(EdgeDirection edgeDirection, Hex hex) {
     q = hex.q;
     r = hex.r;
@@ -117,4 +134,8 @@ class Edge extends Hex {
 
   @override
   get hashCode => super.hashCode + edgeType.index;
+
+  fromJson(Map<String, dynamic> json) => _$EdgeFromJson(json);
+
+  Map<String, dynamic> baseJson() => _$EdgeToJson(this);
 }

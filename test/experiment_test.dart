@@ -6,23 +6,19 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hex_game/piece.dart';
-import 'package:hex_game/board.dart';
+import 'package:hex_game/hex.dart';
+import 'package:hex_game/color.dart';
 
 void main() {
   group('Json Tests', () {
-    test('Should Serialize a Piece', () {
-      Piece p = DotRulePiece();
-      var json = p.toJson();
-      p = Piece.fromJson(json);
-      expect(p.runtimeType, DotRulePiece);
+    test('Should Rotate a Point', () {
+      Point expected = Point(0.0, 1.0);
+      Point actual = Point(1.0,0.0).rotate(90);
     });
-    test('Should Serialize a Board', () {
-    Board b = Board.sample();
-    var json = b.toJson();
-
-    b = Board.fromJson(json);
-    expect(b.runtimeType, Board);
+    test('Should lighten a color', () {
+      Color a = Color();
+      print(a.hexCode);
+      print(a.darken().hexCode);
     });
   });
 }

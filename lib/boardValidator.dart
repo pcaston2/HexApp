@@ -7,6 +7,8 @@ enum BoardValidationErrorType {
   didNotFinishAtAnEnd,
   dotNotCovered,
   tooManyDots,
+  edgeNotTraversed,
+  tooManyEdges,
 }
 
 
@@ -21,6 +23,7 @@ class BoardValidator {
       return;
     } else {
       errors.addAll(validateDots());
+      errors.addAll(validateEdges());
     }
   }
 
@@ -42,23 +45,55 @@ class BoardValidator {
     return trailErrors;
   }
 
+  List<BoardValidationError> validateEdges() {
+    List<BoardValidationError> edgeErrors = [];
+    var edgePieces = _board.getPiece(EdgeRulePiece());
+    for(var entry in edgePieces) {
+      Edge edge = entry.key;
+      EdgeRulePiece edgePiece = entry.value;
+      List<Edge> edges = [];
+      edges.add(edge);
+      edges.add(edge.parallelEdge);
+      int expected = edgePiece.count;
+      int traversed = edges.where((Edge e) => _board.trail.contains(e)).toList().length;
+      if (traversed == expected) {
+
+      } else {
+        edges.forEach((Edge e) => edgeErrors.add(BoardValidationError(
+            e, edgePiece,
+            traversed < expected ?
+              BoardValidationErrorType.edgeNotTraversed :
+              BoardValidationErrorType.tooManyEdges
+        )));
+      }
+    }
+    return edgeErrors;
+  }
+
   List<BoardValidationError> validateDots() {
     List<BoardValidationError> dotErrors = [];
     var dotPieces = _board.getPiece(DotRulePiece());
     if (dotPieces.isNotEmpty) {
-      int count = 0;
+      int coveredDotCount = 0;
       for (Hex h in _board.trail) {
         if (_board.hasPieceAt(h, DotRulePiece())) {
-          count++;
+          coveredDotCount++;
         }
       }
-      if (count != 1) {
-        dotPieces.forEach((MapEntry<Hex, Piece> e) =>
-            dotErrors.add(
-                BoardValidationError(e.key, e.value, count == 0
-                    ? BoardValidationErrorType.dotNotCovered
-                    : BoardValidationErrorType.tooManyDots)
-            ));
+      if (coveredDotCount != 1) {
+        dotPieces.forEach((MapEntry<Hex, Piece> e) {
+          if (coveredDotCount > 1) {
+            if (_board.trail.contains(e.key)) {
+              dotErrors.add(BoardValidationError(
+                  e.key, e.value, BoardValidationErrorType.tooManyDots));
+            }
+          } else {
+            if (!_board.trail.contains(e.key)) {
+              dotErrors.add(BoardValidationError(
+                  e.key, e.value, BoardValidationErrorType.dotNotCovered));
+            }
+          }
+        });
       }
     }
     return dotErrors;

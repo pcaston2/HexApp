@@ -1,8 +1,10 @@
 part of 'hex.dart';
 
+
+
 class Point {
-  num x;
-  num y;
+  double x;
+  double y;
   Point(this.x, this.y);
   Point.origin() : this(0, 0);
   double get magnitude => math.sqrt(x * x + y * y);
@@ -20,9 +22,19 @@ class Point {
   Point operator /(double scale) {
     return new Point(this.x / scale, this.y / scale);
   }
+  Point operator *(double scale) {
+    return new Point(this.x * scale, this.y * scale);
+  }
 
   Point operator -() {
     return new Point(-this.x, -this.y);
+  }
+
+  Point rotate(num degrees) {
+    var rotationMatrix = Matrix2.rotation(degrees * pi/180);
+    var vector = Vector2(this.x, this.y);
+    var rotatedVector = rotationMatrix.transform(vector);
+    return Point(rotatedVector.x, rotatedVector.y);
   }
 
   @override

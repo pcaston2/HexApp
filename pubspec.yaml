@@ -26,6 +26,9 @@ dependencies:
     sdk: flutter
   spritewidget:
   audioplayers: ^0.16.2
+  vector_math: any
+  path_provider:
+  flutter_guid: ^0.1.0
 
 
   # The following adds the Cupertino Icons font to your application.

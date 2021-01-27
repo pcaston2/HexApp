@@ -5,6 +5,7 @@ enum VertexType { East, West }
 enum VertexDirection { East, NorthEast, NorthWest, West, SouthWest, SouthEast }
 
 
+@JsonSerializable()
 class Vertex extends Hex {
   VertexType vertexType = VertexType.East;
 
@@ -29,6 +30,8 @@ class Vertex extends Hex {
         throw new Exception("Couldn't find correct vertex type");
     }
   }
+
+  Vertex();
 
   Vertex.from(this.vertexType, Hex hex) {
     q = hex.q;
@@ -69,7 +72,7 @@ class Vertex extends Hex {
   @override
   get hashCode => super.hashCode + vertexType.index;
 
-  Vertex(this.vertexType, q, r) : super.position(q, r);
+  Vertex.position(this.vertexType, q, r) : super.position(q, r);
 
   @override
   List<Hex> get faces {
@@ -82,4 +85,9 @@ class Vertex extends Hex {
         throw new Exception("Couldn't find correct vertex type");
     }
   }
+
+
+  fromJson(Map<String, dynamic> json) => _$VertexFromJson(json);
+
+  Map<String, dynamic> baseJson() => _$VertexToJson(this);
 }
