@@ -62,9 +62,9 @@ class BoardFlow {
     var flowFiles = files.where((FileSystemEntity entity) =>
         entity.path.contains(".$BOARD_FILE_EXTENSION"));
     List<Board> boards = [];
-    for (FileSystemEntity fse in flowFiles) {
+    for (String boardPath in boardPaths) {
       try {
-        File file = File(fse.path);
+        File file = File("${cacheDir.path}/board_$boardPath.$BOARD_FILE_EXTENSION");
         String s = await file.readAsString();
         boards.add(Board.fromJson(json.decode(s)));
       } on Exception catch (ex) {

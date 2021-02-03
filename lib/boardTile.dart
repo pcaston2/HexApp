@@ -4,5 +4,5 @@ import 'board.dart';
 
 class BoardTile extends ListTile {
   final Board board;
-  BoardTile({this.board, Widget title, GestureTapCallback onTap}) : super(title: title, onTap: onTap);
+  BoardTile({Key key, this.board, Widget title, GestureTapCallback onTap}) : super(key: key, title: title, onTap: onTap);
 }

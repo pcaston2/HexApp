@@ -47,13 +47,12 @@ class Boards extends State<BoardSelection> {
 
                             value.save();
                             _flow.boardPaths.add(value.guid);
-                            _flow.save();
+                            _flow.save().then((value) => setState(() {}));
                             final ScaffoldMessengerState scaffoldMessenger =
                             ScaffoldMessenger.of(context);
                             scaffoldMessenger.showSnackBar(SnackBar(
                                 content: Text(
                                     "Created Board ${_textFieldController.text}")));
-                            setState(() {});
                           });
                           Navigator.pop(context);
                         },
@@ -74,11 +73,35 @@ class Boards extends State<BoardSelection> {
               } else {
                 List<Board> boards = snapshot.data;
                 //Text(flows.length.toString());
-                return ListView(
+                return ReorderableListView(
+                    onReorder: (int oldIndex, int newIndex) {
+                      print("OLD: $oldIndex NEW: $newIndex");
+                      if (newIndex > oldIndex) {
+                        newIndex--;
+                      }
+                      var temp = _flow.boardPaths[oldIndex];
+                      _flow.boardPaths[oldIndex] = _flow.boardPaths[newIndex];
+                      _flow.boardPaths[newIndex]  = temp;
+                      _flow.save().then((data) => setState(() {})
+                      );
+                    },
+                    header: boards.isEmpty? Text("There aren't any boards yet, try adding one!") : Text("Pick a board or add some more!"),
                     children:
                     boards.isNotEmpty ?
-                    List<ListTile>.generate(boards.length, (int index) {
-                      return BoardTile(
+                    List<Dismissible>.generate(boards.length, (int index) {
+                      return Dismissible(
+                          key: ValueKey(boards[index].name),
+                          onDismissed: (direction) {
+                            _flow.boardPaths.removeAt(index);
+                            _flow.save().then((data) => setState(() {}));
+                          },
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            color: Colors.redAccent,
+                            child: Icon(Icons.remove_rounded)
+                          ),
+                          child:
+                          BoardTile(
                           board: boards[index],
                           title: Text(boards[index].name),
                           onTap: () {
@@ -87,8 +110,10 @@ class Boards extends State<BoardSelection> {
                               MaterialPageRoute(builder: (context) => BoardView(boards[index])),
                             );
                           }
+                      )
                       );
-                    }): [Text("There aren't any boards yet, try adding one!")]);
+                    }): []
+                );
               }
             }));
   }

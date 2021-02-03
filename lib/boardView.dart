@@ -108,8 +108,12 @@ class _HexWidgetState extends State<BoardView> {
                             color: Colors.blue,
                           ),
                         ),
-                        ExpansionTile(title: Text("File"), children: [
+                        ExpansionTile(
+                            title: Text("File"),
+                            leading: Icon(Icons.menu),
+                            children: [
                           ListTile(
+                              trailing: Icon(Icons.save),
                               title: Text("Save"),
                               onTap: () {
                                 _gameState.value.board.save().then((value) {
@@ -123,24 +127,31 @@ class _HexWidgetState extends State<BoardView> {
                                 });
                               }),
                           ListTile(
+                              trailing: Icon(Icons.arrow_back_rounded),
                               title: Text("Exit"),
                               onTap: () {
                                 Navigator.pop(context);
                                 Navigator.pop(context);
                                 setState(() {});
                               }),
-                          ListTile(
-                            title: Text("Name: ${_gameState.value.board.name}"),
+                          // ListTile(
+                          //   title: Text("Name: ${_gameState.value.board.name}"),
                             //onTap: () {}
-                          ),
+                          //),
                         ]),
-                        ExpansionTile(title: Text("Design"), children: [
+                        ExpansionTile(
+                            title: Text("Design"),
+                            leading: Icon(Icons.design_services_rounded),
+                            children: [
                           PieceTile(
                               pathPiece,
                               () =>
                                   _choosePiece(context, pathPiece, _gameState)),
                         ]),
-                        ExpansionTile(title: Text("Terminals"), children: [
+                        ExpansionTile(
+                            title: Text("Terminals"),
+                            leading: Icon(Icons.adjust_rounded),
+                            children: [
                           PieceTile(
                               startPiece,
                               () => _choosePiece(
@@ -150,7 +161,10 @@ class _HexWidgetState extends State<BoardView> {
                               () =>
                                   _choosePiece(context, endPiece, _gameState)),
                         ]),
-                        ExpansionTile(title: Text("Rules"), children: [
+                        ExpansionTile(
+                            title: Text("Rules"),
+                            leading: Icon(Icons.rule_rounded),
+                            children: [
                           DropdownButton<RuleColorIndex>(
                               value: _gameState.value.ruleColor,
                               icon: Icon(Icons.color_lens_outlined),
@@ -184,7 +198,10 @@ class _HexWidgetState extends State<BoardView> {
                               () =>
                                   _choosePiece(context, edgePiece, _gameState)),
                         ]),
-                        ExpansionTile(title: Text("Editing"), children: [
+                        ExpansionTile(
+                            title: Text("Editing"),
+                            leading: Icon(Icons.edit_rounded),
+                            children: [
                           PieceTile(
                               erasePiece,
                               () => _choosePiece(
@@ -226,7 +243,10 @@ class _HexWidgetState extends State<BoardView> {
                                         ));
                               }),
                         ]),
-                        ExpansionTile(title: Text("Color Theme"), children: [
+                        ExpansionTile(
+                            title: Text("Color Theme"),
+                            leading: Icon(Icons.color_lens_rounded),
+                            children: [
                           ColorTile(context,
                               color: _gameState.value.board.theme.foreground,
                               title: "Foreground",
@@ -247,7 +267,10 @@ class _HexWidgetState extends State<BoardView> {
                               color: _gameState.value.board.theme.trail,
                               title: "Trail",
                               onSelect: () => setState(() {})),
-                          ExpansionTile(title: Text("Rule Colors"), children: [
+                          ExpansionTile(
+                              title: Text("Rule Colors"),
+                              leading: Icon(Icons.colorize_rounded),
+                              children: [
                             ColorTile(context,
                                 color: _gameState.value.board.theme
                                     .ruleColors[RuleColorIndex.First],

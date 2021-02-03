@@ -126,10 +126,7 @@ class BoardValidator {
     var msg = isSuccessful ? 'Success' : 'Error';
     for (var validationError in errors) {
       msg += '\r\n';
-      msg += '${validationError._type} at ${validationError._hex}';
-      if (validationError._piece != null) {
-        msg += ' for ${validationError._piece}';
-      }
+      msg += validationError.toString();
     }
     return msg;
   }
@@ -140,4 +137,14 @@ class BoardValidationError {
   Piece _piece;
   BoardValidationErrorType _type;
   BoardValidationError(this._hex, this._piece, this._type);
+
+  @override
+  String toString() {
+    String msg = "";
+    msg += '${_type} at ${_hex}';
+    if (_piece != null) {
+      msg += ' for ${_piece}';
+    }
+    return msg;
+  }
 }
