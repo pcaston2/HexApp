@@ -1,6 +1,5 @@
 part of 'main.dart';
 
-
 class HexPainter extends CustomPainter {
   //         <-- CustomPainter class
 
@@ -25,12 +24,12 @@ class HexPainter extends CustomPainter {
         drawStartPiece(hex, center, canvas, _theme);
       } else if (piece is EndPiece) {
         drawEndPiece(hex, center, canvas, _theme);
-      } else if (piece is DotRulePiece) {
-        drawDotRulePiece(hex, center, canvas);
-      } else if (piece is BreakRulePiece) {
-        drawBreakRulePiece(hex, center, canvas);
-      } else if (piece is EdgeRulePiece) {
-        drawEdgeRulePiece(hex, center, canvas, piece, _theme);
+      } else if (piece is DotRule) {
+        drawDotRule(hex, center, canvas, piece, _theme);
+      } else if (piece is BreakRule) {
+        drawBreakRule(hex, center, canvas);
+      } else if (piece is EdgeRule) {
+        drawEdgeRule(hex, center, canvas, piece, _theme);
       } else {
         drawErrorPiece(hex, center, piece, canvas);
       }
@@ -77,7 +76,7 @@ class HexPainter extends CustomPainter {
 
   void drawErrorPiece(Hex hex, Point center, Piece piece, Canvas canvas) {
     TextSpan errorSpan =
-    new TextSpan(style: new TextStyle(color: Colors.red), text: piece.name);
+        new TextSpan(style: new TextStyle(color: Colors.red), text: piece.name);
     TextPainter errorPainter = new TextPainter(
         text: errorSpan,
         textAlign: TextAlign.center,
@@ -115,7 +114,7 @@ class HexPainter extends CustomPainter {
     canvas.drawPath(path, startPaint);
   }
 
-  void drawBreakRulePiece(Hex hex, Point center, Canvas canvas) {
+  void drawBreakRule(Hex hex, Point center, Canvas canvas) {
     final breakPaint = Paint()
       ..color = Colors.grey[800]
       ..strokeWidth = 2
@@ -128,14 +127,16 @@ class HexPainter extends CustomPainter {
       var corner = new Offset(
           center.x + hex.point.x + hex.midpoint.x + vertex.x * 0.75,
           center.y + hex.point.y - hex.midpoint.y - vertex.y * 0.75);
-      canvas.drawLine(corner, corner + Offset(rotationA.x, -rotationA.y), breakPaint);
-      canvas.drawLine(corner, corner + Offset(rotationB.x, -rotationB.y), breakPaint);
+      canvas.drawLine(
+          corner, corner + Offset(rotationA.x, -rotationA.y), breakPaint);
+      canvas.drawLine(
+          corner, corner + Offset(rotationB.x, -rotationB.y), breakPaint);
     }
   }
 
-  void drawDotRulePiece(Hex hex, Point center, Canvas canvas) {
+  void drawDotRule(Hex hex, Point center, Canvas canvas, DotRule dotRule, BoardTheme theme) {
     final startPaint = Paint()
-      ..color = Colors.white
+      ..color = theme.ruleColors[dotRule.color].value
       ..style = PaintingStyle.fill;
     List<Offset> pieceOffset = <Offset>[];
     for (var vertex in Hex.origin().vertexOffsets) {
@@ -150,7 +151,8 @@ class HexPainter extends CustomPainter {
     canvas.drawPath(path, startPaint);
   }
 
-  void drawEdgeRulePiece(Hex hex, Point center, Canvas canvas, EdgeRulePiece piece, BoardTheme theme) {
+  void drawEdgeRule(
+      Hex hex, Point center, Canvas canvas, EdgeRule piece, BoardTheme theme) {
     final edgePaint = Paint()
       ..color = theme.path.darken(10).value
       ..strokeWidth = 2
@@ -159,37 +161,25 @@ class HexPainter extends CustomPainter {
     var m = hex.midpoint.rotate(90);
     if (piece.count == 1) {
       canvas.drawLine(
-          Offset(
-              center.x + hex.point.x + m.x * 0.6,
+          Offset(center.x + hex.point.x + m.x * 0.6,
               center.y + hex.point.y - m.y * 0.6),
-          Offset(
-              center.x+ hex.point.x - m.x * 0.6,
-              center.y + hex.point.y + m.y * 0.6
-          ),
+          Offset(center.x + hex.point.x - m.x * 0.6,
+              center.y + hex.point.y + m.y * 0.6),
           edgePaint);
     } else {
-
       var centerOffset = hex.midpoint / 10;
       canvas.drawLine(
-          Offset(
-              center.x + hex.point.x + m.x * 0.6 + centerOffset.x,
-              center.y + hex.point.y - m.y * 0.6 - centerOffset.y
-          ),
-          Offset(
-              center.x+ hex.point.x - m.x * 0.6 + centerOffset.x,
-              center.y + hex.point.y + m.y * 0.6 - centerOffset.y
-          ),
+          Offset(center.x + hex.point.x + m.x * 0.6 + centerOffset.x,
+              center.y + hex.point.y - m.y * 0.6 - centerOffset.y),
+          Offset(center.x + hex.point.x - m.x * 0.6 + centerOffset.x,
+              center.y + hex.point.y + m.y * 0.6 - centerOffset.y),
           edgePaint);
 
       canvas.drawLine(
-          Offset(
-              center.x + hex.point.x + m.x * 0.6 - centerOffset.x,
-              center.y + hex.point.y - m.y * 0.6 + centerOffset.y
-          ),
-          Offset(
-              center.x+ hex.point.x - m.x * 0.6 - centerOffset.x,
-              center.y + hex.point.y + m.y * 0.6 + centerOffset.y
-          ),
+          Offset(center.x + hex.point.x + m.x * 0.6 - centerOffset.x,
+              center.y + hex.point.y - m.y * 0.6 + centerOffset.y),
+          Offset(center.x + hex.point.x - m.x * 0.6 - centerOffset.x,
+              center.y + hex.point.y + m.y * 0.6 + centerOffset.y),
           edgePaint);
     }
     //canvas.drawCircle(Offset(center.x + hex.midpoint.x + hex.point.x, center.y - hex.midpoint.y + hex.point.y), 25, edgePaint);
@@ -221,8 +211,8 @@ class HexPainter extends CustomPainter {
       ..style = PaintingStyle.fill
       ..shader = RadialGradient(
         colors: [
-          theme.panel.brighten(30).value,
-          theme.panel.darken(30).value,
+          theme.foreground.brighten(30).value,
+          theme.foreground.darken(30).value,
         ],
       ).createShader(Rect.fromCircle(
         center: new Offset(center.x, center.y),
@@ -288,11 +278,14 @@ class HexPainter extends CustomPainter {
     drawTrailEndPiece(_gameState.board, center, canvas, theme);
   }
 
-  void drawCurrentTrail(Board board, Point center, Canvas canvas, BoardTheme theme) {
+  void drawCurrentTrail(
+      Board board, Point center, Canvas canvas, BoardTheme theme) {
     if (board.trail.length > 1) {
       final trailPaint = Paint()
         ..color = board.isFinished
-            ? (board.isSuccess ? theme.trail.brighten(20).value : theme.trail.darken(10).value)
+            ? (board.isSuccess
+                ? theme.trail.brighten(20).value
+                : theme.trail.darken(10).value)
             : theme.trail.value
         ..strokeWidth = 8
         ..style = PaintingStyle.stroke
@@ -307,7 +300,8 @@ class HexPainter extends CustomPainter {
     }
   }
 
-  void drawTrailEndPiece(Board board, Point center, Canvas canvas, BoardTheme theme) {
+  void drawTrailEndPiece(
+      Board board, Point center, Canvas canvas, BoardTheme theme) {
     if (board.hasEnded) {
       var offset = new Offset(
           center.x + board.tail.point.x + board.tail.midpoint.x,
@@ -319,7 +313,9 @@ class HexPainter extends CustomPainter {
             theme.trail.brighten(20).value,
             theme.trail.darken(10).value,
             board.isFinished
-                ? (board.isSuccess ? theme.trail.brighten(20).value : theme.trail.darken(10).value)
+                ? (board.isSuccess
+                    ? theme.trail.brighten(20).value
+                    : theme.trail.darken(10).value)
                 : theme.trail.value
           ],
         ).createShader(Rect.fromCircle(
@@ -330,7 +326,8 @@ class HexPainter extends CustomPainter {
     }
   }
 
-  void drawTrailStartPiece(Board board, Point center, Canvas canvas, BoardTheme theme) {
+  void drawTrailStartPiece(
+      Board board, Point center, Canvas canvas, BoardTheme theme) {
     if (board.trail.length > 0) {
       final startPaint = Paint()
         ..style = PaintingStyle.fill
@@ -339,7 +336,9 @@ class HexPainter extends CustomPainter {
             theme.trail.darken(20).value,
             theme.trail.darken(5).value,
             board.isFinished
-                ? (board.isSuccess ? theme.trail.brighten(20).value : theme.trail.darken(10).value)
+                ? (board.isSuccess
+                    ? theme.trail.brighten(20).value
+                    : theme.trail.darken(10).value)
                 : theme.trail.value
           ],
         ).createShader(Rect.fromCircle(
@@ -372,5 +371,4 @@ class HexPainter extends CustomPainter {
   bool shouldRepaint(CustomPainter old) {
     return true;
   }
-
 }

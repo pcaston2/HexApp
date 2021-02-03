@@ -9,11 +9,13 @@ class Color {
   mat.Color _color;
 
   @JsonKey(ignore: true)
+  // ignore: unnecessary_getters_setters
   mat.Color get value {
     return _color;
   }
 
   @JsonKey(ignore: true)
+  // ignore: unnecessary_getters_setters
   set value(mat.Color color) {
     _color = color;
   }

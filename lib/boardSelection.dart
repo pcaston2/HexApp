@@ -4,19 +4,16 @@ part of 'main.dart';
 class BoardSelection extends StatefulWidget {
   @override
   Boards createState() => new Boards(_flow);
-  BoardFlow _flow;
+  final BoardFlow _flow;
 
   BoardSelection(this._flow);
 }
 
 
-const String BOARD_FILE_EXTENSION = "jhexboard";
 
 class Boards extends State<BoardSelection> {
   BoardFlow _flow;
   Boards(this._flow);
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  int _id;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,9 +43,11 @@ class Boards extends State<BoardSelection> {
                       TextButton(
                         child: Text('OK'),
                         onPressed: () {
-                          print(_textFieldController.text);
-                          createBoard(_textFieldController.text).then((Board value) {
-                            _flow.boards.add(value.guid);
+                          Board.createBoard(_textFieldController.text).then((Board value) {
+
+                            value.save();
+                            _flow.boardPaths.add(value.guid);
+                            _flow.save();
                             final ScaffoldMessengerState scaffoldMessenger =
                             ScaffoldMessenger.of(context);
                             scaffoldMessenger.showSnackBar(SnackBar(
@@ -68,7 +67,7 @@ class Boards extends State<BoardSelection> {
           title: Text(_flow.name),
         ),
         body: FutureBuilder(
-            future: getBoards(),
+            future: _flow.boards,
             builder: (BuildContext context, AsyncSnapshot snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return new Text('Getting your boards...');
@@ -83,55 +82,15 @@ class Boards extends State<BoardSelection> {
                           board: boards[index],
                           title: Text(boards[index].name),
                           onTap: () {
-                            print(boards[index].guid);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => BoardView(boards[index])),
+                            );
                           }
                       );
-                    }): Text("There aren't any boards yet, try adding one!"));
+                    }): [Text("There aren't any boards yet, try adding one!")]);
               }
             }));
   }
-  // ListView(
-  //     children: List.generate(10, (int index) {
-  //   return new ListTile(
-  //     title: Text("item#$index"),
-  //     onTap: () {
-  //       setState(() {
-  //         _id = index;
-  //       });
-  //       print(_id);
-  //     },
-  //   );
 
-  // Board readBoard(String filename) {
-  //   assert(basePath != null, "The base file path must be loaded");
-  //   File f = File('$basePath/$filename.jboard');
-  //   String s = f.readAsStringSync();
-  //   return Board.fromJson(json.decode(s));
-  // }
-
-  Future<Board> createBoard(String boardName) async {
-    var cacheDir = await getApplicationDocumentsDirectory();
-    Board board = new Board.named(boardName);
-    File f = File('${cacheDir.path}/${board.guid}.${BOARD_FILE_EXTENSION}');
-    f.writeAsString(json.encode(board.toJson()));
-    return board;
-  }
-
-  Future<List<Board>> getBoards() async {
-    Directory cacheDir = await getApplicationDocumentsDirectory();
-    List<FileSystemEntity> files = cacheDir.listSync();
-    var flowFiles = files.where((FileSystemEntity entity) =>
-        entity.path.contains(".${BOARD_FILE_EXTENSION}"));
-    List<Board> boards = [];
-    for (FileSystemEntity fse in flowFiles) {
-      try {
-        File file = File(fse.path);
-        String s = await file.readAsString();
-        boards.add(Board.fromJson(json.decode(s)));
-      } on Exception catch (ex) {
-        print(ex);
-      }
-    }
-    return boards;
-  }
 }

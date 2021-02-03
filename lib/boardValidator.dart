@@ -1,8 +1,6 @@
 part of 'board.dart';
 
-
 enum BoardValidationErrorType {
-
   didNotStartFromABeginning,
   didNotFinishAtAnEnd,
   dotNotCovered,
@@ -10,7 +8,6 @@ enum BoardValidationErrorType {
   edgeNotTraversed,
   tooManyEdges,
 }
-
 
 class BoardValidator {
   Board _board;
@@ -25,6 +22,7 @@ class BoardValidator {
       errors.addAll(validateDots());
       errors.addAll(validateEdges());
     }
+    print(errors);
   }
 
   List<BoardValidationError> errors;
@@ -47,24 +45,24 @@ class BoardValidator {
 
   List<BoardValidationError> validateEdges() {
     List<BoardValidationError> edgeErrors = [];
-    var edgePieces = _board.getPiece(EdgeRulePiece());
-    for(var entry in edgePieces) {
+    var edgePieces = _board.getPiece<EdgeRule>();
+    for (var entry in edgePieces) {
       Edge edge = entry.key;
-      EdgeRulePiece edgePiece = entry.value;
+      EdgeRule edgePiece = entry.value;
       List<Edge> edges = [];
       edges.add(edge);
       edges.add(edge.parallelEdge);
       int expected = edgePiece.count;
-      int traversed = edges.where((Edge e) => _board.trail.contains(e)).toList().length;
+      int traversed =
+          edges.where((Edge e) => _board.trail.contains(e)).toList().length;
       if (traversed == expected) {
-
       } else {
         edges.forEach((Edge e) => edgeErrors.add(BoardValidationError(
-            e, edgePiece,
-            traversed < expected ?
-              BoardValidationErrorType.edgeNotTraversed :
-              BoardValidationErrorType.tooManyEdges
-        )));
+            e,
+            edgePiece,
+            traversed < expected
+                ? BoardValidationErrorType.edgeNotTraversed
+                : BoardValidationErrorType.tooManyEdges)));
       }
     }
     return edgeErrors;
@@ -72,30 +70,54 @@ class BoardValidator {
 
   List<BoardValidationError> validateDots() {
     List<BoardValidationError> dotErrors = [];
-    var dotPieces = _board.getPiece(DotRulePiece());
-    if (dotPieces.isNotEmpty) {
-      int coveredDotCount = 0;
-      for (Hex h in _board.trail) {
-        if (_board.hasPieceAt(h, DotRulePiece())) {
-          coveredDotCount++;
-        }
-      }
-      if (coveredDotCount != 1) {
-        dotPieces.forEach((MapEntry<Hex, Piece> e) {
-          if (coveredDotCount > 1) {
-            if (_board.trail.contains(e.key)) {
-              dotErrors.add(BoardValidationError(
-                  e.key, e.value, BoardValidationErrorType.tooManyDots));
-            }
+    List<MapEntry<Hex, DotRule>> allDotPieces = _board.getPiece<DotRule>();
+    Map<RuleColorIndex, List<MapEntry<Hex, DotRule>>> groupedDotRules = groupBy(
+        allDotPieces, (MapEntry<Hex, DotRule> entries) => entries.value.color);
+    for (var dotPieces in groupedDotRules.values) {
+      if (dotPieces.isNotEmpty) {
+        List<MapEntry<Hex, DotRule>> covered = [];
+        List<MapEntry<Hex, DotRule>> uncovered = [];
+        for (MapEntry<Hex, DotRule> entry in dotPieces) {
+          if (_board.trail.contains(entry.key)) {
+            covered.add(entry);
           } else {
-            if (!_board.trail.contains(e.key)) {
-              dotErrors.add(BoardValidationError(
-                  e.key, e.value, BoardValidationErrorType.dotNotCovered));
-            }
+            uncovered.add(entry);
           }
-        });
+        }
+        // for (Hex h in _board.trail) {
+        //   if (_board.hasPieceAt(h, DotRule())) {
+        //     coveredDotCount++;
+        //   }
+        // }
+
+        int coveredDotCount = covered.length;
+        if (coveredDotCount > 1) {
+          dotErrors.addAll(covered.map<BoardValidationError>(
+              (MapEntry<Hex, DotRule> entry) => BoardValidationError(entry.key,
+                  entry.value, BoardValidationErrorType.tooManyDots)));
+        } else if (coveredDotCount < 1) {
+          dotErrors.addAll(uncovered.map<BoardValidationError>(
+              (MapEntry<Hex, DotRule> entry) => BoardValidationError(entry.key,
+                  entry.value, BoardValidationErrorType.dotNotCovered)));
+        }
+
+        // dotPieces.forEach((MapEntry<Hex, Piece> e) {
+        //   if (coveredDotCount > 1) {
+        //     if (_board.trail.contains(e.key)) {
+        //       dotErrors.add(BoardValidationError(
+        //           e.key, e.value, BoardValidationErrorType.tooManyDots));
+        //     }
+        //   } else {
+        //     if (!_board.trail.contains(e.key)) {
+        //       dotErrors.add(BoardValidationError(
+        //           e.key, e.value, BoardValidationErrorType.dotNotCovered));
+        //     }
+        //   }
+        // });
+        // }
       }
     }
+
     return dotErrors;
   }
 
@@ -112,8 +134,6 @@ class BoardValidator {
     return msg;
   }
 }
-
-
 
 class BoardValidationError {
   Hex _hex;

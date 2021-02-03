@@ -9,35 +9,28 @@ class GameState {
   Board board = Board.sample();
   Hex pointer = Hex.origin();
   Piece piece = PathPiece();
+  RuleColorIndex ruleColor = RuleColorIndex.First;
   Matrix4 transform = Matrix4.identity();
 }
 
 bool tracing = false;
 
-/// This is the main application widget.
-class BoardView extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return HexWidget();
-  }
-}
+class BoardView extends StatefulWidget {
+  final Board _board;
 
-class HexWidget extends StatefulWidget {
-  HexWidget({Key key}) : super(key: key);
+  BoardView(this._board, {Key key}) : super(key: key);
 
   @override
-  _HexWidgetState createState() => _HexWidgetState();
+  _HexWidgetState createState() => _HexWidgetState(_board);
 }
 
-class _HexWidgetState extends State<HexWidget> {
+class _HexWidgetState extends State<BoardView> {
   ValueNotifier<GameState> _gameState;
   SoundPlayer soundPlayer = SoundPlayer();
 
   @override
   void initState() {
     super.initState();
-    _gameState = ValueNotifier<GameState>(GameState());
-    loadBasePath();
   }
 
   @override
@@ -46,7 +39,10 @@ class _HexWidgetState extends State<HexWidget> {
     super.dispose();
   }
 
-  _HexWidgetState();
+  _HexWidgetState(Board board) {
+    _gameState = ValueNotifier<GameState>(GameState());
+    _gameState.value.board = board;
+  }
 
   void _choosePiece(
       BuildContext context, Piece piece, ValueNotifier<GameState> gameState) {
@@ -58,38 +54,16 @@ class _HexWidgetState extends State<HexWidget> {
   ErasePiece erasePiece = new ErasePiece();
   StartPiece startPiece = new StartPiece();
   EndPiece endPiece = new EndPiece();
-  DotRulePiece dotPiece = new DotRulePiece();
-  BreakRulePiece breakPiece = new BreakRulePiece();
-  EdgeRulePiece edgePiece = new EdgeRulePiece();
-
-  String basePath = null;
-  Future<String> loadBasePath() async {
-    Future awaiter = getApplicationDocumentsDirectory();
-    awaiter.then((dir) {
-      basePath = dir.path;
-      print('loaded base path');
-    });
-  }
-
-  void writeBoard(Board board) {
-    assert(basePath != null, "The base file path must be loaded");
-    File f = File('$basePath/${board.name}.jboard');
-    f.writeAsString(json.encode(board.toJson()));
-  }
-
-  Board readBoard(String filename) {
-    assert(basePath != null, "The base file path must be loaded");
-    File f = File('$basePath/$filename.jboard');
-    String s = f.readAsStringSync();
-    return Board.fromJson(json.decode(s));
-  }
+  DotRule dotPiece = new DotRule();
+  BreakRule breakPiece = new BreakRule();
+  EdgeRule edgePiece = new EdgeRule();
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
         valueListenable: _gameState,
         builder: (context, value, child) => Scaffold(
-            appBar: AppBar(title: Text('Hex Game')),
+            appBar: AppBar(title: Text(_gameState.value.board.name)),
             floatingActionButtonLocation:
                 FloatingActionButtonLocation.startFloat,
             floatingActionButton:
@@ -138,18 +112,27 @@ class _HexWidgetState extends State<HexWidget> {
                           ListTile(
                               title: Text("Save"),
                               onTap: () {
-                                writeBoard(_gameState.value.board);
+                                _gameState.value.board.save().then((value) {
+                                  final ScaffoldMessengerState
+                                      scaffoldMessenger =
+                                      ScaffoldMessenger.of(context);
+                                  scaffoldMessenger.showSnackBar(
+                                      SnackBar(content: Text("Saved!")));
+                                  Navigator.pop(context);
+                                  setState(() {});
+                                });
                               }),
                           ListTile(
-                              title: Text("Load"),
+                              title: Text("Exit"),
                               onTap: () {
-                                _gameState.value.board =
-                                    readBoard(_gameState.value.board.name);
+                                Navigator.pop(context);
+                                Navigator.pop(context);
+                                setState(() {});
                               }),
                           ListTile(
-                              title:
-                                  Text("Name: ${_gameState.value.board.name}"),
-                              onTap: () {}),
+                            title: Text("Name: ${_gameState.value.board.name}"),
+                            //onTap: () {}
+                          ),
                         ]),
                         ExpansionTile(title: Text("Design"), children: [
                           PieceTile(
@@ -168,6 +151,26 @@ class _HexWidgetState extends State<HexWidget> {
                                   _choosePiece(context, endPiece, _gameState)),
                         ]),
                         ExpansionTile(title: Text("Rules"), children: [
+                          DropdownButton<RuleColorIndex>(
+                              value: _gameState.value.ruleColor,
+                              icon: Icon(Icons.color_lens_outlined),
+                              onChanged: (RuleColorIndex newValue) {
+                                setState(() {
+                                  _gameState.value.ruleColor = newValue;
+                                });
+                              },
+                              items: List<DropdownMenuItem<RuleColorIndex>>.generate(
+                                  RuleColorIndex.values.length, (int index) {
+                                return DropdownMenuItem<RuleColorIndex>(
+                                    value: RuleColorIndex.values[index],
+                                    child: Container(
+                                      height: 24.0,
+                                      width: 24.0,
+                                      decoration: BoxDecoration(
+                                          color: _gameState.value.board.theme.ruleColors[RuleColorIndex.values[index]].value,
+                                          shape: BoxShape.circle),
+                                    ));
+                              })),
                           PieceTile(
                               dotPiece,
                               () =>
@@ -197,7 +200,7 @@ class _HexWidgetState extends State<HexWidget> {
                                           title: Text('Clear board?'),
                                           content: SingleChildScrollView(
                                             child: ListBody(
-                                              children: <Widget>[
+                                              children: [
                                                 Text(
                                                     'Clearing the board will erase everything.'),
                                                 Text(
@@ -205,7 +208,7 @@ class _HexWidgetState extends State<HexWidget> {
                                               ],
                                             ),
                                           ),
-                                          actions: <Widget>[
+                                          actions: [
                                             TextButton(
                                               child: Text('Heck no!'),
                                               onPressed: () {
@@ -222,6 +225,55 @@ class _HexWidgetState extends State<HexWidget> {
                                           ],
                                         ));
                               }),
+                        ]),
+                        ExpansionTile(title: Text("Color Theme"), children: [
+                          ColorTile(context,
+                              color: _gameState.value.board.theme.foreground,
+                              title: "Foreground",
+                              onSelect: () => setState(() {})),
+                          ColorTile(context,
+                              color: _gameState.value.board.theme.background,
+                              title: "Background",
+                              onSelect: () => setState(() {})),
+                          ColorTile(context,
+                              color: _gameState.value.board.theme.border,
+                              title: "Border",
+                              onSelect: () => setState(() {})),
+                          ColorTile(context,
+                              color: _gameState.value.board.theme.path,
+                              title: "Path",
+                              onSelect: () => setState(() {})),
+                          ColorTile(context,
+                              color: _gameState.value.board.theme.trail,
+                              title: "Trail",
+                              onSelect: () => setState(() {})),
+                          ExpansionTile(title: Text("Rule Colors"), children: [
+                            ColorTile(context,
+                                color: _gameState.value.board.theme
+                                    .ruleColors[RuleColorIndex.First],
+                                title: "First",
+                                onSelect: () => setState(() {})),
+                            ColorTile(context,
+                                color: _gameState.value.board.theme
+                                    .ruleColors[RuleColorIndex.Second],
+                                title: "Second",
+                                onSelect: () => setState(() {})),
+                            ColorTile(context,
+                                color: _gameState.value.board.theme
+                                    .ruleColors[RuleColorIndex.Third],
+                                title: "Third",
+                                onSelect: () => setState(() {})),
+                            ColorTile(context,
+                                color: _gameState.value.board.theme
+                                    .ruleColors[RuleColorIndex.Fourth],
+                                title: "Fourth",
+                                onSelect: () => setState(() {})),
+                            ColorTile(context,
+                                color: _gameState.value.board.theme
+                                    .ruleColors[RuleColorIndex.Fifth],
+                                title: "Fifth",
+                                onSelect: () => setState(() {})),
+                          ])
                         ]),
                       ],
                     ),
@@ -255,9 +307,13 @@ class _HexWidgetState extends State<HexWidget> {
                             onDoubleTap: () {
                               if (_gameState.value.board.mode ==
                                   BoardMode.designer) {
+                                if (_gameState.value.piece is ColoredRule) {
+                                  ColoredRule rule = _gameState.value.piece;
+                                  rule.color = _gameState.value.ruleColor;
+                                }
                                 _gameState.value.board.putPiece(
                                     _gameState.value.pointer,
-                                    _gameState.value.piece);
+                                    _gameState.value.piece.clone());
                                 setState(() => _gameState);
                               } else {
                                 //set state try to start

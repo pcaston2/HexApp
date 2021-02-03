@@ -4,8 +4,14 @@ abstract class Rule extends Piece {
 
 }
 
+abstract class ColoredRule extends Rule {
+  RuleColorIndex color;
+  ColoredRule({this.color = RuleColorIndex.First}) : super();
+}
+
 @JsonSerializable()
-class DotRulePiece extends Rule {
+class DotRule extends ColoredRule {
+
   @override
   String get name => "Dot";
 
@@ -13,14 +19,14 @@ class DotRulePiece extends Rule {
   num get order => 300;
 
   @override
-  Map<String, dynamic> baseJson() => _$DotRulePieceToJson(this);
+  Map<String, dynamic> baseJson() => _$DotRuleToJson(this);
 
   @override
-  fromJson(Map<String, dynamic> json) => _$DotRulePieceFromJson(json);
+  fromJson(Map<String, dynamic> json) => _$DotRuleFromJson(json);
 }
 
 @JsonSerializable()
-class BreakRulePiece extends Rule {
+class BreakRule extends Rule {
   @override
   String get name => "Break";
 
@@ -28,14 +34,14 @@ class BreakRulePiece extends Rule {
   num get order => 150;
 
   @override
-  Map<String, dynamic> baseJson() => _$BreakRulePieceToJson(this);
+  Map<String, dynamic> baseJson() => _$BreakRuleToJson(this);
 
   @override
-  fromJson(Map<String, dynamic> json) => _$BreakRulePieceFromJson(json);
+  fromJson(Map<String, dynamic> json) => _$BreakRuleFromJson(json);
 }
 
 @JsonSerializable()
-class EdgeRulePiece extends Rule {
+class EdgeRule extends Rule {
   @override
   String get name => "Edge";
 
@@ -56,8 +62,8 @@ class EdgeRulePiece extends Rule {
   num get order => 300;
 
   @override
-  Map<String, dynamic> baseJson() => _$EdgeRulePieceToJson(this);
+  Map<String, dynamic> baseJson() => _$EdgeRuleToJson(this);
 
   @override
-  fromJson(Map<String, dynamic> json) => _$EdgeRulePieceFromJson(json);
+  fromJson(Map<String, dynamic> json) => _$EdgeRuleFromJson(json);
 }

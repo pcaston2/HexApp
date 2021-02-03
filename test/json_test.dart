@@ -12,10 +12,10 @@ import 'package:hex_game/board.dart';
 void main() {
   group('Json Tests', () {
     test('Should Serialize a Piece', () {
-      Piece p = DotRulePiece();
+      Piece p = DotRule();
       var json = p.toJson();
       p = Piece.fromJson(json);
-      expect(p.runtimeType, DotRulePiece);
+      expect(p.runtimeType, DotRule);
     });
     test('Should Serialize a Board', () {
     Board b = Board.sample();

@@ -1,4 +1,6 @@
 
+
+import 'package:hex_game/boardTheme.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'rule.dart';
@@ -9,9 +11,9 @@ final Map<String, Piece> pieceFactory = {
   'ErasePiece': ErasePiece(),
   'StartPiece': StartPiece(),
   'EndPiece': EndPiece(),
-  'DotRulePiece': DotRulePiece(),
-  'BreakRulePiece': BreakRulePiece(),
-  'EdgeRulePiece': EdgeRulePiece(),
+  'DotRule': DotRule(),
+  'BreakRule': BreakRule(),
+  'EdgeRule': EdgeRule(),
 };
 
 
@@ -34,6 +36,10 @@ abstract class Piece {
     } else {
       throw new Exception("Could not deserialize piece, it does not have a type");
     }
+  }
+
+  Piece clone() {
+    return Piece.fromJson(this.toJson());
   }
 
   fromJson(Map<String, dynamic> json);

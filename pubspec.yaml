@@ -29,6 +29,8 @@ dependencies:
   vector_math: any
   path_provider:
   flutter_guid: ^0.1.0
+  flutter_colorpicker: ^0.3.5
+  collection: ^1.14.13
 
 
   # The following adds the Cupertino Icons font to your application.

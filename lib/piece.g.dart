@@ -33,25 +33,66 @@ EndPiece _$EndPieceFromJson(Map<String, dynamic> json) {
 
 Map<String, dynamic> _$EndPieceToJson(EndPiece instance) => <String, dynamic>{};
 
-DotRulePiece _$DotRulePieceFromJson(Map<String, dynamic> json) {
-  return DotRulePiece();
+DotRule _$DotRuleFromJson(Map<String, dynamic> json) {
+  return DotRule()
+    ..color = _$enumDecodeNullable(_$RuleColorIndexEnumMap, json['color']);
 }
 
-Map<String, dynamic> _$DotRulePieceToJson(DotRulePiece instance) =>
+Map<String, dynamic> _$DotRuleToJson(DotRule instance) => <String, dynamic>{
+      'color': _$RuleColorIndexEnumMap[instance.color],
+    };
+
+T _$enumDecode<T>(
+  Map<T, dynamic> enumValues,
+  dynamic source, {
+  T unknownValue,
+}) {
+  if (source == null) {
+    throw ArgumentError('A value must be provided. Supported values: '
+        '${enumValues.values.join(', ')}');
+  }
+
+  final value = enumValues.entries
+      .singleWhere((e) => e.value == source, orElse: () => null)
+      ?.key;
+
+  if (value == null && unknownValue == null) {
+    throw ArgumentError('`$source` is not one of the supported values: '
+        '${enumValues.values.join(', ')}');
+  }
+  return value ?? unknownValue;
+}
+
+T _$enumDecodeNullable<T>(
+  Map<T, dynamic> enumValues,
+  dynamic source, {
+  T unknownValue,
+}) {
+  if (source == null) {
+    return null;
+  }
+  return _$enumDecode<T>(enumValues, source, unknownValue: unknownValue);
+}
+
+const _$RuleColorIndexEnumMap = {
+  RuleColorIndex.First: 'First',
+  RuleColorIndex.Second: 'Second',
+  RuleColorIndex.Third: 'Third',
+  RuleColorIndex.Fourth: 'Fourth',
+  RuleColorIndex.Fifth: 'Fifth',
+};
+
+BreakRule _$BreakRuleFromJson(Map<String, dynamic> json) {
+  return BreakRule();
+}
+
+Map<String, dynamic> _$BreakRuleToJson(BreakRule instance) =>
     <String, dynamic>{};
 
-BreakRulePiece _$BreakRulePieceFromJson(Map<String, dynamic> json) {
-  return BreakRulePiece();
+EdgeRule _$EdgeRuleFromJson(Map<String, dynamic> json) {
+  return EdgeRule()..count = json['count'] as int;
 }
 
-Map<String, dynamic> _$BreakRulePieceToJson(BreakRulePiece instance) =>
-    <String, dynamic>{};
-
-EdgeRulePiece _$EdgeRulePieceFromJson(Map<String, dynamic> json) {
-  return EdgeRulePiece()..count = json['count'] as int;
-}
-
-Map<String, dynamic> _$EdgeRulePieceToJson(EdgeRulePiece instance) =>
-    <String, dynamic>{
+Map<String, dynamic> _$EdgeRuleToJson(EdgeRule instance) => <String, dynamic>{
       'count': instance.count,
     };

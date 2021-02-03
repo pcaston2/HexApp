@@ -1,7 +1,11 @@
+import 'dart:convert';
 import 'dart:core';
+import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_guid/flutter_guid.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'boardTheme.dart';
 import 'color.dart';
@@ -20,6 +24,8 @@ enum BoardMode {
   play,
   designer,
 }
+
+const String BOARD_FILE_EXTENSION = "jhexboard";
 
 @JsonSerializable(explicitToJson: true)
 class Board {
@@ -211,6 +217,8 @@ class Board {
     _guid = Guid.newGuid;
   }
 
+
+
   Board.sample() {
     name = "Sample";
 
@@ -220,11 +228,24 @@ class Board {
     putPiece(Hex.position(0, 1), PathPiece());
     putPiece(Edge.position(EdgeType.North, 0, 2), StartPiece());
     putPiece(Vertex.position(VertexType.East, -1, 0), EndPiece());
-    putPiece(Vertex.position(VertexType.West, 1, 0), DotRulePiece());
-    putPiece(Edge.position(EdgeType.East, 0, 0), DotRulePiece());
-    putPiece(Hex.origin(), BreakRulePiece());
+    putPiece(Vertex.position(VertexType.West, 1, 0), DotRule());
+    putPiece(Edge.position(EdgeType.East, 0, 0), DotRule());
+    putPiece(Hex.origin(), BreakRule());
     theme = BoardTheme();
     mode = BoardMode.designer;
+  }
+
+  static Future<Board> createBoard(String boardName) async {
+    Board board = new Board.named(boardName);
+    board.theme = BoardTheme.red();
+    await board.save();
+    return board;
+  }
+
+  Future<void> save() async {
+    var cacheDir = await getApplicationDocumentsDirectory();
+    File f = File('${cacheDir.path}/board_$guid.$BOARD_FILE_EXTENSION');
+    f.writeAsString(json.encode(toJson()));
   }
 
   bool putPiece(Hex hex, Piece piece) {
@@ -232,15 +253,15 @@ class Board {
     if (!pieceOnBoard(hex)) {
       return false;
     }
-    if (piece.runtimeType == BreakRulePiece && hex.runtimeType != Hex) {
+    if (piece.runtimeType == BreakRule && hex.runtimeType != Hex) {
       return false;
     }
-    if (piece.runtimeType == EdgeRulePiece && hex.runtimeType != Edge) {
+    if (piece.runtimeType == EdgeRule && hex.runtimeType != Edge) {
       return false;
     }
     if ((piece.runtimeType == StartPiece ||
             piece.runtimeType == EndPiece ||
-            piece.runtimeType == DotRulePiece) &&
+            piece.runtimeType == DotRule) &&
         hex.runtimeType == Hex) {
       return false;
     } else if (piece.runtimeType == ErasePiece) {
@@ -271,13 +292,13 @@ class Board {
       }
       _map.putIfAbsent(hex, () => new List<Piece>.empty(growable: true));
       var pieces = _map[hex];
-      if (piece.runtimeType == EdgeRulePiece) {
-        if (pieces.any((Piece p) => p.runtimeType == EdgeRulePiece)) {
-          EdgeRulePiece existing =
-              pieces.singleWhere((Piece p) => p.runtimeType == EdgeRulePiece);
+      if (piece.runtimeType == EdgeRule) {
+        if (pieces.any((Piece p) => p.runtimeType == EdgeRule)) {
+          EdgeRule existing =
+              pieces.singleWhere((Piece p) => p.runtimeType == EdgeRule);
           existing.count = existing.count == 1 ? 2 : 1;
         } else {
-          pieces.add(EdgeRulePiece());
+          pieces.add(EdgeRule());
         }
         return true;
       } else {
@@ -335,10 +356,10 @@ class Board {
     }
   }
 
-  List<MapEntry<Hex, Piece>> getPiece(Piece p) {
+  List<MapEntry<Hex, T>> getPiece<T>() {
     return flatten()
         .where((MapEntry<Hex, Piece> entry) =>
-            entry.value.runtimeType == p.runtimeType)
+            entry.value.runtimeType == T).map((entry) => MapEntry<Hex, T>(entry.key, entry.value as T))
         .toList();
   }
 
