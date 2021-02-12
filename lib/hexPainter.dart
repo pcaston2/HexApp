@@ -11,7 +11,6 @@ class HexPainter extends CustomPainter {
     Point center = Point(screenCenter.dx, screenCenter.dy);
     BoardTheme _theme = _gameState.board.theme;
     paintFill(canvas, size, _theme);
-
     drawBoard(center, canvas, _theme);
     var entries = _gameState.board.flatten();
     entries.sort((a, b) => a.value.order.compareTo(b.value.order));
@@ -39,6 +38,8 @@ class HexPainter extends CustomPainter {
     } else {
       drawTrail(center, canvas, _theme);
     }
+
+    //ViewFocalpoint(center, canvas, localFocalStart);
   }
 
   void drawDesignSelection(Point center, Canvas canvas) {
@@ -370,5 +371,13 @@ class HexPainter extends CustomPainter {
   @override
   bool shouldRepaint(CustomPainter old) {
     return true;
+  }
+
+  void ViewFocalpoint(Point center, Canvas canvas, Offset focalpoint) {
+    final focalPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = Colors.red;
+    var focal = new Offset(focalpoint.dx + center.x, focalpoint.dy + center.y);
+    canvas.drawCircle(focalpoint, 10, focalPaint);
   }
 }

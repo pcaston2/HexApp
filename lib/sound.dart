@@ -18,7 +18,7 @@ class SoundPlayer {
   AudioPlayer audioPlayer;
   AudioCache audioCache;
   SoundPlayer() {
-    AudioPlayer.logEnabled = true;
+    //AudioPlayer.logEnabled = true;
     if (kIsWeb) {
       audioPlayer = new AudioPlayer();
       audioPlayer.mode = PlayerMode.LOW_LATENCY;

@@ -1,6 +1,7 @@
 import 'color.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:flutter/material.dart' as mat;
+import 'matColorExtension.dart' as ext;
 
 part 'boardTheme.g.dart';
 
@@ -41,6 +42,20 @@ class BoardTheme {
     ruleColors[RuleColorIndex.Fifth].value = mat.Colors.indigoAccent;
   }
 
+  BoardTheme.beginner() {
+    background.value = ext.HexColor.fromHex("#ffcfcfcc");
+    border.value = ext.HexColor.fromHex("#ff60717e");
+    foreground.value = ext.HexColor.fromHex("#fffbea52");
+    path.value = ext.HexColor.fromHex("#ff413b29");
+    trail.value = ext.HexColor.fromHex("#fff9f7a6");
+    ruleColors[RuleColorIndex.First].value = mat.Colors.orangeAccent;
+    ruleColors[RuleColorIndex.Second].value = mat.Colors.redAccent;
+    ruleColors[RuleColorIndex.Third].value = mat.Colors.lightGreenAccent;
+    ruleColors[RuleColorIndex.Fourth].value = mat.Colors.deepPurpleAccent;
+    ruleColors[RuleColorIndex.Fifth].value = mat.Colors.indigoAccent;
+  }
+
+
   BoardTheme.red() {
     background.value = mat.Colors.white;
     border.value = mat.Colors.grey;
@@ -55,7 +70,7 @@ class BoardTheme {
   }
 
   factory BoardTheme() {
-    return BoardTheme.red();
+    return BoardTheme.beginner();
   }
 
   factory BoardTheme.fromJson(Map<String, dynamic> json) => _$BoardThemeFromJson(json);

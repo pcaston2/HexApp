@@ -22,7 +22,6 @@ class BoardValidator {
       errors.addAll(validateDots());
       errors.addAll(validateEdges());
     }
-    print(errors);
   }
 
   List<BoardValidationError> errors;

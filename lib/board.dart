@@ -215,6 +215,7 @@ class Board {
   Board.named(this.name) {
     _size = 3;
     _guid = Guid.newGuid;
+    _mode = BoardMode.play;
   }
 
 
@@ -237,7 +238,7 @@ class Board {
 
   static Future<Board> createBoard(String boardName) async {
     Board board = new Board.named(boardName);
-    board.theme = BoardTheme.red();
+    board.theme = BoardTheme();
     await board.save();
     return board;
   }
@@ -298,7 +299,7 @@ class Board {
               pieces.singleWhere((Piece p) => p.runtimeType == EdgeRule);
           existing.count = existing.count == 1 ? 2 : 1;
         } else {
-          pieces.add(EdgeRule());
+          pieces.add(piece);
         }
         return true;
       } else {

@@ -22,9 +22,7 @@ part 'boardView.dart';
 part 'flowSelection.dart';
 part 'boardSelection.dart';
 
-Offset focalStart = Offset.zero;
-
-void main() => runApp(MaterialApp(title: "Hex Puzzle Game", home: FlowSelection()));
+void main() => runApp(MaterialApp(title: "Sise", home: FlowSelection()));
 
 
 
