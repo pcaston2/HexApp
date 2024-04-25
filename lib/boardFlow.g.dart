@@ -6,13 +6,11 @@ part of 'boardFlow.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-BoardFlow _$BoardFlowFromJson(Map<String, dynamic> json) {
-  return BoardFlow()
-    ..name = json['name'] as String
-    ..guid = json['guid'] as String
-    ..boardPaths =
-        (json['boardPaths'] as List)?.map((e) => e as String)?.toList();
-}
+BoardFlow _$BoardFlowFromJson(Map<String, dynamic> json) => BoardFlow()
+  ..name = json['name'] as String
+  ..guid = json['guid'] as String
+  ..boardPaths =
+      (json['boardPaths'] as List<dynamic>).map((e) => e as String).toList();
 
 Map<String, dynamic> _$BoardFlowToJson(BoardFlow instance) => <String, dynamic>{
       'name': instance.name,

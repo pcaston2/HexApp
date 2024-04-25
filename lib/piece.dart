@@ -24,12 +24,13 @@ abstract class Piece {
 
   factory Piece.fromJson(Map<String, dynamic> json) {
     if (json == null) {
-      return null;
+      throw new Exception("Non-nullable Piece contrstructor ruins things");
+      //return null;
     }
     if (json.containsKey('\$type')) {
       var type = json['\$type'];
       if (pieceFactory.containsKey(type)) {
-        return pieceFactory[type].fromJson(json);
+        return pieceFactory[type]?.fromJson(json);
       } else {
         throw new Exception("Could not deserialize piece, no factory exists for piece $type");
       }

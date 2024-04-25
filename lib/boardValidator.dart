@@ -24,7 +24,7 @@ class BoardValidator {
     }
   }
 
-  List<BoardValidationError> errors;
+  late List<BoardValidationError> errors;
 
   bool get isSuccessful => errors.isEmpty;
 
@@ -46,7 +46,7 @@ class BoardValidator {
     List<BoardValidationError> edgeErrors = [];
     var edgePieces = _board.getPiece<EdgeRule>();
     for (var entry in edgePieces) {
-      Edge edge = entry.key;
+      Edge edge = entry.key as Edge;
       EdgeRule edgePiece = entry.value;
       List<Edge> edges = [];
       edges.add(edge);
@@ -132,8 +132,8 @@ class BoardValidator {
 }
 
 class BoardValidationError {
-  Hex _hex;
-  Piece _piece;
+  Hex? _hex;
+  Piece? _piece;
   BoardValidationErrorType _type;
   BoardValidationError(this._hex, this._piece, this._type);
 

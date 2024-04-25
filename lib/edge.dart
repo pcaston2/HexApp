@@ -14,16 +14,16 @@ class Edge extends Hex {
     var points = new List<Point>.empty(growable: true);
     switch (edgeType) {
       case EdgeType.East:
-        points.add(vertex[VertexDirection.NorthEast]);
-        points.add(vertex[VertexDirection.East]);
+        points.add(vertex[VertexDirection.NorthEast]!);
+        points.add(vertex[VertexDirection.East]!);
         break;
       case EdgeType.North:
-        points.add(vertex[VertexDirection.NorthEast]);
-        points.add(vertex[VertexDirection.NorthWest]);
+        points.add(vertex[VertexDirection.NorthEast]!);
+        points.add(vertex[VertexDirection.NorthWest]!);
         break;
       case EdgeType.West:
-        points.add(vertex[VertexDirection.NorthWest]);
-        points.add(vertex[VertexDirection.West]);
+        points.add(vertex[VertexDirection.NorthWest]!);
+        points.add(vertex[VertexDirection.West]!);
         break;
     }
     return points;
@@ -128,7 +128,7 @@ class Edge extends Hex {
       case EdgeType.West:
         return [ this, Hex.from(this, -1, 0) ];
       default:
-        return null;
+        return [ this, Hex.from(this, 0,0) ];
     }
   }
 

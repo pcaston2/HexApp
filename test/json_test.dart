@@ -6,9 +6,12 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hex_game/color.dart';
 import 'package:hex_game/hex.dart';
 import 'package:hex_game/piece.dart';
 import 'package:hex_game/board.dart';
+import 'package:vector_math/vector_math.dart';
+import 'package:flutter/material.dart' as mat;
 
 void main() {
   group('Json Tests', () {
@@ -29,7 +32,7 @@ void main() {
       EdgeRule edge = new EdgeRule();
       edge.count = 2;
       var json = edge.toJson();
-      edge = Piece.fromJson(json);
+      edge = Piece.fromJson(json) as EdgeRule;
       expect(edge.count, 2);
     });
       test('Should Serialize a Board with edge rule', () {
@@ -45,5 +48,13 @@ void main() {
       var theEdge = egdeRules.first;
       expect(theEdge.count, 2);
     });
+      test('Should Serialize a color', () {
+        var hexCode = "#ffffffff";
+        Color c = new Color();
+        c.hexCode = hexCode;
+        var json = c.toJson();
+        c = Color.fromJson(json);
+        expect(c.hexCode, hexCode);
+      });
   });
 }

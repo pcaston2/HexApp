@@ -4,18 +4,15 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'color.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class Color {
-  mat.Color _color;
+  late mat.Color _color;
 
-  @JsonKey(ignore: true)
-  // ignore: unnecessary_getters_setters
+  @JsonKey(includeFromJson: false, includeToJson: false)
   mat.Color get value {
     return _color;
   }
 
-  @JsonKey(ignore: true)
-  // ignore: unnecessary_getters_setters
   set value(mat.Color color) {
     _color = color;
   }
@@ -43,8 +40,11 @@ class Color {
   Color darken([int percent = 10]) {
     assert(1 <= percent && percent <= 100);
     var f = 1 - percent / 100;
-    return Color.from(mat.Color.fromARGB(value.alpha, (value.red * f).round(),
-        (value.green * f).round(), (value.blue * f).round()));
+    return Color.from(mat.Color.fromARGB(
+        value.alpha,
+        (value.red * f).round(),
+        (value.green * f).round(),
+        (value.blue * f).round()));
   }
 
   Color brighten([int percent = 10]) {

@@ -58,11 +58,11 @@ class Point {
     if (points.isEmpty) {
       throw new Exception("List is empty");
     }
-    Point closest;
-    double distance;
+    Point closest = Point.origin();
+    double distance = double.infinity;
     for (var point in points) {
       double currentDistance = (this.unitVector - point.unitVector).magnitude;
-      if (closest == null || currentDistance < distance) {
+      if (currentDistance < distance) {
         closest = point;
         distance = currentDistance;
       }

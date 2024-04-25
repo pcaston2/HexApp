@@ -15,8 +15,8 @@ const String FLOW_FILE_EXTENSION = "jhexflow";
 @JsonSerializable()
 class BoardFlow {
   String name;
-  @JsonKey(ignore: true)
-  Guid _guid;
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  late Guid _guid;
 
   String get guid {
     return _guid.value;
@@ -59,8 +59,8 @@ class BoardFlow {
   Future<List<Board>> get boards async {
     Directory cacheDir = await getApplicationDocumentsDirectory();
     List<FileSystemEntity> files = cacheDir.listSync();
-    var flowFiles = files.where((FileSystemEntity entity) =>
-        entity.path.contains(".$BOARD_FILE_EXTENSION"));
+    //var flowFiles = files.where((FileSystemEntity entity) =>
+    //    entity.path.contains(".$BOARD_FILE_EXTENSION"));
     List<Board> boards = [];
     for (String boardPath in boardPaths) {
       try {

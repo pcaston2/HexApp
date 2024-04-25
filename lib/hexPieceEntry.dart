@@ -4,8 +4,8 @@ part of 'board.dart';
 
 @JsonSerializable(explicitToJson: true)
 class HexPieceEntry {
-  Hex hex;
-  Piece piece;
+  late Hex hex;
+  late Piece piece;
 
   HexPieceEntry();
 

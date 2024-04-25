@@ -4,5 +4,5 @@ import 'boardFlow.dart';
 
 class FlowTile extends ListTile {
   final BoardFlow flow;
-  FlowTile({this.flow, Widget title, GestureTapCallback onTap}) : super(title: title, onTap: onTap);
+  FlowTile({required this.flow, required Widget title, required GestureTapCallback onTap}) : super(title: title, onTap: onTap);
 }

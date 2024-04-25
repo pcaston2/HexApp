@@ -6,7 +6,7 @@ import 'color.dart' as hex;
 class ColorTile extends ListTile {
   final hex.Color color;
 
-  ColorTile(BuildContext context, {this.color, String title, GestureTapCallback onSelect})
+  ColorTile(BuildContext context, {required this.color, required String title, required GestureTapCallback onSelect})
       : super(
     title: Container(
         child: Center(
@@ -30,8 +30,8 @@ class ColorTile extends ListTile {
               ),
               content:
               SlidePicker(
-                  showLabel: false,
-                  paletteType: PaletteType.hsv,
+                  labelTypes: [],
+                  colorModel: ColorModel.hsv,
                   pickerColor: color.value,
                   enableAlpha: false,
                   displayThumbColor: true,

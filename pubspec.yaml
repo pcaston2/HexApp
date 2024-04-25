@@ -18,18 +18,18 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.7.0 <3.0.0"
+  sdk: ">=3.3.4 <4.0.0"
 
 dependencies:
-  json_annotation:
+  json_annotation: ^4.8.1
   flutter:
     sdk: flutter
   spritewidget:
-  audioplayers: ^0.16.2
+  audioplayers: ^5.0.0
   vector_math: any
   path_provider:
-  flutter_guid: ^0.1.0
-  flutter_colorpicker: ^0.3.5
+  flutter_guid: ^0.3.1
+  flutter_colorpicker: ^1.0.3
   collection: ^1.14.13
 
 
@@ -38,7 +38,7 @@ dependencies:
   cupertino_icons: ^1.0.0
 
 dev_dependencies:
-  build_runner: ^1.7.0
+  build_runner: ^2.4.9
   json_serializable:
   flutter_test:
     sdk: flutter

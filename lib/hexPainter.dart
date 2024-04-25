@@ -117,7 +117,7 @@ class HexPainter extends CustomPainter {
 
   void drawBreakRule(Hex hex, Point center, Canvas canvas) {
     final breakPaint = Paint()
-      ..color = Colors.grey[800]
+      ..color = Colors.grey[800]!
       ..strokeWidth = 2
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
@@ -137,7 +137,7 @@ class HexPainter extends CustomPainter {
 
   void drawDotRule(Hex hex, Point center, Canvas canvas, DotRule dotRule, BoardTheme theme) {
     final startPaint = Paint()
-      ..color = theme.ruleColors[dotRule.color].value
+      ..color = theme.ruleColors[dotRule.color]!.value
       ..style = PaintingStyle.fill;
     List<Offset> pieceOffset = <Offset>[];
     for (var vertex in Hex.origin().vertexOffsets) {
@@ -288,7 +288,7 @@ class HexPainter extends CustomPainter {
                 ? theme.trail.brighten(20).value
                 : theme.trail.darken(10).value)
             : theme.trail.value
-        ..strokeWidth = 8
+        ..strokeWidth = 10
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round;
       List<Offset> trailOffset = <Offset>[];
@@ -305,8 +305,8 @@ class HexPainter extends CustomPainter {
       Board board, Point center, Canvas canvas, BoardTheme theme) {
     if (board.hasEnded) {
       var offset = new Offset(
-          center.x + board.tail.point.x + board.tail.midpoint.x,
-          center.y + board.tail.point.y - board.tail.midpoint.y);
+          center.x + board.tail!.point.x + board.tail!.midpoint.x,
+          center.y + board.tail!.point.y - board.tail!.midpoint.y);
       final endPaint = Paint()
         ..style = PaintingStyle.fill
         ..shader = RadialGradient(
@@ -323,7 +323,7 @@ class HexPainter extends CustomPainter {
           center: offset,
           radius: hexSize / 5.0,
         ));
-      canvas.drawCircle(offset, hexSize / 4.0, endPaint);
+      canvas.drawCircle(offset, hexSize / 3.5, endPaint);
     }
   }
 
@@ -354,11 +354,11 @@ class HexPainter extends CustomPainter {
             center.x +
                 board.head.point.x +
                 board.head.midpoint.x +
-                vertex.y / 3.5,
+                vertex.y / 3.0,
             center.y +
                 board.head.point.y -
                 board.head.midpoint.y -
-                vertex.x / 3.5));
+                vertex.x / 3.0));
       }
       Path path = Path();
       path.addPolygon(pieceOffset, true);

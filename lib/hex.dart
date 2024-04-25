@@ -30,22 +30,22 @@ Map<VertexDirection, Point> get vertex => {
 
 Map<EdgeDirection, Point> get edge => {
       EdgeDirection.NorthEast:
-          (vertex[VertexDirection.East] + vertex[VertexDirection.NorthEast]) /
+          (vertex[VertexDirection.East]! + vertex[VertexDirection.NorthEast]!) /
               2.0,
-      EdgeDirection.North: (vertex[VertexDirection.NorthWest] +
-              vertex[VertexDirection.NorthEast]) /
+      EdgeDirection.North: (vertex[VertexDirection.NorthWest]! +
+              vertex[VertexDirection.NorthEast]!) /
           2.0,
       EdgeDirection.NorthWest:
-          (vertex[VertexDirection.West] + vertex[VertexDirection.NorthWest]) /
+          (vertex[VertexDirection.West]! + vertex[VertexDirection.NorthWest]!) /
               2.0,
       EdgeDirection.SouthWest:
-          (vertex[VertexDirection.SouthWest] + vertex[VertexDirection.West]) /
+          (vertex[VertexDirection.SouthWest]! + vertex[VertexDirection.West]!) /
               2.0,
-      EdgeDirection.South: (vertex[VertexDirection.SouthEast] +
-              vertex[VertexDirection.SouthWest]) /
+      EdgeDirection.South: (vertex[VertexDirection.SouthEast]! +
+              vertex[VertexDirection.SouthWest]!) /
           2.0,
       EdgeDirection.SouthEast:
-          (vertex[VertexDirection.East] + vertex[VertexDirection.SouthEast]) /
+          (vertex[VertexDirection.East]! + vertex[VertexDirection.SouthEast]!) /
               2.0
     };
 
@@ -129,32 +129,20 @@ class Hex {
           (offset - closestVertex).magnitude) {
         switch (closestEdgeDirection) {
           case EdgeDirection.NorthEast:
-            //return currHex;
             return new Edge.position(EdgeType.East, currHex.q, currHex.r);
-            break;
           case EdgeDirection.North:
-            //return currHex;
             return new Edge.position(EdgeType.North, currHex.q, currHex.r);
-            break;
           case EdgeDirection.NorthWest:
-            //return currHex;
             return new Edge.position(EdgeType.West, currHex.q, currHex.r);
-            break;
           case EdgeDirection.SouthEast:
-            //return currHex;
             return new Edge.position(EdgeType.West, currHex.q + hexOffset.q,
                 currHex.r + hexOffset.r);
-            break;
           case EdgeDirection.South:
-            //return currHex;
             return new Edge.position(EdgeType.North, currHex.q + hexOffset.q,
                 currHex.r + hexOffset.r);
-            break;
           case EdgeDirection.SouthWest:
-            //return currHex;
             return new Edge.position(EdgeType.East, currHex.q + hexOffset.q,
                 currHex.r + hexOffset.r);
-            break;
           default:
             throw new Exception("Couldn't find correct edge type");
         }
@@ -164,27 +152,16 @@ class Hex {
         switch (closestVertexDirection) {
           case VertexDirection.East:
             return new Vertex.position(VertexType.East, currHex.q, currHex.r);
-            break;
           case VertexDirection.NorthEast:
-            //return currHex;
             return new Vertex.position(VertexType.West, currHex.q + 1, currHex.r - 1);
-            break;
           case VertexDirection.NorthWest:
-            //return currHex;
             return new Vertex.position(VertexType.East, currHex.q - 1, currHex.r);
-            break;
           case VertexDirection.West:
-            //return currHex;
             return new Vertex.position(VertexType.West, currHex.q, currHex.r);
-            break;
           case VertexDirection.SouthWest:
-            //return currHex;
             return new Vertex.position(VertexType.East, currHex.q - 1, currHex.r + 1);
-            break;
           case VertexDirection.SouthEast:
-            //return currHex;
             return new Vertex.position(VertexType.West, currHex.q + 1, currHex.r);
-            break;
           default:
             throw new Exception("Couldn't find correct vertex type");
         }
@@ -219,11 +196,6 @@ class Hex {
         r = 0;
         break;
     }
-
-    // @override
-    // String toString() {
-    //   return "Hex ($q, $r)";
-    // }
   }
 
   Hex operator -(Object other) {
@@ -267,12 +239,13 @@ class Hex {
 
   factory Hex.fromJson(Map<String, dynamic> json) {
     if (json == null) {
-      return null;
+      throw new Exception("Non-Nullable Hex Constructor ruins things");
+      //return null;
     }
     if (json.containsKey('\$type')) {
       var type = json['\$type'];
       if (hexFactory.containsKey(type)) {
-        return hexFactory[type].fromJson(json);
+        return hexFactory[type]?.fromJson(json);
       } else {
         throw new Exception("Could not deserialize piece, no factory exists for piece $type");
       }

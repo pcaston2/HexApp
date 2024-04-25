@@ -31,7 +31,7 @@ const String BOARD_FILE_EXTENSION = "jhexboard";
 class Board {
   String name = "Board";
 
-  Color board;
+  Color board = Color.from(Colors.white);
 
   Map<Hex, List<Piece>> _map = new Map<Hex, List<Piece>>();
 
@@ -46,7 +46,7 @@ class Board {
     entries.forEach((entry) => putPiece(entry.hex, entry.piece));
   }
 
-  BoardTheme theme;
+  BoardTheme theme = BoardTheme.beginner();
 
   int _size = 3;
 
@@ -64,7 +64,7 @@ class Board {
     }
   }
 
-  Guid _guid;
+  late Guid _guid;
 
   String get guid {
     return _guid.value;
@@ -74,7 +74,7 @@ class Board {
     _guid = new Guid(value);
   }
 
-  BoardMode _mode;
+  late BoardMode _mode;
 
   @JsonKey(ignore: true)
   BoardMode get mode {
@@ -95,9 +95,9 @@ class Board {
 
   Hex get head => trail.first;
 
-  Hex get tail => trail.isEmpty ? null : trail.last;
+  Hex? get tail => trail.isEmpty ? null : trail.last;
 
-  Hex get previous {
+  Hex? get previous {
     if (trail.length < 2) {
       return null;
     } else {
@@ -109,7 +109,7 @@ class Board {
     return hasPieceAt(start, StartPiece());
   }
 
-  bool isEnd(Hex end) {
+  bool isEnd(Hex? end) {
     return hasPieceAt(end, EndPiece());
   }
 
@@ -162,17 +162,19 @@ class Board {
   List<Hex> get adjacent {
     var validMoves = <Hex>[];
     if (hasEnded) {
-      return [previous];
+      if (previous == null) {
+        return [];
+      }
     }
     if (tail.runtimeType == Edge) {
-      return tail.vertices
+      return tail!.vertices
           .where((Vertex v) => !trail.contains(v) || v == previous)
           .toList();
     } else if (tail.runtimeType == Vertex) {
-      var edges = tail.edges;
+      var edges = tail!.edges;
       for (Edge edge in edges) {
         if (_map.containsKey(edge)) {
-          if (_map[edge].any((Piece p) => p.runtimeType == PathPiece)) {
+          if (_map[edge]!.any((Piece p) => p.runtimeType == PathPiece)) {
             // var correspondingVertex =
             //     edge.vertices.singleWhere((Vertex v) => v != tail);
             if (!trail.contains(edge) || edge == previous) {
@@ -193,7 +195,7 @@ class Board {
   get hasStarted => _trail.isNotEmpty;
 
   bool pieceOnBoard(Hex hex) {
-    num closestValue;
+    num? closestValue;
     for (var h in hex.faces) {
       var currentValue = h.distanceFromOrigin();
       if (closestValue == null) {
@@ -205,7 +207,7 @@ class Board {
       }
     }
     //num min = hex.faces.reduce((Hex h) => h.distanceFromOrigin());
-    return closestValue <= _size - 1;
+    return closestValue! <= _size - 1;
   }
 
   Iterable<Hex> get keys => _map.keys;
@@ -213,15 +215,14 @@ class Board {
   Board() : this.named("Board");
 
   Board.named(this.name) {
-    _size = 3;
     _guid = Guid.newGuid;
+    _size = 3;
     _mode = BoardMode.play;
   }
 
-
-
   Board.sample() {
     name = "Sample";
+    _guid = Guid.newGuid;
 
     _size = 3;
 
@@ -267,7 +268,7 @@ class Board {
       return false;
     } else if (piece.runtimeType == ErasePiece) {
       if (_map.containsKey(hex)) {
-        List<Piece> pieces = _map[hex];
+        List<Piece> pieces = _map[hex]!;
         if (pieces.isNotEmpty) {
           pieces.sort((a, b) => b.order.compareTo(a.order));
           var first = pieces.first;
@@ -292,11 +293,11 @@ class Board {
         return any;
       }
       _map.putIfAbsent(hex, () => new List<Piece>.empty(growable: true));
-      var pieces = _map[hex];
+      var pieces = _map[hex]!;
       if (piece.runtimeType == EdgeRule) {
         if (pieces.any((Piece p) => p.runtimeType == EdgeRule)) {
           EdgeRule existing =
-              pieces.singleWhere((Piece p) => p.runtimeType == EdgeRule);
+              pieces.singleWhere((Piece p) => p.runtimeType == EdgeRule) as EdgeRule;
           existing.count = existing.count == 1 ? 2 : 1;
         } else {
           pieces.add(piece);
@@ -314,11 +315,15 @@ class Board {
     }
   }
 
-  bool hasPieceAt(Hex h, Piece piece) {
+  bool hasPieceAt(Hex? h, Piece piece) {
     if (!_map.containsKey(h)) {
       return false;
     } else {
-      return _map[h].any((Piece p) => p.runtimeType == piece.runtimeType);
+      if (_map[h] == null) {
+        return false;
+      } else {
+        return _map[h]!.any((Piece p) => p.runtimeType == piece.runtimeType);
+      }
     }
   }
 
@@ -334,7 +339,7 @@ class Board {
 
   List<Piece> getPiecesAt(Hex hex) {
     if (_map.containsKey(hex)) {
-      return _map[hex];
+      return _map[hex]!;
     } else {
       return new List<Piece>.empty();
     }

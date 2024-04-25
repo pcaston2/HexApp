@@ -27,14 +27,14 @@ bool tracing = false;
 class BoardView extends StatefulWidget {
   final Board _board;
 
-  BoardView(this._board, {Key key}) : super(key: key);
+  BoardView(this._board) : super();
 
   @override
   _HexWidgetState createState() => _HexWidgetState(_board);
 }
 
 class _HexWidgetState extends State<BoardView> {
-  ValueNotifier<GameState> _gameState;
+  late ValueNotifier<GameState> _gameState;
   SoundPlayer soundPlayer = SoundPlayer();
 
   @override
@@ -245,9 +245,9 @@ class _HexWidgetState extends State<BoardView> {
                               DropdownButton<RuleColorIndex>(
                                   value: _gameState.value.ruleColor,
                                   icon: Icon(Icons.color_lens_outlined),
-                                  onChanged: (RuleColorIndex newValue) {
+                                  onChanged: (RuleColorIndex? newValue) {
                                     setState(() {
-                                      _gameState.value.ruleColor = newValue;
+                                      _gameState.value.ruleColor = newValue!;
                                     });
                                   },
                                   items: List<
@@ -267,7 +267,7 @@ class _HexWidgetState extends State<BoardView> {
                                                   .theme
                                                   .ruleColors[RuleColorIndex
                                                       .values[index]]
-                                                  .value,
+                                                  ?.value,
                                               shape: BoxShape.circle),
                                         ));
                                   })),
@@ -362,27 +362,27 @@ class _HexWidgetState extends State<BoardView> {
                                   children: [
                                     ColorTile(context,
                                         color: _gameState.value.board.theme
-                                            .ruleColors[RuleColorIndex.First],
+                                            .ruleColors[RuleColorIndex.First]!,
                                         title: "First",
                                         onSelect: () => setState(() {})),
                                     ColorTile(context,
                                         color: _gameState.value.board.theme
-                                            .ruleColors[RuleColorIndex.Second],
+                                            .ruleColors[RuleColorIndex.Second]!,
                                         title: "Second",
                                         onSelect: () => setState(() {})),
                                     ColorTile(context,
                                         color: _gameState.value.board.theme
-                                            .ruleColors[RuleColorIndex.Third],
+                                            .ruleColors[RuleColorIndex.Third]!,
                                         title: "Third",
                                         onSelect: () => setState(() {})),
                                     ColorTile(context,
                                         color: _gameState.value.board.theme
-                                            .ruleColors[RuleColorIndex.Fourth],
+                                            .ruleColors[RuleColorIndex.Fourth]!,
                                         title: "Fourth",
                                         onSelect: () => setState(() {})),
                                     ColorTile(context,
                                         color: _gameState.value.board.theme
-                                            .ruleColors[RuleColorIndex.Fifth],
+                                            .ruleColors[RuleColorIndex.Fifth]!,
                                         title: "Fifth",
                                         onSelect: () => setState(() {})),
                                   ])
@@ -420,7 +420,7 @@ class _HexWidgetState extends State<BoardView> {
                               if (_gameState.value.board.mode ==
                                   BoardMode.designer) {
                                 if (_gameState.value.piece is ColoredRule) {
-                                  ColoredRule rule = _gameState.value.piece;
+                                  ColoredRule rule = _gameState.value.piece as ColoredRule;
                                   rule.color = _gameState.value.ruleColor;
                                 }
                                 _gameState.value.board.putPiece(
