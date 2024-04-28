@@ -76,12 +76,12 @@ class Board {
 
   late BoardMode _mode;
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   BoardMode get mode {
     return _mode;
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   set mode(BoardMode currentMode) {
     if (currentMode == BoardMode.designer) {
       resetTrail();

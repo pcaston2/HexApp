@@ -153,14 +153,14 @@ class HexPainter extends CustomPainter {
   }
 
   void drawEdgeRule(
-      Hex hex, Point center, Canvas canvas, EdgeRule piece, BoardTheme theme) {
+      Hex hex, Point center, Canvas canvas, EdgeRule edgeRule, BoardTheme theme) {
     final edgePaint = Paint()
-      ..color = theme.path.darken(10).value
+      ..color = theme.ruleColors[edgeRule.color]!.value
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
     var m = hex.midpoint.rotate(90);
-    if (piece.count == 1) {
+    if (edgeRule.count == 1) {
       canvas.drawLine(
           Offset(center.x + hex.point.x + m.x * 0.6,
               center.y + hex.point.y - m.y * 0.6),

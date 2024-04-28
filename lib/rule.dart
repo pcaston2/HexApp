@@ -41,7 +41,7 @@ class BreakRule extends Rule {
 }
 
 @JsonSerializable()
-class EdgeRule extends Rule {
+class EdgeRule extends ColoredRule {
   @override
   String get name => "Edge";
 

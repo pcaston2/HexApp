@@ -52,9 +52,6 @@ class Point {
   get hashCode => super.hashCode;
 
   Point closest(List<Point> points) {
-    if (points == null) {
-      throw new Exception("List is null");
-    }
     if (points.isEmpty) {
       throw new Exception("List is empty");
     }
