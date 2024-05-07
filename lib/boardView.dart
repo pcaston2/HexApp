@@ -25,6 +25,7 @@ class GameState {
 bool tracing = false;
 
 class BoardView extends StatefulWidget {
+
   final Board _board;
 
   BoardView(this._board) : super();
@@ -63,9 +64,10 @@ class _HexWidgetState extends State<BoardView> {
   ErasePiece erasePiece = new ErasePiece();
   StartPiece startPiece = new StartPiece();
   EndPiece endPiece = new EndPiece();
-  DotRule dotPiece = new DotRule();
-  BreakRule breakPiece = new BreakRule();
-  EdgeRule edgePiece = new EdgeRule();
+  DotRule dotRule = new DotRule();
+  SequenceRule colorRule = new SequenceRule();
+  EdgeRule edgeRule = new EdgeRule();
+  CornerRule cornerRule = new CornerRule();
 
   @override
   Widget build(BuildContext context) {
@@ -154,7 +156,18 @@ class _HexWidgetState extends State<BoardView> {
                             _gameState.value.transform = transform;
                           }),
                       tooltip: 'Re-Center',
-                      child: const Icon(Icons.home))
+                      child: const Icon(Icons.home)),
+                      Visibility(
+                        child:FloatingActionButton(
+                          heroTag: "next",
+                          onPressed: () =>   setState(() {
+                            Navigator.pop(context, true);
+                          }),
+                          tooltip: 'Next',
+                          child: const Icon(Icons.navigate_next_rounded),
+                        ),
+                        visible: _gameState.value.board.isSuccess && _gameState.value.board.mode == BoardMode.play,
+                      ),
                 ]),
             drawer: _gameState.value.board.mode == BoardMode.play
                 ? null
@@ -272,17 +285,21 @@ class _HexWidgetState extends State<BoardView> {
                                         ));
                                   })),
                               PieceTile(
-                                  dotPiece,
+                                  dotRule,
                                   () => _choosePiece(
-                                      context, dotPiece, _gameState)),
+                                      context, dotRule, _gameState)),
                               PieceTile(
-                                  breakPiece,
+                                  colorRule,
                                   () => _choosePiece(
-                                      context, breakPiece, _gameState)),
+                                      context, colorRule, _gameState)),
                               PieceTile(
-                                  edgePiece,
+                                  edgeRule,
                                   () => _choosePiece(
-                                      context, edgePiece, _gameState)),
+                                      context, edgeRule, _gameState)),
+                              PieceTile(
+                                  cornerRule,
+                                      () => _choosePiece(
+                                      context, cornerRule, _gameState)),
                             ]),
                         ExpansionTile(
                             title: Text("Editing"),
@@ -419,13 +436,19 @@ class _HexWidgetState extends State<BoardView> {
                             onDoubleTap: () {
                               if (_gameState.value.board.mode ==
                                   BoardMode.designer) {
-                                if (_gameState.value.piece is ColoredRule) {
-                                  ColoredRule rule = _gameState.value.piece as ColoredRule;
+                                var clone = _gameState.value.piece.clone();
+                                if (clone is ColoredRule) {
+                                  ColoredRule rule = clone;
                                   rule.color = _gameState.value.ruleColor;
+                                } else if  (clone is SequenceRule) {
+                                  SequenceRule rule = clone;
+                                  rule.colors.add(_gameState.value.ruleColor);
                                 }
-                                _gameState.value.board.putPiece(
+                                if (!_gameState.value.board.putPiece(
                                     _gameState.value.pointer,
-                                    _gameState.value.piece.clone());
+                                    clone)) {
+                                  soundPlayer.play(audioSound.PANEL_FAILURE);
+                                }
                                 setState(() => _gameState);
                               } else {
                                 //set state try to start

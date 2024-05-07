@@ -18,14 +18,12 @@ class Vertex extends Hex {
           Edge.from(EdgeDirection.NorthEast, this),
           Edge.from(EdgeDirection.SouthEast, this)
         ];
-        break;
       case VertexType.West:
         return [
           Edge.from(EdgeDirection.NorthWest, this),
           Edge.from(EdgeDirection.North, Hex.from(this, -1, 1)),
           Edge.from(EdgeDirection.SouthWest, this)
         ];
-        break;
       default:
         throw new Exception("Couldn't find correct vertex type");
     }
@@ -78,12 +76,17 @@ class Vertex extends Hex {
   List<Hex> get faces {
     switch (vertexType) {
       case VertexType.East:
-        return [ this, Hex.from(this, 1, -1), Hex.from(this, 1, 0) ];
+        return [ Hex.from(this), Hex.from(this, 1, -1), Hex.from(this, 1, 0) ];
       case VertexType.West:
-        return [ this, Hex.from(this, -1, 0), Hex.from(this, -1, 1) ];
+        return [ Hex.from(this), Hex.from(this, -1, 0), Hex.from(this, -1, 1) ];
       default:
         throw new Exception("Couldn't find correct vertex type");
     }
+  }
+
+  @override
+  String toString() {
+    return "($q,$r) " + vertexType.toString();
   }
 
 

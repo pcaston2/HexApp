@@ -12,21 +12,19 @@ final Map<String, Piece> pieceFactory = {
   'StartPiece': StartPiece(),
   'EndPiece': EndPiece(),
   'DotRule': DotRule(),
-  'BreakRule': BreakRule(),
+  'SequenceRule': SequenceRule(),
   'EdgeRule': EdgeRule(),
+  'CornerRule': CornerRule(),
 };
 
 
 abstract class Piece {
   String get name;
+  @JsonKey(includeFromJson: false, includeToJson: false)
   num get order;
   Piece();
 
   factory Piece.fromJson(Map<String, dynamic> json) {
-    if (json == null) {
-      throw new Exception("Non-nullable Piece contrstructor ruins things");
-      //return null;
-    }
     if (json.containsKey('\$type')) {
       var type = json['\$type'];
       if (pieceFactory.containsKey(type)) {
@@ -58,6 +56,8 @@ class PathPiece extends Piece {
   @override
   String get name => "Path";
   @override
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
   num get order => 100;
 
   @override
@@ -71,6 +71,8 @@ class PathPiece extends Piece {
 class ErasePiece extends Piece {
   @override
   String get name => "Erase";
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   num get order => -1;
 
@@ -85,6 +87,8 @@ class ErasePiece extends Piece {
 class StartPiece extends Piece {
   @override
   String get name => "Start";
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   num get order => 200;
 
@@ -99,6 +103,9 @@ class StartPiece extends Piece {
 class EndPiece extends Piece {
   @override
   String get name => "End";
+
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   num get order => 200;
 

@@ -58,9 +58,6 @@ class BoardFlow {
 
   Future<List<Board>> get boards async {
     Directory cacheDir = await getApplicationDocumentsDirectory();
-    List<FileSystemEntity> files = cacheDir.listSync();
-    //var flowFiles = files.where((FileSystemEntity entity) =>
-    //    entity.path.contains(".$BOARD_FILE_EXTENSION"));
     List<Board> boards = [];
     for (String boardPath in boardPaths) {
       try {

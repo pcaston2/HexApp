@@ -72,7 +72,6 @@ class Edge extends Hex {
   get midpoint => (vertexOffsets[0] + vertexOffsets[1]) / 2.0;
 
   Edge();
-
   Edge.position(this.edgeType, q, r) : super.position(q, r);
   Edge.from(EdgeDirection edgeDirection, Hex hex) {
     q = hex.q;
@@ -122,13 +121,31 @@ class Edge extends Hex {
   List<Hex> get faces {
     switch (edgeType) {
       case EdgeType.East:
-        return [ this, Hex.from(this, 1, -1) ];
+        return [ Hex.from(this), Hex.from(this, 1, -1) ];
       case EdgeType.North:
-        return [ this, Hex.from(this, 0, -1) ];
+        return [ Hex.from(this), Hex.from(this, 0, -1) ];
       case EdgeType.West:
-        return [ this, Hex.from(this, -1, 0) ];
+        return [ Hex.from(this), Hex.from(this, -1, 0) ];
       default:
-        return [ this, Hex.from(this, 0,0) ];
+        return [ Hex.from(this), Hex.from(this, 0,0) ];
+    }
+  }
+
+  Edge get above {
+    var hex = this.faces.last;
+    return Edge.from(this.direction, hex);
+  }
+
+  EdgeDirection get direction {
+    switch (edgeType) {
+      case EdgeType.East:
+        return EdgeDirection.NorthEast;
+      case EdgeType.North:
+        return EdgeDirection.North;
+      case EdgeType.West:
+        return EdgeDirection.NorthWest;
+      default:
+        throw new UnimplementedError("There is no direction for ${edgeType}");
     }
   }
 

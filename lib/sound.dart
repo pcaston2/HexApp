@@ -8,9 +8,9 @@ enum audioSound {
 }
 
 Map<audioSound, String> audioFiles = {
-  audioSound.PANEL_SUCCESS: 'panel_success.mp3',
-  audioSound.PANEL_FAILURE: 'panel_failure.mp3',
-  audioSound.TRACING_END: 'stop_tracing.mp3',
+  audioSound.PANEL_SUCCESS: 'Success.mp3',
+  audioSound.PANEL_FAILURE: 'Fail.mp3',
+  audioSound.TRACING_END: 'Abort.mp3',
   audioSound.TRACING_START: 'activate.mp3',
 };
 
@@ -29,9 +29,16 @@ class SoundPlayer {
   }
 
   void play(audioSound sound) {
+
     String fileName = audioFiles[sound]!;
+    return;
     //if (kIsWeb) {
-    audioPlayer.play(AssetSource(fileName));
+    try {
+      audioPlayer.play(AssetSource(fileName));
+    } catch (ex) {
+      //TODO: Find out why sound fails to play
+      print(ex);
+    }
     //} else if (Platform.isWindows) {
     //  print('Should play $fileName');
     //} else {

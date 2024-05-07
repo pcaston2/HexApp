@@ -11,6 +11,7 @@ class HexPainter extends CustomPainter {
     Point center = Point(screenCenter.dx, screenCenter.dy);
     BoardTheme _theme = _gameState.board.theme;
     paintFill(canvas, size, _theme);
+
     drawBoard(center, canvas, _theme);
     var entries = _gameState.board.flatten();
     entries.sort((a, b) => a.value.order.compareTo(b.value.order));
@@ -25,10 +26,12 @@ class HexPainter extends CustomPainter {
         drawEndPiece(hex, center, canvas, _theme);
       } else if (piece is DotRule) {
         drawDotRule(hex, center, canvas, piece, _theme);
-      } else if (piece is BreakRule) {
-        drawBreakRule(hex, center, canvas);
+      } else if (piece is SequenceRule) {
+        drawColorRule(hex, center, canvas, piece, _theme);
       } else if (piece is EdgeRule) {
         drawEdgeRule(hex, center, canvas, piece, _theme);
+      } else if (piece is CornerRule) {
+        drawCornerRule(hex, center, canvas, piece, _theme);
       } else {
         drawErrorPiece(hex, center, piece, canvas);
       }
@@ -38,6 +41,7 @@ class HexPainter extends CustomPainter {
     } else {
       drawTrail(center, canvas, _theme);
     }
+
 
     //ViewFocalpoint(center, canvas, localFocalStart);
   }
@@ -115,23 +119,30 @@ class HexPainter extends CustomPainter {
     canvas.drawPath(path, startPaint);
   }
 
-  void drawBreakRule(Hex hex, Point center, Canvas canvas) {
-    final breakPaint = Paint()
-      ..color = Colors.grey[800]!
+  void drawColorRule(Hex hex, Point center, Canvas canvas, SequenceRule colorRule, BoardTheme theme) {
+
+    var colorOffset = 0;
+    for (var color in colorRule.colors) {
+      var colorPaint = Paint()
+      ..color = theme.ruleColors[color]!.value
       ..strokeWidth = 2
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
-    for (var vertex in Hex.origin().vertexOffsets) {
-      Point direction = vertex / 6.0;
-      Point rotationA = direction.rotate(120);
-      Point rotationB = direction.rotate(-120);
-      var corner = new Offset(
-          center.x + hex.point.x + hex.midpoint.x + vertex.x * 0.75,
-          center.y + hex.point.y - hex.midpoint.y - vertex.y * 0.75);
-      canvas.drawLine(
-          corner, corner + Offset(rotationA.x, -rotationA.y), breakPaint);
-      canvas.drawLine(
-          corner, corner + Offset(rotationB.x, -rotationB.y), breakPaint);
+      for (var vertex in Hex
+          .origin()
+          .vertexOffsets) {
+        Point direction = vertex / 6.0;
+        Point rotationA = direction.rotate(120);
+        Point rotationB = direction.rotate(-120);
+        var corner = new Offset(
+            center.x + hex.point.x + hex.midpoint.x + vertex.x * 0.75 * (1 - colorOffset*0.08),
+            center.y + hex.point.y - hex.midpoint.y - vertex.y * 0.75 * (1 - colorOffset*0.08));
+        canvas.drawLine(
+            corner, corner + Offset(rotationA.x, -rotationA.y), colorPaint);
+        canvas.drawLine(
+            corner, corner + Offset(rotationB.x, -rotationB.y), colorPaint);
+      }
+      colorOffset++;
     }
   }
 
@@ -142,8 +153,8 @@ class HexPainter extends CustomPainter {
     List<Offset> pieceOffset = <Offset>[];
     for (var vertex in Hex.origin().vertexOffsets) {
       pieceOffset.add(new Offset(
-          center.x + hex.point.x + hex.midpoint.x + vertex.x / 14,
-          center.y + hex.point.y - hex.midpoint.y - vertex.y / 14));
+          center.x + hex.point.x + hex.midpoint.x + vertex.x / 12,
+          center.y + hex.point.y - hex.midpoint.y - vertex.y / 12));
     }
     Path path = Path();
     path.addPolygon(pieceOffset, true);
@@ -156,7 +167,7 @@ class HexPainter extends CustomPainter {
       Hex hex, Point center, Canvas canvas, EdgeRule edgeRule, BoardTheme theme) {
     final edgePaint = Paint()
       ..color = theme.ruleColors[edgeRule.color]!.value
-      ..strokeWidth = 2
+      ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
 
     var m = hex.midpoint.rotate(90);
@@ -187,6 +198,19 @@ class HexPainter extends CustomPainter {
     //Path path = Path();
     //path.addPolygon(pieceOffset, true);
     //canvas.drawPath(path, edgePaint);
+  }
+
+  void drawCornerRule(Hex hex, Point center, Canvas canvas, CornerRule cornerRule, BoardTheme theme) {
+    final cornerPaint = Paint()
+      ..color = theme.ruleColors[cornerRule.color]!.value
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke;
+    for (int i = 0;i<cornerRule.count; i++) {
+      canvas.drawCircle(Offset(
+        center.x + hex.point.x + hex.midpoint.x,
+        center.y + hex.point.y - hex.midpoint.y,
+      ), 9+i*5, cornerPaint);
+    }
   }
 
   void drawPathPiece(Hex hex, Point center, Canvas canvas, BoardTheme theme) {
@@ -285,7 +309,7 @@ class HexPainter extends CustomPainter {
       final trailPaint = Paint()
         ..color = board.isFinished
             ? (board.isSuccess
-                ? theme.trail.brighten(20).value
+                ? theme.trail.brighten(30).value
                 : theme.trail.darken(10).value)
             : theme.trail.value
         ..strokeWidth = 10
@@ -315,7 +339,7 @@ class HexPainter extends CustomPainter {
             theme.trail.darken(10).value,
             board.isFinished
                 ? (board.isSuccess
-                    ? theme.trail.brighten(20).value
+                    ? theme.trail.brighten(30).value
                     : theme.trail.darken(10).value)
                 : theme.trail.value
           ],
@@ -338,7 +362,7 @@ class HexPainter extends CustomPainter {
             theme.trail.darken(5).value,
             board.isFinished
                 ? (board.isSuccess
-                    ? theme.trail.brighten(20).value
+                    ? theme.trail.brighten(30).value
                     : theme.trail.darken(10).value)
                 : theme.trail.value
           ],
@@ -373,11 +397,5 @@ class HexPainter extends CustomPainter {
     return true;
   }
 
-  void ViewFocalpoint(Point center, Canvas canvas, Offset focalpoint) {
-    final focalPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..color = Colors.red;
-    var focal = new Offset(focalpoint.dx + center.x, focalpoint.dy + center.y);
-    canvas.drawCircle(focalpoint, 10, focalPaint);
-  }
+
 }

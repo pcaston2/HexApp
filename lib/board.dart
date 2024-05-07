@@ -81,7 +81,6 @@ class Board {
     return _mode;
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   set mode(BoardMode currentMode) {
     if (currentMode == BoardMode.designer) {
       resetTrail();
@@ -114,11 +113,7 @@ class Board {
   }
 
   bool isTail(Hex current) {
-    if (current == null) {
-      return false;
-    } else {
-      return current == tail;
-    }
+    return current == tail;
   }
 
   bool startAt(Hex start) {
@@ -232,7 +227,6 @@ class Board {
     putPiece(Vertex.position(VertexType.East, -1, 0), EndPiece());
     putPiece(Vertex.position(VertexType.West, 1, 0), DotRule());
     putPiece(Edge.position(EdgeType.East, 0, 0), DotRule());
-    putPiece(Hex.origin(), BreakRule());
     theme = BoardTheme();
     mode = BoardMode.designer;
   }
@@ -255,10 +249,10 @@ class Board {
     if (!pieceOnBoard(hex)) {
       return false;
     }
-    if (piece.runtimeType == BreakRule && hex.runtimeType != Hex) {
+    if (piece.runtimeType == SequenceRule && hex.runtimeType != Hex) {
       return false;
     }
-    if (piece.runtimeType == EdgeRule && hex.runtimeType != Edge) {
+    if ((piece.runtimeType == EdgeRule || piece.runtimeType == CornerRule) && hex.runtimeType != Edge) {
       return false;
     }
     if ((piece.runtimeType == StartPiece ||
@@ -272,6 +266,13 @@ class Board {
         if (pieces.isNotEmpty) {
           pieces.sort((a, b) => b.order.compareTo(a.order));
           var first = pieces.first;
+          if (first.runtimeType == SequenceRule) {
+            var color = first as SequenceRule;
+            if (color.colors.isNotEmpty) {
+              color.colors.removeLast();
+              return true;
+            }
+          }
           pieces.remove(first);
           return true;
         }
@@ -297,12 +298,34 @@ class Board {
       if (piece.runtimeType == EdgeRule) {
         if (pieces.any((Piece p) => p.runtimeType == EdgeRule)) {
           EdgeRule existing =
-              pieces.singleWhere((Piece p) => p.runtimeType == EdgeRule) as EdgeRule;
+          pieces.singleWhere((Piece p) =>
+          p.runtimeType == EdgeRule) as EdgeRule;
           existing.count = existing.count == 1 ? 2 : 1;
         } else {
           pieces.add(piece);
         }
         return true;
+      } else if (piece.runtimeType == CornerRule) {
+        if (pieces.any((Piece p) => p.runtimeType == CornerRule)) {
+          CornerRule existing = pieces.singleWhere((Piece p) =>
+          p.runtimeType == CornerRule) as CornerRule;
+          existing.count = existing.count == 1 ? 2 : 1;
+        } else {
+          pieces.add(piece);
+        }
+        return true;
+      } else if (piece.runtimeType == SequenceRule) {
+        if (pieces.any((Piece p) => p.runtimeType == SequenceRule)) {
+          var color = (piece as SequenceRule).colors.single;
+          SequenceRule existing = pieces.singleWhere((Piece p) =>
+          p.runtimeType == SequenceRule) as SequenceRule;
+          if (existing.colors.length >= 5) {
+            return false;
+          } else {
+            existing.colors.add(color);
+            return true;
+          }
+        }
       } else {
         pieces.removeWhere((p) => p.runtimeType == piece.runtimeType);
       }

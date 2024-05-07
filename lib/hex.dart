@@ -238,10 +238,6 @@ class Hex {
 
 
   factory Hex.fromJson(Map<String, dynamic> json) {
-    if (json == null) {
-      throw new Exception("Non-Nullable Hex Constructor ruins things");
-      //return null;
-    }
     if (json.containsKey('\$type')) {
       var type = json['\$type'];
       if (hexFactory.containsKey(type)) {

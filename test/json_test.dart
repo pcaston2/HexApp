@@ -10,8 +10,6 @@ import 'package:hex_game/color.dart';
 import 'package:hex_game/hex.dart';
 import 'package:hex_game/piece.dart';
 import 'package:hex_game/board.dart';
-import 'package:vector_math/vector_math.dart';
-import 'package:flutter/material.dart' as mat;
 
 void main() {
   group('Json Tests', () {

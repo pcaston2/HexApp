@@ -7,6 +7,14 @@ enum BoardValidationErrorType {
   tooManyDots,
   edgeNotTraversed,
   tooManyEdges,
+  cornerNotTraversed,
+  tooManyCorners,
+  colorOrder,
+  differentColorOverlap,
+  noColorAtSequence,
+  colorNotInSequence,
+  colorNotSatisfied,
+
 }
 
 class BoardValidator {
@@ -19,8 +27,15 @@ class BoardValidator {
     if (trailErrors.isNotEmpty) {
       return;
     } else {
+      errors.addAll(validateColorsAndSequence());
       errors.addAll(validateDots());
       errors.addAll(validateEdges());
+      errors.addAll(validateCorners());
+    }
+    var errorIndex=0;
+    for(var error in errors) {
+      errorIndex++;
+      print("${errorIndex}. ${error}");
     }
   }
 
@@ -42,6 +57,81 @@ class BoardValidator {
     return trailErrors;
   }
 
+
+  List<BoardValidationError> validateColorsAndSequence() {
+    List<BoardValidationError> colorErrors = [];
+    List<RuleColorIndex> previousColors = [];
+    void addColor(Hex trail, ColoredRule rule) {
+      if (previousColors.isEmpty) {
+        previousColors.add(rule.color);
+      } else {
+        if (previousColors.last != rule.color) {
+          if (previousColors.contains(rule.color)) {
+            colorErrors.add(new BoardValidationError(
+                trail, rule, BoardValidationErrorType.colorOrder));
+          } else {
+            previousColors.add(rule.color);
+          }
+        }
+      }
+    }
+    var copyOfSequenceRules = _board.getPiece<SequenceRule>().map((e) => new MapEntry<Hex, SequenceRule>(e.key, e.value.clone() as SequenceRule)).toList();
+    List<Hex> previousFaces = [];
+    var trailIndex = 0;
+    for (var trail in _board.trail) {
+      trailIndex++;
+      var dot = _board.getPiece<DotRule>().singleWhereOrNull((d) => d.key == trail);
+      if (dot != null) {
+        addColor(trail, dot.value);
+      }
+      if (trail.runtimeType == Vertex) {
+      } else if (trail.runtimeType == Edge) {
+        var edgeRules = _board.getPiece<EdgeRule>().where((e) => e.key == trail || ((e.key as Edge).parallelEdge == trail));
+        var dotRules = _board.getPiece<DotRule>().where((e) => e.key == trail);
+        var coloredRules = List<MapEntry<Hex, ColoredRule>>.from(dotRules)..addAll(edgeRules);
+        if (coloredRules.isNotEmpty) {
+          if (coloredRules.length == 1) {
+            addColor(trail, coloredRules.single.value);
+          } else {
+            if (coloredRules.any((r) => r.value.color != coloredRules.first.value.color)) {
+              for (var rule in coloredRules) {
+                colorErrors.add(BoardValidationError(rule.key, rule.value, BoardValidationErrorType.differentColorOverlap));
+              }
+            }
+          }
+        }
+      }
+      var currentFaces = trail.faces;
+      var sequenceRules = copyOfSequenceRules.where((e) => currentFaces.contains(e.key));
+      if (sequenceRules.isNotEmpty) {
+        if (previousColors.isEmpty) {
+          for(var rule in sequenceRules) {
+            if (!previousFaces.contains(rule.key)) {
+              colorErrors.add(new BoardValidationError(rule.key, rule.value, BoardValidationErrorType.noColorAtSequence));
+            }
+          }
+        } else {
+          for(var sequenceRule in sequenceRules) {
+            if (!previousFaces.contains(sequenceRule.key)) {
+              if (!sequenceRule.value.colors.remove(previousColors.last)) {
+                colorErrors.add(new BoardValidationColorError(sequenceRule.key, sequenceRule.value, BoardValidationErrorType.colorNotInSequence, previousColors.last));
+              }
+            }
+          }
+        }
+      }
+      previousFaces = currentFaces;
+    }
+    for (var sequenceRule in copyOfSequenceRules) {
+      if (sequenceRule.value.colors.isNotEmpty) {
+        for (var colorIndex in sequenceRule.value.colors) {
+          colorErrors.add(new BoardValidationColorError(sequenceRule.key, sequenceRule.value, BoardValidationErrorType.colorNotSatisfied,colorIndex));
+        }
+      }
+    }
+    return colorErrors;
+  }
+
   List<BoardValidationError> validateEdges() {
     List<BoardValidationError> edgeErrors = [];
     var edgePieces = _board.getPiece<EdgeRule>();
@@ -61,10 +151,32 @@ class BoardValidator {
             edgePiece,
             traversed < expected
                 ? BoardValidationErrorType.edgeNotTraversed
-                : BoardValidationErrorType.tooManyEdges)));
+                  : BoardValidationErrorType.tooManyEdges)));
       }
     }
     return edgeErrors;
+  }
+
+  List<BoardValidationError> validateCorners() {
+    List<BoardValidationError> cornerErrors = [];
+    var cornerRules = _board.getPiece<CornerRule>();
+    for (var entry in cornerRules) {
+      Edge edge = entry.key as Edge;
+      CornerRule cornerRule = entry.value;
+      List<Vertex> corners = new List<Vertex>.from(edge.vertices);
+      int expected = cornerRule.count;
+      int traversed = corners.where((Vertex v) => _board.trail.contains(v)).toList().length;
+      if (traversed == expected) {
+      } else {
+        corners.forEach((Vertex v) => cornerErrors.add(BoardValidationError(
+          v,
+          cornerRule,
+          traversed < expected
+            ? BoardValidationErrorType.cornerNotTraversed
+              : BoardValidationErrorType.tooManyCorners)));
+      }
+    }
+    return cornerErrors;
   }
 
   List<BoardValidationError> validateDots() {
@@ -145,5 +257,15 @@ class BoardValidationError {
       msg += ' for ${_piece}';
     }
     return msg;
+  }
+}
+
+class BoardValidationColorError extends BoardValidationError {
+  late RuleColorIndex _color;
+  BoardValidationColorError(Hex hex, Piece piece, BoardValidationErrorType error, this._color) : super(hex, piece, error);
+
+  @override
+  String toString() {
+    return "${super.toString()} with ${_color} color";
   }
 }

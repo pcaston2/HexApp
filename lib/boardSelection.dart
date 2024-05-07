@@ -105,10 +105,7 @@ class Boards extends State<BoardSelection> {
                           board: boards[index],
                           title: Text(boards[index].name),
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => BoardView(boards[index])),
-                            );
+                            pushBoard(context, boards, index);
                           }
                       )
                       );
@@ -116,6 +113,16 @@ class Boards extends State<BoardSelection> {
                 );
               }
             }));
+
+
   }
 
+  Future<void> pushBoard(BuildContext context, List<Board> boards, index) async {
+    var result = await Navigator.push( context, MaterialPageRoute(builder: (context) => BoardView(boards[index])));
+    if (result != null && result) {
+      if (boards.length > index +1) {
+        pushBoard(context, boards, ++index);
+      }
+    }
+  }
 }
