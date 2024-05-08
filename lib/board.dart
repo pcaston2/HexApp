@@ -31,7 +31,7 @@ const String BOARD_FILE_EXTENSION = "jhexboard";
 class Board {
   String name = "Board";
 
-  Color board = Color.from(Colors.white);
+  late bool completed;
 
   Map<Hex, List<Piece>> _map = new Map<Hex, List<Piece>>();
 
@@ -210,6 +210,7 @@ class Board {
   Board() : this.named("Board");
 
   Board.named(this.name) {
+    completed = false;
     _guid = Guid.newGuid;
     _size = 3;
     _mode = BoardMode.play;
@@ -348,6 +349,12 @@ class Board {
         return _map[h]!.any((Piece p) => p.runtimeType == piece.runtimeType);
       }
     }
+  }
+
+  Board clone() {
+    var board = Board.fromJson(toJson());
+    board._guid = Guid.newGuid;
+    return board;
   }
 
   List<MapEntry<Hex, Piece>> flatten() {

@@ -166,7 +166,7 @@ class _HexWidgetState extends State<BoardView> {
                           tooltip: 'Next',
                           child: const Icon(Icons.navigate_next_rounded),
                         ),
-                        visible: _gameState.value.board.isSuccess && _gameState.value.board.mode == BoardMode.play,
+                        visible: _gameState.value.board.completed && _gameState.value.board.mode == BoardMode.play,
                       ),
                 ]),
             drawer: _gameState.value.board.mode == BoardMode.play
@@ -448,6 +448,8 @@ class _HexWidgetState extends State<BoardView> {
                                     _gameState.value.pointer,
                                     clone)) {
                                   soundPlayer.play(audioSound.PANEL_FAILURE);
+                                } else {
+                                  _gameState.value.board.save();
                                 }
                                 setState(() => _gameState);
                               } else {
@@ -484,6 +486,11 @@ class _HexWidgetState extends State<BoardView> {
                                       if (_gameState.value.board.trySolve()) {
                                         soundPlayer
                                             .play(audioSound.PANEL_SUCCESS);
+                                        if (_gameState.value.board.completed == false) {
+                                          _gameState.value.board.completed =
+                                          true;
+                                          _gameState.value.board.save();
+                                        }
                                       } else {
                                         soundPlayer
                                             .play(audioSound.PANEL_FAILURE);

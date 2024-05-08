@@ -43,10 +43,10 @@ class Boards extends State<BoardSelection> {
                       TextButton(
                         child: Text('OK'),
                         onPressed: () {
-                          Board.createBoard(_textFieldController.text).then((Board value) {
+                          Board.createBoard(_textFieldController.text).then((Board newBoard) {
 
-                            value.save();
-                            _flow.boardPaths.add(value.guid);
+                            newBoard.save();
+                            _flow.boardPaths.add(newBoard.guid);
                             _flow.save().then((value) => setState(() {}));
                             final ScaffoldMessengerState scaffoldMessenger =
                             ScaffoldMessenger.of(context);
@@ -75,7 +75,6 @@ class Boards extends State<BoardSelection> {
                 //Text(flows.length.toString());
                 return ReorderableListView(
                     onReorder: (int oldIndex, int newIndex) {
-                      print("OLD: $oldIndex NEW: $newIndex");
                       if (newIndex > oldIndex) {
                         newIndex--;
                       }
@@ -92,13 +91,58 @@ class Boards extends State<BoardSelection> {
                       return Dismissible(
                           key: ValueKey(boards[index].name),
                           onDismissed: (direction) {
-                            _flow.boardPaths.removeAt(index);
-                            _flow.save().then((data) => setState(() {}));
+                            if (direction == DismissDirection.endToStart) {
+                              _flow.boardPaths.removeAt(index);
+                              _flow.save().then((data) => setState(() {}));
+                            }
                           },
-                          direction: DismissDirection.endToStart,
-                          background: Container(
+                          confirmDismiss: (DismissDirection direction) async {
+                            if (direction == DismissDirection.endToStart) {
+                              return await showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: const Text("Delete Board?"),
+                                    content: const Text(
+                                        "Are you sure you want to delete this board?"),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        child: Text('Heck no!'),
+                                        onPressed: () {
+                                          Navigator.of(context).pop(false);
+                                        },
+                                      ),
+                                      TextButton(
+                                          child: Text('You bet!'),
+                                          onPressed: () {
+                                            Navigator.of(context).pop(true);
+                                          })
+                                    ],
+                                  );
+                                },
+                              );
+                            } else {
+                              var newBoard = boards[index].clone();
+                              newBoard.name += " copy";
+                              newBoard.save();
+                              _flow.boardPaths.insert(index+1, newBoard.guid);
+                              _flow.save().then((value) => setState(() {}));
+                              final ScaffoldMessengerState scaffoldMessenger =
+                              ScaffoldMessenger.of(context);
+                              scaffoldMessenger.showSnackBar(SnackBar(
+                                  content: Text(
+                                      "Created a copy of ${boards[index].name}")));
+                              return false;
+                            }
+                          },
+                          direction: DismissDirection.horizontal,
+                          secondaryBackground: Container(
                             color: Colors.redAccent,
-                            child: Icon(Icons.remove_rounded)
+                            child: Icon(Icons.remove_rounded),
+                          ),
+                          background: Container(
+                            color: Colors.blueAccent,
+                            child: Icon(Icons.copy),
                           ),
                           child:
                           BoardTile(
