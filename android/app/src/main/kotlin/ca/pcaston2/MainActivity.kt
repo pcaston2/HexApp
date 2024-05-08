@@ -1,4 +1,4 @@
-package ca.my_first_flutter_app
+package ca.pcaston2.thex
 
 import io.flutter.embedding.android.FlutterActivity
 
