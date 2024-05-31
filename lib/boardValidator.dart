@@ -77,9 +77,7 @@ class BoardValidator {
     }
     var copyOfSequenceRules = _board.getPiece<SequenceRule>().map((e) => new MapEntry<Hex, SequenceRule>(e.key, e.value.clone() as SequenceRule)).toList();
     List<Hex> previousFaces = [];
-    var trailIndex = 0;
     for (var trail in _board.trail) {
-      trailIndex++;
       var dot = _board.getPiece<DotRule>().singleWhereOrNull((d) => d.key == trail);
       if (dot != null) {
         addColor(trail, dot.value);
@@ -105,12 +103,16 @@ class BoardValidator {
       var sequenceRules = copyOfSequenceRules.where((e) => currentFaces.contains(e.key));
       if (sequenceRules.isNotEmpty) {
         if (previousColors.isEmpty) {
-          for(var rule in sequenceRules) {
-            if (!previousFaces.contains(rule.key)) {
-              colorErrors.add(new BoardValidationError(rule.key, rule.value, BoardValidationErrorType.noColorAtSequence));
+            if (sequenceRules.every((r) => r.value.colors.every((c) => c == sequenceRules.first.value.colors.first))) {
+              previousColors.add(sequenceRules.first.value.colors.first);
+            } else {
+              for(var rule in sequenceRules) {
+                if (!previousFaces.contains(rule.key)) {
+                  colorErrors.add(new BoardValidationError(rule.key, rule.value, BoardValidationErrorType.differentColorOverlap));
+                }
+              }
             }
           }
-        } else {
           for(var sequenceRule in sequenceRules) {
             if (!previousFaces.contains(sequenceRule.key)) {
               if (!sequenceRule.value.colors.remove(previousColors.last)) {
@@ -118,7 +120,6 @@ class BoardValidator {
               }
             }
           }
-        }
       }
       previousFaces = currentFaces;
     }

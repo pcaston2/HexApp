@@ -478,6 +478,7 @@ class _HexWidgetState extends State<BoardView> {
                         },
                          */
                             onScaleEnd: (details) {
+                              print (_gameState.value.transform);
                               if (_gameState.value.board.mode ==
                                   BoardMode.play) {
                                 if (_gameState.value.board.hasEnded) {
@@ -548,7 +549,7 @@ class _HexWidgetState extends State<BoardView> {
                                 focalStart = details.focalPoint;
                                 setState(() {
                                    var transform = _gameState.value.transform;
-                                   print(transform);
+                                   //print(transform);
                                    var scaleX = transform.entry(0,0);
                                    var scaleY = transform.entry(1,1);
                                    var focal = details.localFocalPoint;

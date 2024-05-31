@@ -3,12 +3,10 @@ import 'dart:core';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_guid/flutter_guid.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'boardTheme.dart';
-import 'color.dart';
 import 'hex.dart';
 import 'piece.dart';
 
@@ -320,7 +318,7 @@ class Board {
           var color = (piece as SequenceRule).colors.single;
           SequenceRule existing = pieces.singleWhere((Piece p) =>
           p.runtimeType == SequenceRule) as SequenceRule;
-          if (existing.colors.length >= 5) {
+          if (existing.colors.length >= 3) {
             return false;
           } else {
             existing.colors.add(color);

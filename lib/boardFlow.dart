@@ -18,6 +18,8 @@ class BoardFlow {
   @JsonKey(includeFromJson: false, includeToJson: false)
   late Guid _guid;
 
+  late bool completed;
+
   String get guid {
     return _guid.value;
   }
@@ -33,6 +35,7 @@ class BoardFlow {
   BoardFlow.named(this.name)
   {
     _guid = Guid.newGuid;
+    completed = false;
   }
 
   factory BoardFlow.fromJson(Map<String, dynamic> json) => _$BoardFlowFromJson(json);
