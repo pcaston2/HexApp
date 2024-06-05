@@ -1,12 +1,7 @@
 part of 'main.dart';
 
-Offset focalStart = Offset.zero;
-Offset localFocalStart = Offset.zero;
 
-get screenSize => Offset(
-    hexWidth * maxBoardSize * 2 * 1.25, hexHeight * maxBoardSize * 2 * 1.25);
 
-get screenCenter => Offset(screenSize.dx / 2, screenSize.dy / 2);
 
 class GameState {
   Board board = Board.sample();
@@ -24,7 +19,10 @@ class GameState {
 
 bool tracing = false;
 
+Point traceOffset = Point.origin();
+
 class BoardView extends StatefulWidget {
+
 
   final Board _board;
 
@@ -36,6 +34,10 @@ class BoardView extends StatefulWidget {
 
 class _HexWidgetState extends State<BoardView> {
   late ValueNotifier<GameState> _gameState;
+
+  late HexPainter painter;
+
+
   SoundPlayer soundPlayer = SoundPlayer();
 
   @override
@@ -407,20 +409,42 @@ class _HexWidgetState extends State<BoardView> {
                       ],
                     ),
                   ),
-            body: OverflowBox(
-                maxHeight: screenSize.dy,
-                maxWidth: screenSize.dx,
-                child: SizedBox.expand(
-                    child: Transform(
-                        transform: _gameState.value.transform,
-                        transformHitTests: true,
-                        child: GestureDetector(
+            body: Container(
+                decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      stops: [
+                        0.4,
+                        0.5,
+                        0.6,
+                      ],
+                      colors: [
+                        _gameState.value.board.theme.background.value,
+                        _gameState.value.board.theme.background.darken(10).value,
+                        _gameState.value.board.theme.background.value,
+                      ],
+                    )),
+                child:Center(
+                child: AspectRatio(
+              aspectRatio: hexHeight / hexWidth,
+              child: FittedBox(
+                    alignment: Alignment.center,
+                    fit: BoxFit.contain,
+                    child: SizedBox(
+                      width: _gameState.value.board.screenSize.x,
+                      height: _gameState.value.board.screenSize.y,
+                      child:
+                          GestureDetector(
+                            trackpadScrollCausesScale: true,
                             behavior: HitTestBehavior.translucent,
                             onLongPressEnd: (details) {},
                             onTapUp: (details) {
                               var p = Point(
-                                  details.localPosition.dx - screenCenter.dx,
-                                  details.localPosition.dy - screenCenter.dy);
+                                  details.localPosition.dx,
+                                  details.localPosition.dy);
+                              p -= _gameState.value.board.screenCenter;
+                              print(p);
                               var h = Hex.getHexPartFromPoint(p);
                               if (_gameState.value.board.mode ==
                                   BoardMode.designer) {
@@ -499,33 +523,50 @@ class _HexWidgetState extends State<BoardView> {
                                     });
                                     tracing = false;
                                   }
+                                } else {
+                                  tracing = false;
+                                  _gameState.value.board.resetTrail();
+                                  soundPlayer.play(audioSound.TRACING_END);
+                                  setState(() => {});
                                 }
                               }
                             },
                             onScaleStart: (details) {
-                              focalStart = details.focalPoint;
-                              localFocalStart = details.localFocalPoint;
                               if (_gameState.value.board.mode ==
                                   BoardMode.play) {
                                 var p = Point(
-                                    details.localFocalPoint.dx -
-                                        screenCenter.dx,
-                                    details.localFocalPoint.dy -
-                                        screenCenter.dy);
-                                var h = Hex.getHexPartFromPoint(p);
-                                if (_gameState.value.board.isEnd(h)) {
-                                  tracing = true;
-                                } else if (_gameState.value.board.isStart(h)) {
-                                  _gameState.value.board.startAt(h);
-                                  soundPlayer.play(audioSound.TRACING_START);
-                                  if (tracing) {
-                                    soundPlayer.play(audioSound.TRACING_END);
+                                    details.localFocalPoint.dx,
+                                    details.localFocalPoint.dy);
+                                p -= _gameState.value.board.screenCenter;
+                                //var h = Hex.getHexPartFromPoint(p);
+                                var h = Hex.getClosestFromPoint(p, _gameState.value.board.getPiece<StartPiece>());
+                                if (h != null) {
+                                  traceOffset = h!.localPoint - p;
+                                  if (traceOffset.magnitude < 50) {
+                                    if (_gameState.value.board.isEnd(h)) {
+                                      tracing = true;
+                                    } else
+                                    if (_gameState.value.board.isStart(h)) {
+                                      _gameState.value.board.startAt(h);
+                                      soundPlayer.play(
+                                          audioSound.TRACING_START);
+                                      if (tracing) {
+                                        soundPlayer.play(
+                                            audioSound.TRACING_END);
+                                      }
+                                      tracing = true;
+                                    } else if (_gameState.value.board.isTail(h)) {
+                                      tracing = true;
+                                    } else {
+                                      tracing = false;
+                                    }
+                                  } else {
+                                    if (_gameState.value.board.isTail(h)) {
+                                      tracing = true;
+                                    } else {
+                                      tracing = false;
+                                    }
                                   }
-                                  tracing = true;
-                                } else if (_gameState.value.board.isTail(h)) {
-                                  tracing = true;
-                                } else {
-                                  tracing = false;
                                 }
                               }
                               setState(() {});
@@ -542,49 +583,18 @@ class _HexWidgetState extends State<BoardView> {
                               }
                             },
                             onScaleUpdate: (details) {
-                              if (!_gameState.value.board.hasStarted ||
-                                  !tracing) {
-                                var offsetDelta =
-                                    details.focalPoint - focalStart;
-                                focalStart = details.focalPoint;
-                                setState(() {
-                                   var transform = _gameState.value.transform;
-                                   //print(transform);
-                                   var scaleX = transform.entry(0,0);
-                                   var scaleY = transform.entry(1,1);
-                                   var focal = details.localFocalPoint;
-                                   transform.translate(focal.dx, focal.dy);
-                                   var scale = details.scale;
-                                   transform.scale(scale / scaleX, scale / scaleY);
-                                   //transform.rotateZ(details.rotation / 180);
-                                   transform.translate(-focal.dx, -focal.dy);
-
-                                  //var current = transform.getTranslation();
-                                  //transform.translate(-current.x, -current.y);
-
-                                  // transform.scale(
-                                  //     1 - (1 - details.scale) / 150.0,
-                                  //     1 - (1 - details.scale) / 150.0
-                                  // );
-                                  //transform.rotateZ(details.rotation / 90);
-                                  //transform.translate(-focal.dx, -focal.dy);
-                                  //transform.translate(current.x, current.y);
-                                  transform.translate(
-                                      offsetDelta.dx * scale, offsetDelta.dy * scale);
-                                });
-                              } else {
                                 var p = Point(
-                                    details.localFocalPoint.dx -
-                                        screenCenter.dx,
-                                    details.localFocalPoint.dy -
-                                        screenCenter.dy);
+                                    details.localFocalPoint.dx,
+                                    details.localFocalPoint.dy);
+                                p -= _gameState.value.board.screenCenter;
+                                p += traceOffset;
                                 var h = Hex.getHexPartFromPoint(p);
                                 if (_gameState.value.board.moveTo(h)) {
                                   setState(() => _gameState.value.board);
                                 }
-                              }
                             },
-                            child: CustomPaint(
-                                painter: HexPainter(_gameState.value))))))));
+                            child:
+                            CustomPaint(
+                                painter: HexPainter(_gameState.value))))))))));
   }
 }

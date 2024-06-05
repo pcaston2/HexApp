@@ -5,12 +5,13 @@ class HexPainter extends CustomPainter {
 
   GameState _gameState;
   HexPainter(this._gameState);
+
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.clipRect(new Rect.fromLTWH(0, 0, screenSize.dx, screenSize.dy));
-    Point center = Point(screenCenter.dx, screenCenter.dy);
+    //canvas.clipRect(new Rect.fromLTWH(0, 0, size.width, size.height));
+    Point center = Point(size.width / 2, size.height / 2);
     BoardTheme _theme = _gameState.board.theme;
-    paintFill(canvas, size, _theme);
+    //paintFill(canvas, size, _theme);
 
     drawBoard(center, canvas, _theme);
     var entries = _gameState.board.flatten();
@@ -228,8 +229,8 @@ class HexPainter extends CustomPainter {
     List<Offset> boardOffset = <Offset>[];
     var vertexes = vertex.values;
     vertexes.forEach((Point p) => boardOffset.add(Offset(
-        center.x + p.x * 2 * _gameState.board.size,
-        center.y + p.y * 2 * (_gameState.board.size))));
+        center.x + p.y * 2 * _gameState.board.size,
+        center.y + p.x * 2 * (_gameState.board.size))));
     var boardPath = Path();
     boardPath.addPolygon(boardOffset, true);
     final boardFillPaint = Paint()
@@ -285,9 +286,9 @@ class HexPainter extends CustomPainter {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            theme.background.value,
-            theme.background.darken(10).value,
-            theme.background.value,
+            theme.background.brighten(5).value,
+            theme.background.darken(5).value,
+            theme.background.brighten(5).value,
           ],
           stops: [
             0.4,

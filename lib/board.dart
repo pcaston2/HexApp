@@ -74,6 +74,12 @@ class Board {
 
   late BoardMode _mode;
 
+  get screenSize => Point(
+      hexHeight * size * 2 * 1.10,
+      hexWidth * size * 2 * 1.10
+  );
+  get screenCenter => Point(screenSize.x / 2, screenSize.y / 2);
+
   @JsonKey(includeFromJson: false, includeToJson: false)
   BoardMode get mode {
     return _mode;

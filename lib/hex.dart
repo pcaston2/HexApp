@@ -1,4 +1,6 @@
 import 'dart:math';
+import 'package:hex_game/piece.dart';
+
 import 'math.dart' as math;
 import 'package:vector_math/vector_math.dart';
 
@@ -12,12 +14,10 @@ part 'point.dart';
 part 'hex.g.dart';
 
 
-
-
-
+const sqrtOf3 = 1.732;
 const double hexSize = 50.0;
-get hexWidth => hexSize * 2;
-get hexHeight => math.sqrt(3) * hexSize;
+const hexWidth = hexSize * 2;
+const hexHeight = sqrtOf3 * hexSize;
 
 Map<VertexDirection, Point> get vertex => {
       VertexDirection.East: new Point(hexWidth / 2.0, 0.0),
@@ -89,6 +89,8 @@ class Hex {
 
   Point get midpoint => Point.origin();
 
+  Point get localPoint => new Point(point.x + midpoint.x, point.y - midpoint.y);
+
   List<Edge> get edges {
     return [
       Edge.from(EdgeDirection.NorthEast, this),
@@ -110,6 +112,24 @@ class Hex {
     return ((q).abs()
         + (q + r).abs()
         + (r).abs()) / 2;
+  }
+
+  static Hex? getClosestFromPoint(Point p, List<MapEntry<Hex, StartPiece>> pieces) {
+    if (pieces.isEmpty) {
+      return null;
+    }
+    var closest = pieces.first;
+    print("Point: ${p}");
+    for(var piece in pieces) {
+      print("Piece: ${piece.key.localPoint}");
+      var currDistance = Point(-(piece.key.localPoint.x-p.x),piece.key.localPoint.y-p.y).magnitude;
+      var bestDistance = Point(-(closest.key.localPoint.x-p.x),closest.key.localPoint.y-p.y).magnitude;
+      print(bestDistance);
+      if (currDistance < bestDistance) {
+        closest = piece;
+      }
+    }
+    return closest.key;
   }
 
   static Hex getHexPartFromPoint(Point p) {

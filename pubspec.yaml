@@ -29,7 +29,7 @@ dependencies:
   vector_math: any
   path_provider:
   flutter_guid: ^0.3.1
-  flutter_colorpicker: ^1.0.3
+  flutter_colorpicker: ^1.1.0
   collection: ^1.14.13
 
 
