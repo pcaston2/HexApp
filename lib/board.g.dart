@@ -13,6 +13,7 @@ Board _$BoardFromJson(Map<String, dynamic> json) => Board()
       .map((e) => HexPieceEntry.fromJson(e as Map<String, dynamic>))
       .toList()
   ..theme = BoardTheme.fromJson(json['theme'] as Map<String, dynamic>)
+  ..tutorial = json['tutorial'] as bool
   ..size = json['size'] as int
   ..guid = json['guid'] as String;
 
@@ -21,6 +22,7 @@ Map<String, dynamic> _$BoardToJson(Board instance) => <String, dynamic>{
       'completed': instance.completed,
       'map': instance.map.map((e) => e.toJson()).toList(),
       'theme': instance.theme.toJson(),
+      'tutorial': instance.tutorial,
       'size': instance.size,
       'guid': instance.guid,
     };

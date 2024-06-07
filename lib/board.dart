@@ -53,6 +53,8 @@ class Board {
 
   bool _finished = false;
 
+  bool tutorial = true;
+
   int get size {
     return _size;
   }
