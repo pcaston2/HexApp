@@ -96,24 +96,32 @@ class BoardValidator {
       var currentFaces = trail.faces;
       var sequenceRules = copyOfSequenceRules.where((e) => currentFaces.contains(e.key));
       if (sequenceRules.isNotEmpty) {
+        //add if empty, or error
         if (previousColors.isEmpty) {
-            if (sequenceRules.every((r) => r.value.colors.every((c) => c == sequenceRules.first.value.colors.first))) {
-              previousColors.add(sequenceRules.first.value.colors.first);
-            } else {
-              for(var rule in sequenceRules) {
-                if (!previousFaces.contains(rule.key)) {
-                  colorErrors.add(new BoardValidationError(rule.key, rule.value, BoardValidationErrorType.differentColorOverlap));
-                }
+          if (sequenceRules.every((r) => r.value.colors.every((c) => c ==
+              sequenceRules.first.value.colors.first))) {
+            previousColors.add(sequenceRules.first.value.colors.first);
+          } else {
+            for (var rule in sequenceRules) {
+              if (!previousFaces.contains(rule.key)) {
+                colorErrors.add(new BoardValidationError(rule.key, rule.value,
+                    BoardValidationErrorType.differentColorOverlap));
               }
             }
           }
-          for(var sequenceRule in sequenceRules) {
+        }
+        if (!previousColors.isEmpty) {
+          for (var sequenceRule in sequenceRules) {
             if (!previousFaces.contains(sequenceRule.key)) {
               if (!sequenceRule.value.colors.remove(previousColors.last)) {
-                colorErrors.add(new BoardValidationColorError(sequenceRule.key, sequenceRule.value, BoardValidationErrorType.colorNotInSequence, previousColors.last));
+                colorErrors.add(new BoardValidationColorError(
+                    sequenceRule.key, sequenceRule.value,
+                    BoardValidationErrorType.colorNotInSequence,
+                    previousColors.last));
               }
             }
           }
+        }
       }
       previousFaces = currentFaces;
     }
@@ -161,14 +169,12 @@ class BoardValidator {
       List<Vertex> corners = new List<Vertex>.from(edge.vertices);
       int expected = cornerRule.count;
       int traversed = corners.where((Vertex v) => _board.trail.contains(v)).toList().length;
-      if (traversed == expected) {
-      } else {
-        corners.forEach((Vertex v) => cornerErrors.add(BoardValidationError(
-          v,
-          cornerRule,
-          traversed < expected
-            ? BoardValidationErrorType.cornerNotTraversed
-              : BoardValidationErrorType.tooManyCorners)));
+      if (traversed != expected) {
+        cornerErrors.add(BoardValidationError(
+          edge,cornerRule, traversed < expected ?
+            BoardValidationErrorType.cornerNotTraversed :
+            BoardValidationErrorType.tooManyCorners
+        ));
       }
     }
     return cornerErrors;
@@ -190,11 +196,6 @@ class BoardValidator {
             uncovered.add(entry);
           }
         }
-        // for (Hex h in _board.trail) {
-        //   if (_board.hasPieceAt(h, DotRule())) {
-        //     coveredDotCount++;
-        //   }
-        // }
 
         int coveredDotCount = covered.length;
         if (coveredDotCount > 1) {
@@ -206,21 +207,6 @@ class BoardValidator {
               (MapEntry<Hex, DotRule> entry) => BoardValidationError(entry.key,
                   entry.value, BoardValidationErrorType.dotNotCovered)));
         }
-
-        // dotPieces.forEach((MapEntry<Hex, Piece> e) {
-        //   if (coveredDotCount > 1) {
-        //     if (_board.trail.contains(e.key)) {
-        //       dotErrors.add(BoardValidationError(
-        //           e.key, e.value, BoardValidationErrorType.tooManyDots));
-        //     }
-        //   } else {
-        //     if (!_board.trail.contains(e.key)) {
-        //       dotErrors.add(BoardValidationError(
-        //           e.key, e.value, BoardValidationErrorType.dotNotCovered));
-        //     }
-        //   }
-        // });
-        // }
       }
     }
 
@@ -256,11 +242,11 @@ class BoardValidationError {
 }
 
 class BoardValidationColorError extends BoardValidationError {
-  late RuleColorIndex _color;
-  BoardValidationColorError(Hex hex, Piece piece, BoardValidationErrorType error, this._color) : super(hex, piece, error);
+  late RuleColorIndex color;
+  BoardValidationColorError(Hex hex, Piece piece, BoardValidationErrorType error, this.color) : super(hex, piece, error);
 
   @override
   String toString() {
-    return "${super.toString()} with ${_color} color";
+    return "${super.toString()} with ${color} color";
   }
 }

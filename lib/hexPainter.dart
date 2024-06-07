@@ -33,9 +33,10 @@ class HexPainter extends CustomPainter {
     }
 
     for (var entry in entries) {
-      var errors = _gameState.board.errors.where((BoardValidationError e) => e.hex == entry.key && e.piece == entry.value).toList();
       var hex = entry.key;
       var piece = entry.value;
+      var errors = _gameState.board.errors.where((BoardValidationError e) => e.hex == hex && e.piece.runtimeType == piece.runtimeType).toList();
+
       if (piece is PathPiece) {
         drawPathPiece(hex, center, canvas, _theme);
       } else if (piece is BreakPiece) {
@@ -45,13 +46,13 @@ class HexPainter extends CustomPainter {
       } else if (piece is EndPiece) {
         drawEndPiece(hex, center, canvas, _theme);
       } else if (piece is DotRule) {
-        drawDotRule(hex, center, canvas, piece, _theme, errorPulse);
+        drawDotRule(hex, center, canvas, piece, _theme, errorPulse, errors);
       } else if (piece is SequenceRule) {
-        drawColorRule(hex, center, canvas, piece, _theme, errorPulse);
+        drawColorRule(hex, center, canvas, piece, _theme, errorPulse, errors);
       } else if (piece is EdgeRule) {
-        drawEdgeRule(hex, center, canvas, piece, _theme, errorPulse);
+        drawEdgeRule(hex, center, canvas, piece, _theme, errorPulse, errors);
       } else if (piece is CornerRule) {
-        drawCornerRule(hex, center, canvas, piece, _theme, errorPulse);
+        drawCornerRule(hex, center, canvas, piece, _theme, errorPulse, errors);
       } else {
         drawErrorPiece(hex, center, piece, canvas);
       }
@@ -152,8 +153,7 @@ class HexPainter extends CustomPainter {
     canvas.drawPath(path, startPaint);
   }
 
-  void drawColorRule(Hex hex, Point center, Canvas canvas, SequenceRule colorRule, BoardTheme theme, double errorPulse) {
-
+  void drawColorRule(Hex hex, Point center, Canvas canvas, SequenceRule colorRule, BoardTheme theme, double errorPulse, List<BoardValidationError> errors) {
     var colorOffset = 0;
     for (var color in colorRule.colors) {
       var colorPaint = Paint()
@@ -178,32 +178,39 @@ class HexPainter extends CustomPainter {
       colorOffset++;
     }
 
-    if (errorPulse != 0) {
+    if (errorPulse != 0 && errors.isNotEmpty) {
       final errorPaint = Paint()
         ..color = (errorPulse < 0 ? Colors.black : Colors.red).withOpacity(errorPulse.abs())
         ..strokeWidth = 2;
       var colorOffset = 0;
       for (var color in colorRule.colors) {
-        for (var vertex in Hex
-            .origin()
-            .vertexOffsets) {
-          Point direction = vertex / 6.0;
-          Point rotationA = direction.rotate(120);
-          Point rotationB = direction.rotate(-120);
-          var corner = new Offset(
-              center.x + hex.point.x + hex.midpoint.x + vertex.x * 0.75 * (1 - colorOffset*0.08),
-              center.y + hex.point.y - hex.midpoint.y - vertex.y * 0.75 * (1 - colorOffset*0.08));
-          canvas.drawLine(
-              corner, corner + Offset(rotationA.x, -rotationA.y), errorPaint);
-          canvas.drawLine(
-              corner, corner + Offset(rotationB.x, -rotationB.y), errorPaint);
+        if (
+        errors.any((e) => e.runtimeType == BoardValidationError) ||
+        errors.whereType<BoardValidationColorError>().any((e) => e.color == color)
+        ) {
+          for (var vertex in Hex
+              .origin()
+              .vertexOffsets) {
+            Point direction = vertex / 6.0;
+            Point rotationA = direction.rotate(120);
+            Point rotationB = direction.rotate(-120);
+            var corner = new Offset(
+                center.x + hex.point.x + hex.midpoint.x +
+                    vertex.x * 0.75 * (1 - colorOffset * 0.08),
+                center.y + hex.point.y - hex.midpoint.y -
+                    vertex.y * 0.75 * (1 - colorOffset * 0.08));
+            canvas.drawLine(
+                corner, corner + Offset(rotationA.x, -rotationA.y), errorPaint);
+            canvas.drawLine(
+                corner, corner + Offset(rotationB.x, -rotationB.y), errorPaint);
+          }
+          colorOffset++;
         }
-        colorOffset++;
       }
     }
   }
 
-  void drawDotRule(Hex hex, Point center, Canvas canvas, DotRule dotRule, BoardTheme theme, double errorPulse) {
+  void drawDotRule(Hex hex, Point center, Canvas canvas, DotRule dotRule, BoardTheme theme, double errorPulse, List<BoardValidationError> errors) {
     final startPaint = Paint()
       ..color = theme.ruleColors[dotRule.color]!.value
       ..style = PaintingStyle.fill;
@@ -219,7 +226,7 @@ class HexPainter extends CustomPainter {
     //hex.vertices.forEach((Point p) => pieceOffset.add(new Offset(hex.point.x + hex.midpoint.x + p.x, hex.point.y + hex.midpoint.y - p.y)));
     canvas.drawPath(path, startPaint);
 
-    if (errorPulse != 0) {
+    if (errorPulse != 0 && errors.isNotEmpty) {
       final errorPaint = Paint()
           ..color = (errorPulse < 0 ? Colors.black : Colors.red).withOpacity(errorPulse.abs());
           canvas.drawPath(path, errorPaint);
@@ -227,7 +234,7 @@ class HexPainter extends CustomPainter {
   }
 
   void drawEdgeRule(
-      Hex hex, Point center, Canvas canvas, EdgeRule edgeRule, BoardTheme theme, double errorPulse) {
+      Hex hex, Point center, Canvas canvas, EdgeRule edgeRule, BoardTheme theme, double errorPulse, List<BoardValidationError> errors) {
     final edgePaint = Paint()
       ..color = theme.ruleColors[edgeRule.color]!.value
       ..strokeWidth = 3
@@ -257,7 +264,7 @@ class HexPainter extends CustomPainter {
               center.y + hex.point.y + m.y * 0.6 + centerOffset.y),
           edgePaint);
     }
-    if (errorPulse != 0) {
+    if (errorPulse != 0 && errors.isNotEmpty) {
       final errorPaint = Paint()
         ..color = (errorPulse < 0 ? Colors.black : Colors.red).withOpacity(errorPulse.abs())
         ..strokeWidth = 3;
@@ -288,7 +295,7 @@ class HexPainter extends CustomPainter {
     }
   }
 
-  void drawCornerRule(Hex hex, Point center, Canvas canvas, CornerRule cornerRule, BoardTheme theme, double errorPulse) {
+  void drawCornerRule(Hex hex, Point center, Canvas canvas, CornerRule cornerRule, BoardTheme theme, double errorPulse, List<BoardValidationError> errors) {
     final cornerPaint = Paint()
       ..color = theme.ruleColors[cornerRule.color]!.value
       ..strokeWidth = 3
@@ -300,7 +307,7 @@ class HexPainter extends CustomPainter {
       ), 9+i*5, cornerPaint);
     }
 
-    if (errorPulse != 0) {
+    if (errorPulse != 0 && errors.isNotEmpty) {
       final errorPaint = Paint()
         ..color = (errorPulse < 0 ? Colors.black : Colors.red).withOpacity(
             errorPulse.abs())
