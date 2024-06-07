@@ -32,7 +32,7 @@ class SoundPlayer {
 
     String fileName = audioFiles[sound]!;
     return;
-    //if (kIsWeb) {
+    //TODO: turn this back on
     try {
       audioPlayer.play(AssetSource(fileName));
     } catch (ex) {

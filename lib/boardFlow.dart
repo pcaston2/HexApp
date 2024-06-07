@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_guid/flutter_guid.dart';
+import 'package:hex_game/boardTheme.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -90,5 +91,13 @@ class BoardFlow {
       }
     }
     return flows;
+  }
+
+  Future<void> applyThemeToAll(BoardTheme theme) async {
+    var boards = await this.boards;
+    for (var board in boards) {
+      board.theme = theme;
+      await board.save();
+    }
   }
 }

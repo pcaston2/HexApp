@@ -5,6 +5,7 @@ part of 'main.dart';
 
 class GameState {
   Board board = Board.sample();
+  BoardFlow flow = BoardFlow();
   Hex pointer = Hex.origin();
   Piece piece = PathPiece();
   BoardAnimation boardAnimation = new BoardAnimation();
@@ -19,11 +20,12 @@ class BoardView extends StatefulWidget {
 
 
   final Board _board;
+  final BoardFlow _flow;
 
-  BoardView(this._board) : super();
+  BoardView(this._board, this._flow) : super();
 
   @override
-  _HexWidgetState createState() => _HexWidgetState(_board);
+  _HexWidgetState createState() => _HexWidgetState(_board, _flow);
 }
 
 class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
@@ -105,6 +107,9 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
           errorController.reset();
           _gameState.value.boardAnimation.error = 0;
           errorController.value = 0;
+          if (!tracing) {
+            _gameState.value.board.resetTrail();
+          }
           setState(() {});
         }
       });
@@ -129,12 +134,17 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
   @override
   void dispose() {
     _gameState.dispose();
+    pulseController.dispose();
+    fadeController.dispose();
+    errorController.dispose();
+    beckonController.dispose();
     super.dispose();
   }
 
-  _HexWidgetState(Board board) {
+  _HexWidgetState(Board board, BoardFlow flow) {
     _gameState = ValueNotifier<GameState>(GameState());
     _gameState.value.board = board;
+    _gameState.value.flow = flow;
   }
 
   void _choosePiece(
@@ -298,6 +308,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                     onPressed: () {
                                       setState(
                                           () => _gameState.value.board.size--);
+                                      _gameState.value.board.save();
                                     },
                                     icon: Icon(Icons.remove_rounded)),
                                 title: Text(
@@ -306,6 +317,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                     onPressed: () {
                                       setState(
                                           () => _gameState.value.board.size++);
+                                      _gameState.value.board.save();
                                     },
                                     icon: Icon(Icons.add_rounded)),
                               ),
@@ -422,6 +434,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                                           .clear();
                                                       Navigator.of(context)
                                                           .pop();
+                                                      _gameState.value.board.save();
                                                     })
                                               ],
                                             ));
@@ -435,24 +448,39 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                   color:
                                       _gameState.value.board.theme.foreground,
                                   title: "Foreground",
-                                  onSelect: () => setState(() {})),
+                                  onSelect: () {
+                                    setState(() {});
+                                    _gameState.value.board.save();
+                                  }),
                               ColorTile(context,
                                   color:
                                       _gameState.value.board.theme.background,
                                   title: "Background",
-                                  onSelect: () => setState(() {})),
+                                  onSelect: () {
+                                    setState(() {});
+                                    _gameState.value.board.save();
+                                  }),
                               ColorTile(context,
                                   color: _gameState.value.board.theme.border,
                                   title: "Border",
-                                  onSelect: () => setState(() {})),
+                                  onSelect: () {
+                                    setState(() {});
+                                    _gameState.value.board.save();
+                                  }),
                               ColorTile(context,
                                   color: _gameState.value.board.theme.path,
                                   title: "Path",
-                                  onSelect: () => setState(() {})),
+                                  onSelect: () {
+                                    setState(() {});
+                                    _gameState.value.board.save();
+                                  }),
                               ColorTile(context,
                                   color: _gameState.value.board.theme.trail,
                                   title: "Trail",
-                                  onSelect: () => setState(() {})),
+                                  onSelect: () {
+                                    setState(() {});
+                                    _gameState.value.board.save();
+                                  }),
                               ExpansionTile(
                                   title: Text("Rule Colors"),
                                   leading: Icon(Icons.colorize_rounded),
@@ -461,28 +489,86 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                         color: _gameState.value.board.theme
                                             .ruleColors[RuleColorIndex.First]!,
                                         title: "First",
-                                        onSelect: () => setState(() {})),
+                                        onSelect: () {
+                                          setState(() {});
+                                          _gameState.value.board.save();
+                                        }),
                                     ColorTile(context,
                                         color: _gameState.value.board.theme
                                             .ruleColors[RuleColorIndex.Second]!,
                                         title: "Second",
-                                        onSelect: () => setState(() {})),
+                                        onSelect: () {
+                                          setState(() {});
+                                          _gameState.value.board.save();
+                                        }),
                                     ColorTile(context,
                                         color: _gameState.value.board.theme
                                             .ruleColors[RuleColorIndex.Third]!,
                                         title: "Third",
-                                        onSelect: () => setState(() {})),
+                                        onSelect: () {
+                                          setState(() {});
+                                          _gameState.value.board.save();
+                                        }),
                                     ColorTile(context,
                                         color: _gameState.value.board.theme
                                             .ruleColors[RuleColorIndex.Fourth]!,
                                         title: "Fourth",
-                                        onSelect: () => setState(() {})),
+                                        onSelect: () {
+                                          setState(() {});
+                                          _gameState.value.board.save();
+                                        }),
                                     ColorTile(context,
                                         color: _gameState.value.board.theme
                                             .ruleColors[RuleColorIndex.Fifth]!,
                                         title: "Fifth",
-                                        onSelect: () => setState(() {})),
-                                  ])
+                                        onSelect: () {
+                                          setState(() {});
+                                          _gameState.value.board.save();
+                                        }),
+                                  ]),
+                              ListTile(
+                                  title: Text("Apply Theme To Flow"),
+                                  leading: Icon(Icons.content_copy_rounded),
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) =>
+                                            AlertDialog(
+                                              title: Text('Apply Theme to Flow?'),
+                                              content: SingleChildScrollView(
+                                                child: ListBody(
+                                                  children: [
+                                                    Text(
+                                                        'This will overwrite all board themes in this flow with the current theme.'),
+                                                    Text(
+                                                        'Are you sure you want to apply this theme to all boards in the flow?'),
+                                                  ],
+                                                ),
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  child: Text('Heck no!'),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                ),
+                                                TextButton(
+                                                  child: Text('You bet!'),
+                                                  onPressed: () async {
+                                                    await _gameState.value.flow.applyThemeToAll(_gameState.value.board.theme).then((value) {
+                                                      final ScaffoldMessengerState
+                                                      scaffoldMessenger =
+                                                      ScaffoldMessenger.of(context);
+                                                      scaffoldMessenger.showSnackBar(
+                                                          SnackBar(content: Text("Theme has been applied!")));
+                                                      setState(() {});
+                                                    });
+                                                    Navigator.of(context).pop();
+                                                  })
+                                              ],
+                                            ));
+                                  }),
                             ]),
                       ],
                     ),

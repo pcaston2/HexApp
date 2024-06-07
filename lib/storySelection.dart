@@ -76,7 +76,7 @@ class Stories extends State<StorySelection> {
                         story: stories[index],
                         title: Text(stories[index].name),
                         onTap: () async {
-                          var result = await Navigator.push(
+                          await Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => FlowSelection(stories[index])),
                           );

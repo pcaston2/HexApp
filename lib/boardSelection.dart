@@ -152,7 +152,7 @@ class Boards extends State<BoardSelection> {
                             board: boards[index],
                             title: Text(boards[index].name),
                             onTap: () {
-                              pushBoard(context, boards, index);
+                              pushBoard(context, boards, index, _flow);
                             }
                         )
                         );
@@ -164,14 +164,14 @@ class Boards extends State<BoardSelection> {
 
   }
 
-  Future<void> pushBoard(BuildContext context, List<Board> boards, index) async {
-    var result = await Navigator.push( context, MaterialPageRoute(builder: (context) => BoardView(boards[index])));
+  Future<void> pushBoard(BuildContext context, List<Board> boards,int index, BoardFlow flow) async {
+    var result = await Navigator.push( context, MaterialPageRoute(builder: (context) => BoardView(boards[index], flow)));
     if (result != null && result) {
       if (boards.every((b) => b.completed)) {
         Navigator.pop(context, true);
       }
       if (boards.length > index +1) {
-        pushBoard(context, boards, ++index);
+        pushBoard(context, boards, ++index, flow);
       }
     }
   }
