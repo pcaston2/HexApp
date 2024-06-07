@@ -12,8 +12,6 @@ void main() {
   group('Json Tests', () {
     test('Should lighten a color', () {
       Color a = Color();
-      print(a.hexCode);
-      print(a.darken().hexCode);
     });
   });
 }

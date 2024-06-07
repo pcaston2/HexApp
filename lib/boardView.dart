@@ -7,14 +7,8 @@ class GameState {
   Board board = Board.sample();
   Hex pointer = Hex.origin();
   Piece piece = PathPiece();
+  BoardAnimation boardAnimation = new BoardAnimation();
   RuleColorIndex ruleColor = RuleColorIndex.First;
-  Matrix4 transform = defaultTransform();
-
-  static Matrix4 defaultTransform() {
-    var transform = Matrix4.identity();
-    transform.setEntry(3,3, 1.0);
-    return transform;
-  }
 }
 
 bool tracing = false;
@@ -32,7 +26,7 @@ class BoardView extends StatefulWidget {
   _HexWidgetState createState() => _HexWidgetState(_board);
 }
 
-class _HexWidgetState extends State<BoardView> {
+class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
   late ValueNotifier<GameState> _gameState;
 
   late HexPainter painter;
@@ -40,9 +34,96 @@ class _HexWidgetState extends State<BoardView> {
 
   SoundPlayer soundPlayer = SoundPlayer();
 
+  late Animation<double> beckon;
+  late AnimationController beckonController;
+
+  late Animation<double> pulse;
+  late AnimationController pulseController;
+
+  late Animation<double> fade;
+  late AnimationController fadeController;
+
+  late Animation<double> error;
+  late AnimationController errorController;
+
+
+
   @override
   void initState() {
     super.initState();
+
+    beckonController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 6),
+    );
+    Tween<double> growTween = Tween(begin: 0, end: 1);
+    beckon = growTween.animate(beckonController)
+      ..addListener(() {
+        _gameState.value.boardAnimation.beckon = beckon.value;
+        setState(() {});
+      })
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          beckonController.repeat();
+        } else if (status == AnimationStatus.dismissed) {
+          beckonController.forward();
+        }
+      });
+    beckonController.forward();
+
+    pulseController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 250),
+    );
+    Tween<double> pulseTween = Tween(begin: -1, end: 1);
+    pulse = pulseTween.animate(pulseController)
+      ..addListener(() {
+        _gameState.value.boardAnimation.pulse = pulse.value;
+        setState(() {});
+      })
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          pulseController.repeat(reverse: true);
+        } else if (status == AnimationStatus.dismissed) {
+          pulseController.forward();
+        }
+      });
+    pulseController.forward();
+
+    fadeController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 5),
+    );
+    Tween<double> fadeTween = Tween(begin: 1, end: 0);
+    fade = fadeTween.animate(fadeController)
+      ..addListener(() {
+        _gameState.value.boardAnimation.fade = fade.value;
+        setState(() {});
+      })
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          errorController.reset();
+          _gameState.value.boardAnimation.error = 0;
+          errorController.value = 0;
+          setState(() {});
+        }
+      });
+
+    errorController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds:500),
+    );
+    Tween<double> errorTween = Tween(begin:-1,end:1);
+    error = errorTween.animate(errorController)
+      ..addListener(() {
+        _gameState.value.boardAnimation.error = error.value;
+        setState(() {});
+      })
+     ..addStatusListener((status) {
+       if (status == AnimationStatus.completed) {
+         errorController.repeat(reverse: true);
+       }
+     });
   }
 
   @override
@@ -63,6 +144,7 @@ class _HexWidgetState extends State<BoardView> {
   }
 
   PathPiece pathPiece = new PathPiece();
+  BreakPiece breakPiece = new BreakPiece();
   ErasePiece erasePiece = new ErasePiece();
   StartPiece startPiece = new StartPiece();
   EndPiece endPiece = new EndPiece();
@@ -151,14 +233,6 @@ class _HexWidgetState extends State<BoardView> {
                       child: _gameState.value.board.mode == BoardMode.play
                           ? Icon(Icons.build_rounded)
                           : Icon(Icons.play_arrow_rounded)),
-                  FloatingActionButton(
-                      heroTag: "center",
-                      onPressed: () => setState(() {
-                            var transform = GameState.defaultTransform();
-                            _gameState.value.transform = transform;
-                          }),
-                      tooltip: 'Re-Center',
-                      child: const Icon(Icons.home)),
                       Visibility(
                         child:FloatingActionButton(
                           heroTag: "next",
@@ -239,6 +313,10 @@ class _HexWidgetState extends State<BoardView> {
                                   pathPiece,
                                   () => _choosePiece(
                                       context, pathPiece, _gameState)),
+                              PieceTile(
+                                  breakPiece,
+                                  () => _choosePiece(
+                                      context, breakPiece, _gameState)),
                             ]),
                         ExpansionTile(
                             title: Text("Terminals"),
@@ -444,7 +522,6 @@ class _HexWidgetState extends State<BoardView> {
                                   details.localPosition.dx,
                                   details.localPosition.dy);
                               p -= _gameState.value.board.screenCenter;
-                              print(p);
                               var h = Hex.getHexPartFromPoint(p);
                               if (_gameState.value.board.mode ==
                                   BoardMode.designer) {
@@ -480,29 +557,7 @@ class _HexWidgetState extends State<BoardView> {
                                 //set state try to start
                               }
                             },
-                            /*
-                        onPanStart: (details) {
-
-                          movement = new Point.origin();
-
-                        },
-                        onPanEnd: (details) {
-
-                          var vector = movement;
-                          if (vector != null && vector.magnitude > 10) {
-                            var closest = vector.closest(edge.values.toList());
-                            var direction = edge.entries
-                                .singleWhere((element) => element.value == closest)
-                                .key;
-                            _hex.value += direction;
-                          } else {
-                          }
-                          movement = null;
-
-                        },
-                         */
                             onScaleEnd: (details) {
-                              print (_gameState.value.transform);
                               if (_gameState.value.board.mode ==
                                   BoardMode.play) {
                                 if (_gameState.value.board.hasEnded) {
@@ -512,13 +567,16 @@ class _HexWidgetState extends State<BoardView> {
                                         soundPlayer
                                             .play(audioSound.PANEL_SUCCESS);
                                         if (_gameState.value.board.completed == false) {
-                                          _gameState.value.board.completed =
-                                          true;
+                                          _gameState.value.board.completed = true;
                                           _gameState.value.board.save();
                                         }
                                       } else {
                                         soundPlayer
                                             .play(audioSound.PANEL_FAILURE);
+                                        fadeController.reset();
+                                        fadeController.forward();
+                                        errorController.reset();
+                                        errorController.forward();
                                       }
                                     });
                                     tracing = false;
@@ -529,6 +587,8 @@ class _HexWidgetState extends State<BoardView> {
                                   soundPlayer.play(audioSound.TRACING_END);
                                   setState(() => {});
                                 }
+                                beckonController.reset();
+                                beckonController.forward();
                               }
                             },
                             onScaleStart: (details) {
@@ -538,14 +598,10 @@ class _HexWidgetState extends State<BoardView> {
                                     details.localFocalPoint.dx,
                                     details.localFocalPoint.dy);
                                 p -= _gameState.value.board.screenCenter;
-                                //var h = Hex.getHexPartFromPoint(p);
                                 var h = Hex.getClosestFromPoint(p, _gameState.value.board.getPiece<StartPiece>());
                                 if (h != null) {
-                                  traceOffset = h!.localPoint - p;
+                                  traceOffset = h.localPoint - p;
                                   if (traceOffset.magnitude < 50) {
-                                    if (_gameState.value.board.isEnd(h)) {
-                                      tracing = true;
-                                    } else
                                     if (_gameState.value.board.isStart(h)) {
                                       _gameState.value.board.startAt(h);
                                       soundPlayer.play(
@@ -555,19 +611,15 @@ class _HexWidgetState extends State<BoardView> {
                                             audioSound.TRACING_END);
                                       }
                                       tracing = true;
-                                    } else if (_gameState.value.board.isTail(h)) {
-                                      tracing = true;
                                     } else {
                                       tracing = false;
                                     }
                                   } else {
-                                    if (_gameState.value.board.isTail(h)) {
-                                      tracing = true;
-                                    } else {
-                                      tracing = false;
-                                    }
+                                    tracing = false;
                                   }
                                 }
+                                beckonController.reset();
+                                beckonController.forward();
                               }
                               setState(() {});
                             },

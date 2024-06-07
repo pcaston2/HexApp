@@ -11,6 +11,7 @@ final Map<String, Piece> pieceFactory = {
   'ErasePiece': ErasePiece(),
   'StartPiece': StartPiece(),
   'EndPiece': EndPiece(),
+  'BreakPiece': BreakPiece(),
   'DotRule': DotRule(),
   'SequenceRule': SequenceRule(),
   'EdgeRule': EdgeRule(),
@@ -116,4 +117,18 @@ class EndPiece extends Piece {
   fromJson(Map<String, dynamic> json) => _$EndPieceFromJson(json);
 }
 
+@JsonSerializable()
+class BreakPiece extends Piece {
+  @override
+  String get name => "Break Piece";
+
+  @override
+  num get order => 75;
+
+  @override
+  Map<String, dynamic> baseJson() => _$BreakPieceToJson(this);
+
+  @override
+  fromJson(Map<String, dynamic> json) => _$BreakPieceFromJson(json);
+}
 

@@ -33,6 +33,9 @@ class Board {
 
   Map<Hex, List<Piece>> _map = new Map<Hex, List<Piece>>();
 
+  @JsonKey(includeToJson: false, includeFromJson: false)
+  List<BoardValidationError> errors = [];
+
   List<HexPieceEntry> get map {
     List<HexPieceEntry> entries = [];
     flatten().forEach((element) =>
@@ -139,15 +142,21 @@ class Board {
 
   bool get isSuccess {
     if (hasEnded && isFinished) {
-      var boardValidator = new BoardValidator(this);
-      return boardValidator.isSuccessful;
+      return errors.isEmpty;
     }
     return false;
   }
 
   bool trySolve() {
     _finished = true;
+    errors = getErrors();
     return isSuccess;
+  }
+
+
+  List<BoardValidationError> getErrors() {
+    var boardValidator = new BoardValidator(this);
+    return boardValidator.errors;
   }
 
   bool get hasEnded {
@@ -188,6 +197,7 @@ class Board {
 
   void resetTrail() {
     _trail.clear();
+    errors = [];
     _finished = false;
   }
 
@@ -254,6 +264,7 @@ class Board {
     if (!pieceOnBoard(hex)) {
       return false;
     }
+    //reject invalid placements
     if (piece.runtimeType == SequenceRule && hex.runtimeType != Hex) {
       return false;
     }
@@ -287,6 +298,9 @@ class Board {
         return false;
       }
     } else {
+      if (piece is BreakPiece && hex.runtimeType != Edge) {
+          return false;
+      }
       if ((hex.runtimeType == Hex || hex.runtimeType == Vertex) &&
           piece is PathPiece) {
         bool any = false;
@@ -298,8 +312,15 @@ class Board {
         hex.edges.forEach((Edge e) => putPiece(e, piece));
         return any;
       }
+      //check other items on the board
       _map.putIfAbsent(hex, () => new List<Piece>.empty(growable: true));
       var pieces = _map[hex]!;
+      if (pieces.any((Piece p) => p is BreakPiece)) {
+        return false;
+      }
+      if (piece is BreakPiece && pieces.isNotEmpty) {
+        return false;
+      }
       if (piece.runtimeType == EdgeRule) {
         if (pieces.any((Piece p) => p.runtimeType == EdgeRule)) {
           EdgeRule existing =

@@ -25,6 +25,11 @@ EndPiece _$EndPieceFromJson(Map<String, dynamic> json) => EndPiece();
 
 Map<String, dynamic> _$EndPieceToJson(EndPiece instance) => <String, dynamic>{};
 
+BreakPiece _$BreakPieceFromJson(Map<String, dynamic> json) => BreakPiece();
+
+Map<String, dynamic> _$BreakPieceToJson(BreakPiece instance) =>
+    <String, dynamic>{};
+
 DotRule _$DotRuleFromJson(Map<String, dynamic> json) =>
     DotRule()..color = $enumDecode(_$RuleColorIndexEnumMap, json['color']);
 

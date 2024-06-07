@@ -38,7 +38,9 @@ class Color {
   Map<String, dynamic> toJson() => _$ColorToJson(this);
 
   Color darken([int percent = 10]) {
-    assert(1 <= percent && percent <= 100);
+    if (percent < 0) {
+      return brighten(-percent);
+    }
     var f = 1 - percent / 100;
     return Color.from(mat.Color.fromARGB(
         value.alpha,
@@ -48,7 +50,9 @@ class Color {
   }
 
   Color brighten([int percent = 10]) {
-    assert(1 <= percent && percent <= 100);
+    if (percent < 0) {
+      return darken(-percent);
+    }
     var p = percent / 100;
     return Color.from(mat.Color.fromARGB(
         value.alpha,

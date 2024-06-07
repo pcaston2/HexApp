@@ -7,4 +7,3 @@ double sqrt(num x) {
   return m.sqrt(x);
 }
 
-

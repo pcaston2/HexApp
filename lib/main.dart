@@ -1,9 +1,12 @@
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:hex_game/story.dart';
 import 'package:hex_game/storyTile.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/animation.dart';
+import 'dart:math';
 import 'boardTheme.dart';
 import 'flowTile.dart';
-import 'package:flutter/material.dart';
 import 'pieceTile.dart';
 import 'boardTile.dart';
 import 'boardFlow.dart';
@@ -17,6 +20,7 @@ part 'boardView.dart';
 part 'flowSelection.dart';
 part 'boardSelection.dart';
 part 'storySelection.dart';
+part 'boardAnimation.dart';
 
 bool developer = true;
 

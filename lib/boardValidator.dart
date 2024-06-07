@@ -14,7 +14,6 @@ enum BoardValidationErrorType {
   noColorAtSequence,
   colorNotInSequence,
   colorNotSatisfied,
-
 }
 
 class BoardValidator {
@@ -31,11 +30,6 @@ class BoardValidator {
       errors.addAll(validateDots());
       errors.addAll(validateEdges());
       errors.addAll(validateCorners());
-    }
-    var errorIndex=0;
-    for(var error in errors) {
-      errorIndex++;
-      print("${errorIndex}. ${error}");
     }
   }
 
@@ -245,17 +239,17 @@ class BoardValidator {
 }
 
 class BoardValidationError {
-  Hex? _hex;
-  Piece? _piece;
-  BoardValidationErrorType _type;
-  BoardValidationError(this._hex, this._piece, this._type);
+  Hex? hex;
+  Piece? piece;
+  BoardValidationErrorType type;
+  BoardValidationError(this.hex, this.piece, this.type);
 
   @override
   String toString() {
     String msg = "";
-    msg += '${_type} at ${_hex}';
-    if (_piece != null) {
-      msg += ' for ${_piece}';
+    msg += '${type} at ${hex}';
+    if (piece != null) {
+      msg += ' for ${piece}';
     }
     return msg;
   }
