@@ -122,7 +122,6 @@ class Hex {
     for(var piece in pieces) {
       var currDistance = Point(-(piece.key.localPoint.x-p.x),piece.key.localPoint.y-p.y).magnitude;
       var bestDistance = Point(-(closest.key.localPoint.x-p.x),closest.key.localPoint.y-p.y).magnitude;
-      print(bestDistance);
       if (currDistance < bestDistance) {
         closest = piece;
       }

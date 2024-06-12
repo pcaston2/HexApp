@@ -1,9 +1,9 @@
-
 import 'package:audioplayers/audioplayers.dart';
-import 'package:hex_game/story.dart';
-import 'package:hex_game/storyTile.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'settings.dart';
+import 'story.dart';
+import 'storyTile.dart';
 import 'boardTheme.dart';
 import 'flowTile.dart';
 import 'pieceTile.dart';
@@ -20,7 +20,12 @@ part 'flowSelection.dart';
 part 'boardSelection.dart';
 part 'storySelection.dart';
 part 'boardAnimation.dart';
+part 'mainMenu.dart';
 
-bool developer = true;
+late Settings settings;
 
-void main() => runApp(MaterialApp(title: "Thex", home: StorySelection()));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  settings = await Settings.getInstance();
+  runApp(MaterialApp(title: "Thex", home: MainMenu()));
+}

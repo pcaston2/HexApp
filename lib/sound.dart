@@ -7,11 +7,11 @@ enum audioSound {
   TRACING_END
 }
 
-Map<audioSound, String> audioFiles = {
-  audioSound.PANEL_SUCCESS: 'Success.mp3',
-  audioSound.PANEL_FAILURE: 'Fail.mp3',
-  audioSound.TRACING_END: 'Abort.mp3',
-  audioSound.TRACING_START: 'activate.mp3',
+Map <audioSound, AudioPlayer> audioPlayers = {
+  audioSound.PANEL_SUCCESS: SoundPlayer.configureSound("Success.mp3"),
+  audioSound.PANEL_FAILURE: SoundPlayer.configureSound("Fail.mp3"),
+  audioSound.TRACING_END: SoundPlayer.configureSound("Abort.mp3"),
+  audioSound.TRACING_START: SoundPlayer.configureSound("Activate.mp3"),
 };
 
 class SoundPlayer {
@@ -28,23 +28,24 @@ class SoundPlayer {
     //}
   }
 
-  void play(audioSound sound) {
+  static AudioPlayer configureSound(String assetName) {
+    var player = AudioPlayer();
+    player.setSourceAsset(assetName);
+    player.setPlayerMode(PlayerMode.lowLatency);
+    player.setReleaseMode(ReleaseMode.stop);
+    return player;
+  }
 
-    String fileName = audioFiles[sound]!;
-    return;
-    //TODO: turn this back on
-    try {
-      audioPlayer.play(AssetSource(fileName));
-    } catch (ex) {
-      //TODO: Find out why sound fails to play
-      print(ex);
+  void play(audioSound sound) {
+    if (settings.sound) {
+      var player = audioPlayers[sound]!;
+      try {
+        player.stop();
+        player.resume();
+      } catch (ex) {
+        print(ex);
+      }
     }
-    //} else if (Platform.isWindows) {
-    //  print('Should play $fileName');
-    //} else {
-    //  audioCache.play(fileName, mode: PlayerMode.LOW_LATENCY);
-    //  audioCache.
-    //}
   }
 }
 

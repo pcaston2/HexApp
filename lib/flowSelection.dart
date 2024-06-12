@@ -18,7 +18,7 @@ class Flows extends State<FlowSelection> {
         floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
         floatingActionButton:
             Visibility(
-              visible: developer,
+              visible: settings.developer,
               child: FloatingActionButton(
                 tooltip: "Add a Flow",
                 child: Icon(Icons.add_rounded),
@@ -77,7 +77,7 @@ class Flows extends State<FlowSelection> {
                 List<BoardFlow> flows = snapshot.data;
                 //Text(flows.length.toString());
                 return ReorderableListView(
-                    buildDefaultDragHandles: developer,
+                    buildDefaultDragHandles: settings.developer,
                     onReorder: (int oldIndex, int newIndex) {
                       if (newIndex > oldIndex) {
                         newIndex--;
@@ -94,7 +94,7 @@ class Flows extends State<FlowSelection> {
                         List<Dismissible>.generate(flows.length, (int index) {
                   return
                     Dismissible(
-                      direction: developer ? DismissDirection.endToStart : DismissDirection.none,
+                      direction: settings.developer ? DismissDirection.endToStart : DismissDirection.none,
                       background: Container(
                         color: Colors.redAccent,
                         child: Icon(Icons.remove_rounded),

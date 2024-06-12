@@ -36,6 +36,9 @@ class Board {
   @JsonKey(includeToJson: false, includeFromJson: false)
   List<BoardValidationError> errors = [];
 
+  @JsonKey(includeToJson: false, includeFromJson: false)
+  Point? crosshair = null;
+
   List<HexPieceEntry> get map {
     List<HexPieceEntry> entries = [];
     flatten().forEach((element) =>
@@ -196,6 +199,24 @@ class Board {
     }
     return validMoves;
   }
+
+  Hex? get next {
+    if (crosshair != null) {
+      var adjacents = adjacent;
+      if (adjacents.isNotEmpty) {
+        var closest = adjacents.first;
+        for (var adj in adjacents) {
+          if ((adj.localPoint - crosshair!).magnitude < (closest.localPoint  - crosshair!).magnitude) {
+            closest = adj;
+          }
+        }
+        return closest;
+      }
+    }
+    return null;
+  }
+
+
 
   void resetTrail() {
     _trail.clear();

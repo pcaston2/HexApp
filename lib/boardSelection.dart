@@ -18,7 +18,7 @@ class Boards extends State<BoardSelection> {
         floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
         floatingActionButton:
         Visibility(
-        visible: developer,
+        visible: settings.developer,
         child: FloatingActionButton(
           tooltip: "Add a Board",
           child: Icon(Icons.add_rounded),
@@ -76,7 +76,7 @@ class Boards extends State<BoardSelection> {
                 List<Board> boards = snapshot.data;
                 //Text(flows.length.toString());
                 return ReorderableListView(
-                    buildDefaultDragHandles: developer,
+                    buildDefaultDragHandles: settings.developer,
                     onReorder: (int oldIndex, int newIndex) {
                       if (newIndex > oldIndex) {
                         newIndex--;
@@ -138,7 +138,7 @@ class Boards extends State<BoardSelection> {
                                 return false;
                               }
                             },
-                            direction: developer ? DismissDirection.horizontal : DismissDirection.none,
+                            direction: settings.developer ? DismissDirection.horizontal : DismissDirection.none,
                             secondaryBackground: Container(
                               color: Colors.redAccent,
                               child: Icon(Icons.remove_rounded),

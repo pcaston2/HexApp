@@ -107,7 +107,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
           errorController.reset();
           _gameState.value.boardAnimation.error = 0;
           errorController.value = 0;
-          if (!tracing) {
+          if (!tracing && _gameState.value.board.isSuccess == false) {
             _gameState.value.board.resetTrail();
           }
           setState(() {});
@@ -226,7 +226,9 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                 Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     //crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                  FloatingActionButton(
+                      Visibility(
+                        visible: settings.developer,
+                        child: FloatingActionButton(
                       heroTag: "mode",
                       onPressed: () => setState(() {
                             if (_gameState.value.board.mode == BoardMode.play) {
@@ -241,8 +243,9 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                           ? 'Designer Mode'
                           : 'Play Mode',
                       child: _gameState.value.board.mode == BoardMode.play
-                          ? Icon(Icons.build_rounded)
-                          : Icon(Icons.play_arrow_rounded)),
+                          ? Icon(Icons.design_services_rounded)
+                          : Icon(Icons.play_arrow_rounded)
+                      )),
                       Visibility(
                         child:FloatingActionButton(
                           heroTag: "next",
@@ -644,6 +647,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                               }
                             },
                             onScaleEnd: (details) {
+                              setState(() => _gameState.value.board.crosshair = null);
                               if (_gameState.value.board.mode ==
                                   BoardMode.play) {
                                 if (_gameState.value.board.hasEnded) {
@@ -687,7 +691,8 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                 var h = Hex.getClosestFromPoint(p, _gameState.value.board.getPiece<StartPiece>());
                                 if (h != null) {
                                   traceOffset = h.localPoint - p;
-                                  if (traceOffset.magnitude < 50) {
+                                  if (traceOffset.magnitude < 50 * _gameState.value.board.size) {
+                                    setState(() => _gameState.value.board.crosshair = h.localPoint);
                                     if (_gameState.value.board.isStart(h)) {
                                       _gameState.value.board.startAt(h);
                                       soundPlayer.play(
@@ -726,6 +731,10 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                     details.localFocalPoint.dy);
                                 p -= _gameState.value.board.screenCenter;
                                 p += traceOffset;
+                                if (_gameState.value.board.crosshair != null) {
+                                  setState(() =>
+                                  _gameState.value.board.crosshair = p);
+                                }
                                 var h = Hex.getHexPartFromPoint(p);
                                 if (_gameState.value.board.moveTo(h)) {
                                   setState(() => _gameState.value.board);

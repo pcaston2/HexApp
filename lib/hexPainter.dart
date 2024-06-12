@@ -76,6 +76,7 @@ class HexPainter extends CustomPainter {
           }
         }
       }
+      drawCrosshair(canvas, center, _gameState.board.crosshair);
     }
 
 
@@ -291,7 +292,7 @@ class HexPainter extends CustomPainter {
             Offset(center.x + hex.point.x - m.x * 0.6 - centerOffset.x,
                 center.y + hex.point.y + m.y * 0.6 + centerOffset.y),
             errorPaint);
-    }
+      }
     }
   }
 
@@ -410,6 +411,7 @@ class HexPainter extends CustomPainter {
     double tips = max(0,trailFade-(1-trailFade));
     double mid = min(1,trailFade * 2);
     drawCurrentTrail(_gameState.board, center, canvas, theme, trailPulse, mid);
+    drawIncrementalTrail(_gameState.board, center, canvas);
     drawTrailStartPiece(_gameState.board, center, canvas, theme, trailPulse, tips);
     drawTrailEndPiece(_gameState.board, center, canvas, theme, trailPulse, tips);
   }
@@ -430,9 +432,47 @@ class HexPainter extends CustomPainter {
       board.trail.forEach((Hex h) => trailOffset.add(new Offset(
           center.x + h.point.x + h.midpoint.x,
           center.y + h.point.y - h.midpoint.y)));
+      if ((board.next != null) && board.trail.contains(board.next)) {
+        trailOffset.removeLast();
+      }
       Path trailPath = Path();
       trailPath.addPolygon(trailOffset, false);
       canvas.drawPath(trailPath, trailPaint);
+    }
+  }
+
+  void drawIncrementalTrail(Board board, Point center, Canvas canvas) {
+    var next = board.next;
+    if (next != null) {
+      final incrementalPaint = Paint()
+        ..color = (board.isFinished
+            ? (board.isSuccess
+            ? board.theme.trail.brighten(20).value
+            : board.theme.trail.darken(10).value)
+            : board.theme.trail.value)
+        ..strokeWidth = 10
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
+
+      var current = board.tail!.localPoint;
+      var to = next.localPoint;
+      var distance = (board.crosshair!-current).magnitude;
+      var maxDistance = (to - current).magnitude;
+      if (distance > maxDistance) {
+        distance = maxDistance;
+      }
+      var scaleTo = (to-current).unitVector * distance + current;
+
+      if (board.trail.contains(next)) {
+        var previous = board.trail.reversed.skip(1).first.localPoint;
+        canvas.drawLine(Offset(previous.x + center.x, previous.y + center.y),
+            Offset(scaleTo.x + center.x, scaleTo.y + center.y),
+            incrementalPaint);
+      } else {
+        canvas.drawLine(Offset(current.x + center.x, current.y + center.y),
+            Offset(scaleTo.x + center.x, scaleTo.y + center.y),
+            incrementalPaint);
+      }
     }
   }
 
@@ -528,6 +568,20 @@ class HexPainter extends CustomPainter {
 
     canvas.drawCircle(offset, hexSize / 4.0 * (1+beckon*5), endPaint);
   }
+
+  void drawCrosshair(Canvas canvas, Point center, Point? crosshair) {
+    if (crosshair != null) {
+      final cornerPaint = Paint()
+        ..color = Colors.white.withOpacity(0.6)
+        ..strokeWidth = 5
+        ..style = PaintingStyle.stroke;
+      canvas.drawCircle(Offset(center.x + crosshair.x,
+        center.y + crosshair.y,
+      ), 8, cornerPaint);
+    }
+  }
+
+
 
 
 

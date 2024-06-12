@@ -13,10 +13,10 @@ class Stories extends State<StorySelection> {
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       floatingActionButton:
         Visibility(
-          visible: developer,
+          visible: settings.developer,
             child:
               FloatingActionButton(
-                tooltip: "Add a Story",
+                tooltip: "Add Story",
                 child: Icon(Icons.add_rounded),
                 onPressed: () {
                   TextEditingController _textFieldController =
@@ -59,7 +59,7 @@ class Stories extends State<StorySelection> {
               )
         ),
       appBar: AppBar(
-        title: Text('Thex'),
+        title: Text('Stories'),
       ),
       body: FutureBuilder(
         future: Story.getStories(),
