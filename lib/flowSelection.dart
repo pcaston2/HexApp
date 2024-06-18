@@ -44,7 +44,6 @@ class Flows extends State<FlowSelection> {
                             TextButton(
                               child: Text('OK'),
                               onPressed: () {
-                                print(_textFieldController.text);
                                 BoardFlow.createFlow(_textFieldController.text).then((BoardFlow newFlow) {
                                   newFlow.save();
                                   _story.flowPaths.add(newFlow.guid);
@@ -66,7 +65,58 @@ class Flows extends State<FlowSelection> {
               ),
             ),
         appBar: AppBar(
-          title: Text(_story.name),
+
+          title: settings.developer
+              ? Row(children: [
+            Text(_story.name),
+            IconButton(
+                onPressed: () {
+                  TextEditingController _textFieldController =
+                  TextEditingController();
+                  _textFieldController.text =
+                      _story.name;
+                  showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: Text('Please Rename Your Story:'),
+                          content: TextField(
+                            controller: _textFieldController,
+                            decoration: InputDecoration(
+                                hintText: "My Story"),
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              child: Text('CANCEL'),
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                            ),
+                            TextButton(
+                                child: Text('OK'),
+                                onPressed: () {
+                                  _story.name =
+                                      _textFieldController.text;
+                                  _story
+                                      .save()
+                                      .then((value) =>
+                                      setState(() {}));
+                                  final ScaffoldMessengerState
+                                  scaffoldMessenger =
+                                  ScaffoldMessenger.of(context);
+                                  scaffoldMessenger.showSnackBar(
+                                      SnackBar(
+                                          content: Text(
+                                              "Story renamed to ${_textFieldController.text}")));
+                                  Navigator.pop(context);
+                                })
+                          ],
+                        );
+                      });
+                },
+                icon: Icon(Icons.edit_rounded))
+          ])
+              : Text(_story.name),
         ),
         body: FutureBuilder(
             future: _story.flows,
@@ -102,8 +152,7 @@ class Flows extends State<FlowSelection> {
                       key: ValueKey(flows[index].guid),
                       onDismissed: (direction) {
                         if (direction == DismissDirection.endToStart) {
-                          _story.flowPaths.removeAt(index);
-                          _story.save().then((data) => setState(() {}));
+                          _story.deleteAt(index).then((data) => setState(() {}));
                         }
                       },
                       confirmDismiss: (DismissDirection direction) async {

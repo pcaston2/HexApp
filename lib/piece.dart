@@ -120,7 +120,7 @@ class EndPiece extends Piece {
 @JsonSerializable()
 class BreakPiece extends Piece {
   @override
-  String get name => "Break Piece";
+  String get name => "Break Path";
 
   @override
   num get order => 75;

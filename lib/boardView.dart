@@ -1,8 +1,5 @@
 part of 'main.dart';
 
-
-
-
 class GameState {
   Board board = Board.sample();
   BoardFlow flow = BoardFlow();
@@ -17,8 +14,6 @@ bool tracing = false;
 Point traceOffset = Point.origin();
 
 class BoardView extends StatefulWidget {
-
-
   final Board _board;
   final BoardFlow _flow;
 
@@ -33,7 +28,6 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
 
   late HexPainter painter;
 
-
   SoundPlayer soundPlayer = SoundPlayer();
 
   late Animation<double> beckon;
@@ -47,8 +41,6 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
 
   late Animation<double> error;
   late AnimationController errorController;
-
-
 
   @override
   void initState() {
@@ -116,19 +108,19 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
 
     errorController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds:500),
+      duration: Duration(milliseconds: 500),
     );
-    Tween<double> errorTween = Tween(begin:-1,end:1);
+    Tween<double> errorTween = Tween(begin: -1, end: 1);
     error = errorTween.animate(errorController)
       ..addListener(() {
         _gameState.value.boardAnimation.error = error.value;
         setState(() {});
       })
-     ..addStatusListener((status) {
-       if (status == AnimationStatus.completed) {
-         errorController.repeat(reverse: true);
-       }
-     });
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          errorController.repeat(reverse: true);
+        }
+      });
   }
 
   @override
@@ -222,41 +214,42 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                     : Text(_gameState.value.board.name)),
             floatingActionButtonLocation:
                 FloatingActionButtonLocation.startFloat,
-            floatingActionButton:
-                Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    //crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Visibility(
-                        visible: settings.developer,
-                        child: FloatingActionButton(
-                      heroTag: "mode",
+            floatingActionButton: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                //crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Visibility(
+                      visible: settings.developer,
+                      child: FloatingActionButton(
+                          heroTag: "mode",
+                          onPressed: () => setState(() {
+                                if (_gameState.value.board.mode ==
+                                    BoardMode.play) {
+                                  setState(() => _gameState.value.board.mode =
+                                      BoardMode.designer);
+                                } else {
+                                  setState(() => _gameState.value.board.mode =
+                                      BoardMode.play);
+                                }
+                              }),
+                          tooltip: _gameState.value.board.mode == BoardMode.play
+                              ? 'Designer Mode'
+                              : 'Play Mode',
+                          child: _gameState.value.board.mode == BoardMode.play
+                              ? Icon(Icons.design_services_rounded)
+                              : Icon(Icons.play_arrow_rounded))),
+                  Visibility(
+                    child: FloatingActionButton(
+                      heroTag: "next",
                       onPressed: () => setState(() {
-                            if (_gameState.value.board.mode == BoardMode.play) {
-                              setState(() => _gameState.value.board.mode =
-                                  BoardMode.designer);
-                            } else {
-                              setState(() =>
-                                  _gameState.value.board.mode = BoardMode.play);
-                            }
-                          }),
-                      tooltip: _gameState.value.board.mode == BoardMode.play
-                          ? 'Designer Mode'
-                          : 'Play Mode',
-                      child: _gameState.value.board.mode == BoardMode.play
-                          ? Icon(Icons.design_services_rounded)
-                          : Icon(Icons.play_arrow_rounded)
-                      )),
-                      Visibility(
-                        child:FloatingActionButton(
-                          heroTag: "next",
-                          onPressed: () =>   setState(() {
-                            Navigator.pop(context, true);
-                          }),
-                          tooltip: 'Next',
-                          child: const Icon(Icons.navigate_next_rounded),
-                        ),
-                        visible: _gameState.value.board.completed && _gameState.value.board.mode == BoardMode.play,
-                      ),
+                        Navigator.pop(context, true);
+                      }),
+                      tooltip: 'Next',
+                      child: const Icon(Icons.navigate_next_rounded),
+                    ),
+                    visible: _gameState.value.board.completed &&
+                        _gameState.value.board.mode == BoardMode.play,
+                  ),
                 ]),
             drawer: _gameState.value.board.mode == BoardMode.play
                 ? null
@@ -290,6 +283,47 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                     });
                                   }),
                               ListTile(
+                                  trailing: Icon(Icons.share_rounded),
+                                  title: Text("Share"),
+                                  onTap: () {
+                                    var boardData =
+                                        _gameState.value.board.toBase64();
+                                    Navigator.of(context)
+                                        .push(MaterialPageRoute<void>(
+                                      fullscreenDialog: true,
+                                      builder: (BuildContext context) {
+                                        return Scaffold(
+                                          appBar: AppBar(
+                                            title: Text(
+                                                _gameState.value.board.name),
+                                            leading: IconButton(
+                                              icon: Icon(Icons.close),
+                                              onPressed: () =>
+                                                  Navigator.of(context).pop(),
+                                            ),
+                                          ),
+                                          body: Center(
+                                            child: QrImageView(
+                                              data: boardData,
+                                              version: QrVersions.auto,
+                                              errorStateBuilder: (cxt, err) {
+                                                return Container(
+                                                  child: Center(
+                                                    child: Text(
+                                                      'Uh oh! Something went wrong... ${err.toString()}',
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ));
+                                  }),
+                              ListTile(
                                   trailing: Icon(Icons.arrow_back_rounded),
                                   title: Text("Exit"),
                                   onTap: () {
@@ -297,10 +331,6 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                     Navigator.pop(context);
                                     setState(() {});
                                   }),
-                              // ListTile(
-                              //   title: Text("Name: ${_gameState.value.board.name}"),
-                              //onTap: () {}
-                              //),
                             ]),
                         ExpansionTile(
                             title: Text("Design"),
@@ -393,7 +423,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                       context, edgeRule, _gameState)),
                               PieceTile(
                                   cornerRule,
-                                      () => _choosePiece(
+                                  () => _choosePiece(
                                       context, cornerRule, _gameState)),
                             ]),
                         ExpansionTile(
@@ -437,7 +467,8 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                                           .clear();
                                                       Navigator.of(context)
                                                           .pop();
-                                                      _gameState.value.board.save();
+                                                      _gameState.value.board
+                                                          .save();
                                                     })
                                               ],
                                             ));
@@ -450,40 +481,35 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                               ColorTile(context,
                                   color:
                                       _gameState.value.board.theme.foreground,
-                                  title: "Foreground",
-                                  onSelect: () {
-                                    setState(() {});
-                                    _gameState.value.board.save();
-                                  }),
+                                  title: "Foreground", onSelect: () {
+                                setState(() {});
+                                _gameState.value.board.save();
+                              }),
                               ColorTile(context,
                                   color:
                                       _gameState.value.board.theme.background,
-                                  title: "Background",
-                                  onSelect: () {
-                                    setState(() {});
-                                    _gameState.value.board.save();
-                                  }),
+                                  title: "Background", onSelect: () {
+                                setState(() {});
+                                _gameState.value.board.save();
+                              }),
                               ColorTile(context,
                                   color: _gameState.value.board.theme.border,
-                                  title: "Border",
-                                  onSelect: () {
-                                    setState(() {});
-                                    _gameState.value.board.save();
-                                  }),
+                                  title: "Border", onSelect: () {
+                                setState(() {});
+                                _gameState.value.board.save();
+                              }),
                               ColorTile(context,
                                   color: _gameState.value.board.theme.path,
-                                  title: "Path",
-                                  onSelect: () {
-                                    setState(() {});
-                                    _gameState.value.board.save();
-                                  }),
+                                  title: "Path", onSelect: () {
+                                setState(() {});
+                                _gameState.value.board.save();
+                              }),
                               ColorTile(context,
                                   color: _gameState.value.board.theme.trail,
-                                  title: "Trail",
-                                  onSelect: () {
-                                    setState(() {});
-                                    _gameState.value.board.save();
-                                  }),
+                                  title: "Trail", onSelect: () {
+                                setState(() {});
+                                _gameState.value.board.save();
+                              }),
                               ExpansionTile(
                                   title: Text("Rule Colors"),
                                   leading: Icon(Icons.colorize_rounded),
@@ -491,43 +517,38 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                     ColorTile(context,
                                         color: _gameState.value.board.theme
                                             .ruleColors[RuleColorIndex.First]!,
-                                        title: "First",
-                                        onSelect: () {
-                                          setState(() {});
-                                          _gameState.value.board.save();
-                                        }),
+                                        title: "First", onSelect: () {
+                                      setState(() {});
+                                      _gameState.value.board.save();
+                                    }),
                                     ColorTile(context,
                                         color: _gameState.value.board.theme
                                             .ruleColors[RuleColorIndex.Second]!,
-                                        title: "Second",
-                                        onSelect: () {
-                                          setState(() {});
-                                          _gameState.value.board.save();
-                                        }),
+                                        title: "Second", onSelect: () {
+                                      setState(() {});
+                                      _gameState.value.board.save();
+                                    }),
                                     ColorTile(context,
                                         color: _gameState.value.board.theme
                                             .ruleColors[RuleColorIndex.Third]!,
-                                        title: "Third",
-                                        onSelect: () {
-                                          setState(() {});
-                                          _gameState.value.board.save();
-                                        }),
+                                        title: "Third", onSelect: () {
+                                      setState(() {});
+                                      _gameState.value.board.save();
+                                    }),
                                     ColorTile(context,
                                         color: _gameState.value.board.theme
                                             .ruleColors[RuleColorIndex.Fourth]!,
-                                        title: "Fourth",
-                                        onSelect: () {
-                                          setState(() {});
-                                          _gameState.value.board.save();
-                                        }),
+                                        title: "Fourth", onSelect: () {
+                                      setState(() {});
+                                      _gameState.value.board.save();
+                                    }),
                                     ColorTile(context,
                                         color: _gameState.value.board.theme
                                             .ruleColors[RuleColorIndex.Fifth]!,
-                                        title: "Fifth",
-                                        onSelect: () {
-                                          setState(() {});
-                                          _gameState.value.board.save();
-                                        }),
+                                        title: "Fifth", onSelect: () {
+                                      setState(() {});
+                                      _gameState.value.board.save();
+                                    }),
                                   ]),
                               ListTile(
                                   title: Text("Apply Theme To Flow"),
@@ -538,7 +559,8 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                         context: context,
                                         builder: (BuildContext context) =>
                                             AlertDialog(
-                                              title: Text('Apply Theme to Flow?'),
+                                              title:
+                                                  Text('Apply Theme to Flow?'),
                                               content: SingleChildScrollView(
                                                 child: ListBody(
                                                   children: [
@@ -557,18 +579,27 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                                   },
                                                 ),
                                                 TextButton(
-                                                  child: Text('You bet!'),
-                                                  onPressed: () async {
-                                                    await _gameState.value.flow.applyThemeToAll(_gameState.value.board.theme).then((value) {
-                                                      final ScaffoldMessengerState
-                                                      scaffoldMessenger =
-                                                      ScaffoldMessenger.of(context);
-                                                      scaffoldMessenger.showSnackBar(
-                                                          SnackBar(content: Text("Theme has been applied!")));
-                                                      setState(() {});
-                                                    });
-                                                    Navigator.of(context).pop();
-                                                  })
+                                                    child: Text('You bet!'),
+                                                    onPressed: () async {
+                                                      await _gameState
+                                                          .value.flow
+                                                          .applyThemeToAll(
+                                                              _gameState.value
+                                                                  .board.theme)
+                                                          .then((value) {
+                                                        final ScaffoldMessengerState
+                                                            scaffoldMessenger =
+                                                            ScaffoldMessenger
+                                                                .of(context);
+                                                        scaffoldMessenger
+                                                            .showSnackBar(SnackBar(
+                                                                content: Text(
+                                                                    "Theme has been applied!")));
+                                                        setState(() {});
+                                                      });
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                    })
                                               ],
                                             ));
                                   }),
@@ -576,172 +607,204 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                       ],
                     ),
                   ),
-            body: Container(
-                decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      stops: [
-                        0.4,
-                        0.5,
-                        0.6,
-                      ],
-                      colors: [
-                        _gameState.value.board.theme.background.value,
-                        _gameState.value.board.theme.background.darken(10).value,
-                        _gameState.value.board.theme.background.value,
-                      ],
-                    )),
-                child:Center(
-                child: AspectRatio(
-              aspectRatio: hexHeight / hexWidth,
-              child: FittedBox(
-                    alignment: Alignment.center,
-                    fit: BoxFit.contain,
-                    child: SizedBox(
-                      width: _gameState.value.board.screenSize.x,
-                      height: _gameState.value.board.screenSize.y,
-                      child:
-                          GestureDetector(
-                            trackpadScrollCausesScale: true,
-                            behavior: HitTestBehavior.translucent,
-                            onLongPressEnd: (details) {},
-                            onTapUp: (details) {
-                              var p = Point(
-                                  details.localPosition.dx,
-                                  details.localPosition.dy);
-                              p -= _gameState.value.board.screenCenter;
-                              var h = Hex.getHexPartFromPoint(p);
-                              if (_gameState.value.board.mode ==
-                                  BoardMode.designer) {
-                                if (_gameState.value.board.pieceOnBoard(h)) {
-                                  setState(() => _gameState.value.pointer = h);
-                                }
-                              } else {
-                                /*
+            body: Stack(children: [
+              Container(
+                  decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    stops: [
+                      0.4,
+                      0.5,
+                      0.6,
+                    ],
+                    colors: [
+                      _gameState.value.board.theme.background.value,
+                      _gameState.value.board.theme.background.darken(10).value,
+                      _gameState.value.board.theme.background.value,
+                    ],
+                  )),
+                  child: Center(
+                      child: AspectRatio(
+                          aspectRatio: hexHeight / hexWidth,
+                          child: FittedBox(
+                              alignment: Alignment.center,
+                              fit: BoxFit.contain,
+                              child: SizedBox(
+                                  width: _gameState.value.board.screenSize.x,
+                                  height: _gameState.value.board.screenSize.y,
+                                  child: GestureDetector(
+                                      trackpadScrollCausesScale: true,
+                                      behavior: HitTestBehavior.translucent,
+                                      onLongPressEnd: (details) {},
+                                      onTapUp: (details) {
+                                        var p = Point(details.localPosition.dx,
+                                            details.localPosition.dy);
+                                        p -=
+                                            _gameState.value.board.screenCenter;
+                                        var h = Hex.getHexPartFromPoint(p);
+                                        if (_gameState.value.board.mode ==
+                                            BoardMode.designer) {
+                                          if (_gameState.value.board
+                                              .pieceOnBoard(h)) {
+                                            setState(() =>
+                                                _gameState.value.pointer = h);
+                                          }
+                                        } else {
+                                          /*
                                 setState(() => _gameState.value.board.startAt(h));
                                  */
-                              }
-                            },
-                            onDoubleTap: () {
-                              if (_gameState.value.board.mode ==
-                                  BoardMode.designer) {
-                                var clone = _gameState.value.piece.clone();
-                                if (clone is ColoredRule) {
-                                  ColoredRule rule = clone;
-                                  rule.color = _gameState.value.ruleColor;
-                                } else if  (clone is SequenceRule) {
-                                  SequenceRule rule = clone;
-                                  rule.colors.add(_gameState.value.ruleColor);
-                                }
-                                if (!_gameState.value.board.putPiece(
-                                    _gameState.value.pointer,
-                                    clone)) {
-                                  soundPlayer.play(audioSound.PANEL_FAILURE);
-                                } else {
-                                  _gameState.value.board.save();
-                                }
-                                setState(() => _gameState);
-                              } else {
-                                //set state try to start
-                              }
-                            },
-                            onScaleEnd: (details) {
-                              setState(() => _gameState.value.board.crosshair = null);
-                              if (_gameState.value.board.mode ==
-                                  BoardMode.play) {
-                                if (_gameState.value.board.hasEnded) {
-                                  if (tracing) {
-                                    setState(() {
-                                      if (_gameState.value.board.trySolve()) {
-                                        soundPlayer
-                                            .play(audioSound.PANEL_SUCCESS);
-                                        if (_gameState.value.board.completed == false) {
-                                          _gameState.value.board.completed = true;
-                                          _gameState.value.board.save();
                                         }
-                                      } else {
-                                        soundPlayer
-                                            .play(audioSound.PANEL_FAILURE);
-                                        fadeController.reset();
-                                        fadeController.forward();
-                                        errorController.reset();
-                                        errorController.forward();
-                                      }
-                                    });
-                                    tracing = false;
-                                  }
-                                } else {
-                                  tracing = false;
-                                  _gameState.value.board.resetTrail();
-                                  soundPlayer.play(audioSound.TRACING_END);
-                                  setState(() => {});
-                                }
-                                beckonController.reset();
-                                beckonController.forward();
-                              }
-                            },
-                            onScaleStart: (details) {
-                              if (_gameState.value.board.mode ==
-                                  BoardMode.play) {
-                                var p = Point(
-                                    details.localFocalPoint.dx,
-                                    details.localFocalPoint.dy);
-                                p -= _gameState.value.board.screenCenter;
-                                var h = Hex.getClosestFromPoint(p, _gameState.value.board.getPiece<StartPiece>());
-                                if (h != null) {
-                                  traceOffset = h.localPoint - p;
-                                  if (traceOffset.magnitude < 50 * _gameState.value.board.size) {
-                                    setState(() => _gameState.value.board.crosshair = h.localPoint);
-                                    if (_gameState.value.board.isStart(h)) {
-                                      _gameState.value.board.startAt(h);
-                                      soundPlayer.play(
-                                          audioSound.TRACING_START);
-                                      if (tracing) {
-                                        soundPlayer.play(
-                                            audioSound.TRACING_END);
-                                      }
-                                      tracing = true;
-                                    } else {
-                                      tracing = false;
-                                    }
-                                  } else {
-                                    tracing = false;
-                                  }
-                                }
-                                beckonController.reset();
-                                beckonController.forward();
-                              }
-                              setState(() {});
-                            },
-                            onTap: () {
-                              if (_gameState.value.board.mode ==
-                              BoardMode.play) {
-                                if (_gameState.value.board.hasStarted) {
-                                  tracing = false;
-                                  _gameState.value.board.resetTrail();
-                                  soundPlayer.play(audioSound.TRACING_END);
-                                  setState(() => {});
-                                }
-                              }
-                            },
-                            onScaleUpdate: (details) {
-                                var p = Point(
-                                    details.localFocalPoint.dx,
-                                    details.localFocalPoint.dy);
-                                p -= _gameState.value.board.screenCenter;
-                                p += traceOffset;
-                                if (_gameState.value.board.crosshair != null) {
-                                  setState(() =>
-                                  _gameState.value.board.crosshair = p);
-                                }
-                                var h = Hex.getHexPartFromPoint(p);
-                                if (_gameState.value.board.moveTo(h)) {
-                                  setState(() => _gameState.value.board);
-                                }
-                            },
-                            child:
-                            CustomPaint(
-                                painter: HexPainter(_gameState.value))))))))));
+                                      },
+                                      onDoubleTap: () {
+                                        if (_gameState.value.board.mode ==
+                                            BoardMode.designer) {
+                                          var clone =
+                                              _gameState.value.piece.clone();
+                                          if (clone is ColoredRule) {
+                                            ColoredRule rule = clone;
+                                            rule.color =
+                                                _gameState.value.ruleColor;
+                                          } else if (clone is SequenceRule) {
+                                            SequenceRule rule = clone;
+                                            rule.colors.add(
+                                                _gameState.value.ruleColor);
+                                          }
+                                          if (!_gameState.value.board.putPiece(
+                                              _gameState.value.pointer,
+                                              clone)) {
+                                            soundPlayer
+                                                .play(audioSound.PANEL_FAILURE);
+                                          } else {
+                                            _gameState.value.board.save();
+                                          }
+                                          setState(() => _gameState);
+                                        } else {
+                                          //set state try to start
+                                        }
+                                      },
+                                      onScaleEnd: (details) {
+                                        setState(() => _gameState
+                                            .value.board.crosshair = null);
+                                        if (_gameState.value.board.mode ==
+                                            BoardMode.play) {
+                                          if (_gameState.value.board.hasEnded) {
+                                            if (tracing) {
+                                              setState(() {
+                                                if (_gameState.value.board
+                                                    .trySolve()) {
+                                                  soundPlayer.play(
+                                                      audioSound.PANEL_SUCCESS);
+                                                  if (_gameState.value.board
+                                                          .completed ==
+                                                      false) {
+                                                    _gameState.value.board
+                                                        .completed = true;
+                                                    _gameState.value.board
+                                                        .save();
+                                                  }
+                                                } else {
+                                                  soundPlayer.play(
+                                                      audioSound.PANEL_FAILURE);
+                                                  fadeController.reset();
+                                                  fadeController.forward();
+                                                  errorController.reset();
+                                                  errorController.forward();
+                                                }
+                                              });
+                                              tracing = false;
+                                            }
+                                          } else {
+                                            tracing = false;
+                                            _gameState.value.board.resetTrail();
+                                            soundPlayer
+                                                .play(audioSound.TRACING_END);
+                                            setState(() => {});
+                                          }
+                                          beckonController.reset();
+                                          beckonController.forward();
+                                        }
+                                      },
+                                      onScaleStart: (details) {
+                                        if (_gameState.value.board.mode ==
+                                            BoardMode.play) {
+                                          var p = Point(
+                                              details.localFocalPoint.dx,
+                                              details.localFocalPoint.dy);
+                                          p -= _gameState
+                                              .value.board.screenCenter;
+                                          var h = Hex.getClosestFromPoint(
+                                              p,
+                                              _gameState.value.board
+                                                  .getPiece<StartPiece>());
+                                          if (h != null) {
+                                            traceOffset = h.localPoint - p;
+                                            if (traceOffset.magnitude <
+                                                50 *
+                                                    _gameState
+                                                        .value.board.size) {
+                                              setState(() => _gameState
+                                                  .value
+                                                  .board
+                                                  .crosshair = h.localPoint);
+                                              if (_gameState.value.board
+                                                  .isStart(h)) {
+                                                _gameState.value.board
+                                                    .startAt(h);
+                                                soundPlayer.play(
+                                                    audioSound.TRACING_START);
+                                                if (tracing) {
+                                                  soundPlayer.play(
+                                                      audioSound.TRACING_END);
+                                                }
+                                                tracing = true;
+                                              } else {
+                                                tracing = false;
+                                              }
+                                            } else {
+                                              tracing = false;
+                                            }
+                                          }
+                                          beckonController.reset();
+                                          beckonController.forward();
+                                        }
+                                        setState(() {});
+                                      },
+                                      onTap: () {
+                                        if (_gameState.value.board.mode ==
+                                            BoardMode.play) {
+                                          if (_gameState
+                                              .value.board.hasStarted) {
+                                            tracing = false;
+                                            _gameState.value.board.resetTrail();
+                                            soundPlayer
+                                                .play(audioSound.TRACING_END);
+                                            setState(() => {});
+                                          }
+                                        }
+                                      },
+                                      onScaleUpdate: (details) {
+                                        var p = Point(
+                                            details.localFocalPoint.dx,
+                                            details.localFocalPoint.dy);
+                                        p -=
+                                            _gameState.value.board.screenCenter;
+                                        p += traceOffset;
+                                        if (_gameState.value.board.crosshair !=
+                                            null) {
+                                          setState(() => _gameState
+                                              .value.board.crosshair = p);
+                                        }
+                                        var h = Hex.getHexPartFromPoint(p);
+                                        if (_gameState.value.board.moveTo(h)) {
+                                          setState(
+                                              () => _gameState.value.board);
+                                        }
+                                      },
+                                      child: CustomPaint(
+                                          painter: HexPainter(
+                                              _gameState.value)))))))),
+
+            ])));
   }
 }

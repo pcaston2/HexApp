@@ -11,6 +11,7 @@ import 'hex.dart';
 import 'piece.dart';
 
 import 'package:json_annotation/json_annotation.dart';
+import 'settings.dart';
 
 part 'boardValidator.dart';
 part 'hexPieceEntry.dart';
@@ -158,7 +159,6 @@ class Board {
     return isSuccess;
   }
 
-
   List<BoardValidationError> getErrors() {
     var boardValidator = new BoardValidator(this);
     return boardValidator.errors;
@@ -277,9 +277,9 @@ class Board {
   }
 
   Future<void> save() async {
-    var cacheDir = await getApplicationDocumentsDirectory();
-    File f = File('${cacheDir.path}/board_$guid.$BOARD_FILE_EXTENSION');
-    f.writeAsString(json.encode(toJson()));
+    var settings = await Settings.getInstance();
+    File f = File('${settings.storagePath}/board_$guid.$BOARD_FILE_EXTENSION');
+    await f.writeAsString(json.encode(toJson()));
   }
 
   bool putPiece(Hex hex, Piece piece) {
@@ -445,6 +445,14 @@ class Board {
         .where((MapEntry<Hex, Piece> entry) =>
             entry.value.runtimeType == T).map((entry) => MapEntry<Hex, T>(entry.key, entry.value as T))
         .toList();
+  }
+
+  String toBase64() {
+    var json = jsonEncode(this.toJson());
+    var utfEncodedJson = utf8.encode(json);
+    var gzippedJson = gzip.encode(utfEncodedJson);
+    var b64Encode = base64Encode(gzippedJson);
+    return b64Encode;
   }
 
   factory Board.fromJson(Map<String, dynamic> json) => _$BoardFromJson(json);

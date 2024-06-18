@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_guid/flutter_guid.dart';
+import 'settings.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -50,19 +51,18 @@ class Story {
   }
 
   Future<void> save() async {
-    var cacheDir = await getApplicationDocumentsDirectory();
-    File f = File('${cacheDir.path}/story_$guid.$STORY_FILE_EXTENSION');
-    f.writeAsString(json.encode(toJson()));
+    var settings = await Settings.getInstance();
+    File f = File('${settings.storagePath}/story_$guid.$STORY_FILE_EXTENSION');
+    await f.writeAsString(json.encode(toJson()));
   }
 
   Future<List<BoardFlow>> get flows async {
-    Directory cacheDir = await getApplicationDocumentsDirectory();
+    var settings = await Settings.getInstance();
     List<BoardFlow> flows = [];
     for (String flowPath in flowPaths) {
       try {
-        File file = File("${cacheDir.path}/flow_$flowPath.$FLOW_FILE_EXTENSION");
-        String s = await file.readAsString();
-        flows.add(BoardFlow.fromJson(json.decode(s)));
+        var flow = await loadFlow("${settings.storagePath}/flow_$flowPath.$FLOW_FILE_EXTENSION");
+        flows.add(flow);
       } on Exception catch (ex) {
         print(ex);
       }
@@ -70,9 +70,16 @@ class Story {
     return flows;
   }
 
+  Future<BoardFlow> loadFlow(String filename) async {
+    File file = File(filename);
+    String s = await file.readAsString();
+    return BoardFlow.fromJson(json.decode(s));
+  }
+
   static Future<List<Story>> getStories() async {
-    Directory cacheDir = await getApplicationDocumentsDirectory();
-    List<FileSystemEntity> files = cacheDir.listSync();
+    var settings = await Settings.getInstance();
+    var workingDir = Directory(settings.storagePath);
+    List<FileSystemEntity> files = workingDir.listSync();
     var storyFiles = files.where((FileSystemEntity entity) => entity.path.contains(".$STORY_FILE_EXTENSION"));
     List<Story> stories = [];
     for (FileSystemEntity fse in storyFiles) {
@@ -85,5 +92,17 @@ class Story {
       }
     }
     return stories;
+  }
+
+  Future<void> deleteAt(int index) async {
+    var settings = await Settings.getInstance();
+    var flowToDelete = await loadFlow("${settings.storagePath}/flow_${flowPaths[index]}.$FLOW_FILE_EXTENSION");
+    while (flowToDelete.boardPaths.isNotEmpty) {
+      await flowToDelete.deleteAt(0);
+    }
+    var path = flowPaths.removeAt(index);
+    await save();
+    File f = File('${settings.storagePath}/flow_${path}.${FLOW_FILE_EXTENSION}');
+    await f.delete();
   }
 }

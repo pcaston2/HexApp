@@ -7,7 +7,6 @@ class MainMenu extends StatefulWidget {
 
 
 class MainMenuWidget extends State<MainMenu> {
-  final Future<Settings> _settings = Settings.getInstance();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -16,9 +15,11 @@ class MainMenuWidget extends State<MainMenu> {
             child: Text('THEX')
         )
       ),
-      body: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      body:
+      Column(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           crossAxisAlignment: CrossAxisAlignment.stretch,
+
           children: <Widget>[
             ElevatedButton.icon(
               icon: Icon(Icons.play_arrow_rounded),

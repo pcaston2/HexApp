@@ -65,8 +65,57 @@ class Boards extends State<BoardSelection> {
         )
         ),
         appBar: AppBar(
-          title: Text(_flow.name),
-        ),
+          title: settings.developer
+              ? Row(children: [
+            Text(_flow.name),
+            IconButton(
+                onPressed: () {
+                  TextEditingController _textFieldController =
+                  TextEditingController();
+                  _textFieldController.text =
+                      _flow.name;
+                  showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: Text('Please Rename Your Flow:'),
+                          content: TextField(
+                            controller: _textFieldController,
+                            decoration: InputDecoration(
+                                hintText: "My Flow"),
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              child: Text('CANCEL'),
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                            ),
+                            TextButton(
+                                child: Text('OK'),
+                                onPressed: () {
+                                  _flow.name =
+                                      _textFieldController.text;
+                                  _flow
+                                      .save()
+                                      .then((value) =>
+                                      setState(() {}));
+                                  final ScaffoldMessengerState
+                                  scaffoldMessenger =
+                                  ScaffoldMessenger.of(context);
+                                  scaffoldMessenger.showSnackBar(
+                                      SnackBar(
+                                          content: Text(
+                                              "Flow renamed to ${_textFieldController.text}")));
+                                  Navigator.pop(context);
+                                })
+                          ],
+                        );
+                      });
+                },
+                icon: Icon(Icons.edit_rounded))
+          ])
+              : Text(_flow.name)),
         body: FutureBuilder(
             future: _flow.boards,
             builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -95,8 +144,7 @@ class Boards extends State<BoardSelection> {
                             key: ValueKey(boards[index].guid),
                             onDismissed: (direction) {
                               if (direction == DismissDirection.endToStart) {
-                                _flow.boardPaths.removeAt(index);
-                                _flow.save().then((data) => setState(() {}));
+                                _flow.deleteAt(index).then((data) => setState(() {}));
                               }
                             },
                             confirmDismiss: (DismissDirection direction) async {

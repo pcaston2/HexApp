@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_guid/flutter_guid.dart';
 import 'package:hex_game/boardTheme.dart';
+import 'settings.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -55,17 +56,26 @@ class BoardFlow {
   }
 
   Future<void> save() async {
-    var cacheDir = await getApplicationDocumentsDirectory();
-    File f = File('${cacheDir.path}/flow_$guid.$FLOW_FILE_EXTENSION');
-    f.writeAsString(json.encode(toJson()));
+    var settings = await Settings.getInstance();
+    File f = File('${settings.storagePath}/flow_$guid.$FLOW_FILE_EXTENSION');
+    await f.writeAsString(json.encode(toJson()));
+  }
+
+
+  Future<void> deleteAt(int index) async {
+    var settings = await Settings.getInstance();
+    var path = boardPaths.removeAt(index);
+    save();
+    File f = File('${settings.storagePath}/board_${path}.${BOARD_FILE_EXTENSION}');
+    await f.delete();
   }
 
   Future<List<Board>> get boards async {
-    Directory cacheDir = await getApplicationDocumentsDirectory();
+    var settings = await Settings.getInstance();
     List<Board> boards = [];
     for (String boardPath in boardPaths) {
       try {
-        File file = File("${cacheDir.path}/board_$boardPath.$BOARD_FILE_EXTENSION");
+        File file = File("${settings.storagePath}/board_$boardPath.$BOARD_FILE_EXTENSION");
         String s = await file.readAsString();
         boards.add(Board.fromJson(json.decode(s)));
       } on Exception catch (ex) {
@@ -76,8 +86,9 @@ class BoardFlow {
   }
 
   static Future<List<BoardFlow>> getFlows() async {
-    Directory cacheDir = await getApplicationDocumentsDirectory();
-    List<FileSystemEntity> files = cacheDir.listSync();
+    var settings = await Settings.getInstance();
+    var workingDir = Directory(settings.storagePath);
+    List<FileSystemEntity> files = workingDir.listSync();
     var flowFiles = files.where((FileSystemEntity entity) =>
         entity.path.contains(".$FLOW_FILE_EXTENSION"));
     List<BoardFlow> flows = [];

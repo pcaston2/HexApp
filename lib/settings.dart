@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Settings {
   static Settings? _instance;
   final SharedPreferences _prefs;
+  final String _storagePath;
 
 
   bool get sound {
@@ -23,14 +26,31 @@ class Settings {
     _prefs.setBool('dev', value);
   }
 
+  bool getLoaded(String name) {
+    return _prefs.getBool(name) ?? false;
+  }
+
+  void setLoaded(String name) {
+    _prefs.setBool(name, true);
+  }
+
+  String get storagePath {
+    return _storagePath;
+  }
+
   static Future<Settings> getInstance() async {
     if (_instance == null) {
       final sharedPreferences = await SharedPreferences.getInstance();
-      _instance = Settings._(sharedPreferences);
+      Directory appStorage = await getApplicationDocumentsDirectory();
+      Directory storageDirectory = Directory('${appStorage.path}/thex');
+      if (!(await storageDirectory.exists())) {
+        await storageDirectory.create();
+      }
+      _instance = Settings._(sharedPreferences, storageDirectory.path);
     }
     return _instance!;
   }
 
-  Settings._(SharedPreferences sharedPreferences)
-      : _prefs = sharedPreferences;
+  Settings._(SharedPreferences sharedPreferences, String storagePath)
+      : _prefs = sharedPreferences, _storagePath = storagePath;
 }
