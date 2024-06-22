@@ -411,7 +411,9 @@ class HexPainter extends CustomPainter {
     double tips = max(0,trailFade-(1-trailFade));
     double mid = min(1,trailFade * 2);
     drawCurrentTrail(_gameState.board, center, canvas, theme, trailPulse, mid);
-    drawIncrementalTrail(_gameState.board, center, canvas);
+    if (!_gameState.board.hasEnded) {
+      drawIncrementalTrail(_gameState.board, center, canvas);
+    }
     drawTrailStartPiece(_gameState.board, center, canvas, theme, trailPulse, tips);
     drawTrailEndPiece(_gameState.board, center, canvas, theme, trailPulse, tips);
   }
@@ -432,7 +434,7 @@ class HexPainter extends CustomPainter {
       board.trail.forEach((Hex h) => trailOffset.add(new Offset(
           center.x + h.point.x + h.midpoint.x,
           center.y + h.point.y - h.midpoint.y)));
-      if ((board.next != null) && board.trail.contains(board.next)) {
+      if ((board.next != null) && board.trail.contains(board.next) && !board.hasEnded) {
         trailOffset.removeLast();
       }
       Path trailPath = Path();

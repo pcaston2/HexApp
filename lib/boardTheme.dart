@@ -29,38 +29,37 @@ class BoardTheme {
     RuleColorIndex.Fifth: Color.from(mat.Colors.deepPurpleAccent),
   };
 
+  BoardTheme.beginner() {
+    background.value = mat.Colors.lightGreen[100]!;
+    border.value = ext.HexColor.fromHex("#ff60717e");
+    foreground.value = ext.HexColor.fromHex("#fffbea52");
+    path.value = ext.HexColor.fromHex("#ff413b29");
+    trail.value = ext.HexColor.fromHex("#fff9f7a6");
+    ruleColors[RuleColorIndex.First]!.value = mat.Colors.blueGrey[500]!;
+    ruleColors[RuleColorIndex.Second]!.value = mat.Colors.orangeAccent;
+    ruleColors[RuleColorIndex.Third]!.value = mat.Colors.redAccent;
+    ruleColors[RuleColorIndex.Fourth]!.value = mat.Colors.lightGreenAccent;
+    ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
+  }
+
   BoardTheme.blue() {
     background.value = mat.Colors.white;
     border.value = mat.Colors.black;
     foreground.value = mat.Colors.lightBlue;
     path.value = mat.Colors.blueGrey;
     trail.value = mat.Colors.amberAccent;
-    ruleColors[RuleColorIndex.First]!.value = mat.Colors.grey[600]!;
+    ruleColors[RuleColorIndex.First]!.value = mat.Colors.grey[700]!;
     ruleColors[RuleColorIndex.Second]!.value = mat.Colors.orangeAccent;
     ruleColors[RuleColorIndex.Third]!.value = mat.Colors.redAccent;
     ruleColors[RuleColorIndex.Fourth]!.value = mat.Colors.lightGreenAccent;
     ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
   }
-
-  BoardTheme.beginner() {
-    background.value = ext.HexColor.fromHex("#ffcfcfcc");
-    border.value = ext.HexColor.fromHex("#ff60717e");
-    foreground.value = ext.HexColor.fromHex("#fffbea52");
-    path.value = ext.HexColor.fromHex("#ff413b29");
-    trail.value = ext.HexColor.fromHex("#fff9f7a6");
-    ruleColors[RuleColorIndex.First]!.value = mat.Colors.grey[600]!;
-    ruleColors[RuleColorIndex.Second]!.value = mat.Colors.orangeAccent;
-    ruleColors[RuleColorIndex.Third]!.value = mat.Colors.redAccent;
-    ruleColors[RuleColorIndex.Fourth]!.value = mat.Colors.lightGreenAccent;
-    ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
-  }
-
 
   BoardTheme.red() {
-    background.value = mat.Colors.white;
-    border.value = mat.Colors.grey;
+    background.value = mat.Colors.amber[100]!;
+    border.value = mat.Colors.blueGrey[800]!;
     foreground.value = mat.Colors.red[600]!;
-    path.value = mat.Colors.redAccent[200]!;
+    path.value = mat.Colors.red[900]!;
     trail.value = mat.Colors.yellow;
     ruleColors[RuleColorIndex.First]!.value = mat.Colors.orangeAccent;
     ruleColors[RuleColorIndex.Second]!.value = mat.Colors.redAccent;

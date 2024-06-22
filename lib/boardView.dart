@@ -4,7 +4,7 @@ class GameState {
   Board board = Board.sample();
   BoardFlow flow = BoardFlow();
   Hex pointer = Hex.origin();
-  Piece piece = PathPiece();
+  List<Piece> lastUsed = [StartPiece(), EndPiece(), PathPiece(),BreakPiece(), ErasePiece()];
   BoardAnimation boardAnimation = new BoardAnimation();
   RuleColorIndex ruleColor = RuleColorIndex.First;
 }
@@ -13,10 +13,10 @@ bool tracing = false;
 
 Point traceOffset = Point.origin();
 
+
 class BoardView extends StatefulWidget {
   final Board _board;
   final BoardFlow _flow;
-
   BoardView(this._board, this._flow) : super();
 
   @override
@@ -139,10 +139,22 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
     _gameState.value.flow = flow;
   }
 
-  void _choosePiece(
-      BuildContext context, Piece piece, ValueNotifier<GameState> gameState) {
+  void _choosePieceFromMenu(Piece piece) {
     Navigator.pop(context);
-    setState(() => _gameState.value.piece = piece);
+    _choosePiece(piece);
+  }
+
+  void _choosePiece(Piece piece) {
+    var lastUsed = _gameState.value.lastUsed;
+    if (lastUsed.first == piece) {
+      return;
+    } else if (lastUsed.contains(piece)) {
+      lastUsed.remove(piece);
+    }
+    lastUsed.insert(0, piece);
+    while (lastUsed.length > 7) {
+      lastUsed.removeLast();
+    }
   }
 
   PathPiece pathPiece = new PathPiece();
@@ -356,12 +368,10 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                               ),
                               PieceTile(
                                   pathPiece,
-                                  () => _choosePiece(
-                                      context, pathPiece, _gameState)),
+                                  () => _choosePieceFromMenu(pathPiece)),
                               PieceTile(
                                   breakPiece,
-                                  () => _choosePiece(
-                                      context, breakPiece, _gameState)),
+                                  () => _choosePieceFromMenu(breakPiece)),
                             ]),
                         ExpansionTile(
                             title: Text("Terminals"),
@@ -369,12 +379,10 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                             children: [
                               PieceTile(
                                   startPiece,
-                                  () => _choosePiece(
-                                      context, startPiece, _gameState)),
+                                  () => _choosePieceFromMenu(startPiece)),
                               PieceTile(
                                   endPiece,
-                                  () => _choosePiece(
-                                      context, endPiece, _gameState)),
+                                  () => _choosePieceFromMenu(endPiece)),
                             ]),
                         ExpansionTile(
                             title: Text("Rules"),
@@ -411,20 +419,16 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                   })),
                               PieceTile(
                                   dotRule,
-                                  () => _choosePiece(
-                                      context, dotRule, _gameState)),
+                                  () => _choosePieceFromMenu(dotRule)),
                               PieceTile(
                                   colorRule,
-                                  () => _choosePiece(
-                                      context, colorRule, _gameState)),
+                                  () => _choosePieceFromMenu(colorRule)),
                               PieceTile(
                                   edgeRule,
-                                  () => _choosePiece(
-                                      context, edgeRule, _gameState)),
+                                  () => _choosePieceFromMenu(edgeRule)),
                               PieceTile(
                                   cornerRule,
-                                  () => _choosePiece(
-                                      context, cornerRule, _gameState)),
+                                  () => _choosePieceFromMenu(cornerRule)),
                             ]),
                         ExpansionTile(
                             title: Text("Editing"),
@@ -432,8 +436,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                             children: [
                               PieceTile(
                                   erasePiece,
-                                  () => _choosePiece(
-                                      context, erasePiece, _gameState)),
+                                  () => _choosePieceFromMenu(erasePiece)),
                               ListTile(
                                   title: Text("Clear All"),
                                   onTap: () {
@@ -446,10 +449,8 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                               content: SingleChildScrollView(
                                                 child: ListBody(
                                                   children: [
-                                                    Text(
-                                                        'Clearing the board will erase everything.'),
-                                                    Text(
-                                                        'Are you sure you want to clear the board?'),
+                                                    Text('Clearing the board will erase everything.'),
+                                                    Text('Are you sure you want to clear the board?'),
                                                   ],
                                                 ),
                                               ),
@@ -603,6 +604,45 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                               ],
                                             ));
                                   }),
+                              ExpansionTile(
+                                  title: Text("Default Themes"),
+                                  leading: Icon(Icons.brush_rounded),
+                                  children: [
+                                    ListTile(
+                                      leading: Icon(Icons.brush_rounded, color: BoardTheme.beginner().foreground.value),
+                                      title: Text('Beginner'),
+                                      onTap: () {
+                                        setState(() {
+                                          _gameState.value.board.theme = BoardTheme.beginner();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        });
+                                      },
+                                    ),
+                                    ListTile(
+                                      leading: Icon(Icons.brush_rounded, color: BoardTheme.red().foreground.value),
+                                      title: Text('Red'),
+                                      onTap: () {
+                                        setState(() {
+                                          _gameState.value.board.theme = BoardTheme.red();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        });
+                                      },
+                                    ),
+                                    ListTile(
+                                      leading: Icon(Icons.brush_rounded, color: BoardTheme.blue().foreground.value),
+                                      title: Text('Blue'),
+                                      onTap: () {
+                                        setState(() {
+                                          _gameState.value.board.theme = BoardTheme.blue();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        });
+                                      },
+                                    ),
+                                  ]
+                              ),
                             ]),
                       ],
                     ),
@@ -660,7 +700,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                         if (_gameState.value.board.mode ==
                                             BoardMode.designer) {
                                           var clone =
-                                              _gameState.value.piece.clone();
+                                              _gameState.value.lastUsed.first.clone();
                                           if (clone is ColoredRule) {
                                             ColoredRule rule = clone;
                                             rule.color =
@@ -804,6 +844,57 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                       child: CustomPaint(
                                           painter: HexPainter(
                                               _gameState.value)))))))),
+              Visibility(
+                visible: _gameState.value.board.mode == BoardMode.designer,
+                child: Align(
+                alignment: Alignment.topCenter,
+                  child: Wrap(
+                    spacing: 10,
+                    runAlignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.start,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      for (var piece in _gameState.value.lastUsed)
+                        Transform.scale(
+                          scale: (1/(((_gameState.value.lastUsed.indexOf(piece)!+2))/3))*1.15,
+                          child: PieceButton(
+                              piece,
+                              (() {
+                                _choosePiece(piece);
+                              }),
+                              _gameState.value.board.theme.ruleColors[_gameState.value.ruleColor]!.value,
+                          )
+                        )
+                    ]
+                  )
+                )
+              ),
+              Visibility(
+                visible: _gameState.value.board.mode == BoardMode.designer,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(
+                    direction: Axis.vertical,
+                    spacing: 5,
+                    runAlignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.end,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      for (var colorIndex in _gameState.value.board.theme.ruleColors.keys)
+                        Transform.scale(
+                          scale: (colorIndex == _gameState.value.ruleColor ? 1.5 : 1),
+                          child: IconButton(
+                            tooltip: colorIndex.name,
+                            onPressed: () {
+                              _gameState.value.ruleColor = colorIndex;
+                            },
+                            icon: Icon(Icons.palette_rounded, color: _gameState.value.board.theme.ruleColors[colorIndex]!.value),
+                          )
+                        )
+                    ]
+                  )
+                )
+              )
 
             ])));
   }
