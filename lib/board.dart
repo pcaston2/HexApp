@@ -4,7 +4,6 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:flutter_guid/flutter_guid.dart';
-import 'package:path_provider/path_provider.dart';
 
 import 'boardTheme.dart';
 import 'hex.dart';
@@ -51,7 +50,7 @@ class Board {
     entries.forEach((entry) => putPiece(entry.hex, entry.piece));
   }
 
-  BoardTheme theme = BoardTheme.beginner();
+  BoardTheme theme = BoardTheme.yellow();
 
   int _size = 3;
 
@@ -277,6 +276,9 @@ class Board {
   }
 
   Future<void> save() async {
+    if (mode == BoardMode.designer) {
+      completed = false;
+    }
     var settings = await Settings.getInstance();
     File f = File('${settings.storagePath}/board_$guid.$BOARD_FILE_EXTENSION');
     await f.writeAsString(json.encode(toJson()));

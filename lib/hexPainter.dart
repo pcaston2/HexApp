@@ -90,12 +90,22 @@ class HexPainter extends CustomPainter {
           center.y + _gameState.pointer.point.y - vertex.y));
     }
     final paint = Paint()
-      ..color = Colors.blueAccent.withAlpha(128)
-      ..strokeWidth = 2
+      ..color = Colors.blueAccent.withAlpha(80)
+      ..strokeWidth = 17
+      ..strokeCap = StrokeCap.round
       ..blendMode = BlendMode.difference
       ..style = PaintingStyle.stroke;
-    offsets.forEach((Offset offset) => canvas.drawCircle(offset, 5, paint));
-    offsets.forEach((Offset offset) => canvas.drawCircle(offset, 10, paint));
+    //offsets.forEach((Offset offset) => canvas.drawCircle(offset, 5, paint));
+    //offsets.forEach((Offset offset) => canvas.drawCircle(offset, 10, paint));
+    if (offsets.length == 1) {
+      canvas.drawPoints(PointMode.points,offsets,paint);
+    } else if (offsets.length == 2) {
+      canvas.drawPoints(PointMode.lines, offsets, paint);
+    } else {
+      var poly = [...offsets];
+      poly.add(poly.first);
+      canvas.drawPoints(PointMode.polygon, poly, paint);
+    }
   }
 
   void drawEndPiece(Hex hex, Point center, Canvas canvas, BoardTheme theme) {
@@ -182,7 +192,8 @@ class HexPainter extends CustomPainter {
     if (errorPulse != 0 && errors.isNotEmpty) {
       final errorPaint = Paint()
         ..color = (errorPulse < 0 ? Colors.black : Colors.red).withOpacity(errorPulse.abs())
-        ..strokeWidth = 2;
+        ..strokeWidth = 2
+        ..strokeCap = StrokeCap.round;
       var colorOffset = 0;
       for (var color in colorRule.colors) {
         if (
@@ -299,26 +310,26 @@ class HexPainter extends CustomPainter {
   void drawCornerRule(Hex hex, Point center, Canvas canvas, CornerRule cornerRule, BoardTheme theme, double errorPulse, List<BoardValidationError> errors) {
     final cornerPaint = Paint()
       ..color = theme.ruleColors[cornerRule.color]!.value
-      ..strokeWidth = 3
+      ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
     for (int i = 0;i<cornerRule.count; i++) {
       canvas.drawCircle(Offset(
         center.x + hex.point.x + hex.midpoint.x,
         center.y + hex.point.y - hex.midpoint.y,
-      ), 9+i*5, cornerPaint);
+      ), 7+i*4, cornerPaint);
     }
 
     if (errorPulse != 0 && errors.isNotEmpty) {
       final errorPaint = Paint()
         ..color = (errorPulse < 0 ? Colors.black : Colors.red).withOpacity(
             errorPulse.abs())
-        ..strokeWidth = 3
+        ..strokeWidth = 2
         ..style = PaintingStyle.stroke;
       for (int i = 0; i < cornerRule.count; i++) {
         canvas.drawCircle(Offset(
           center.x + hex.point.x + hex.midpoint.x,
           center.y + hex.point.y - hex.midpoint.y,
-        ), 9 + i * 5, errorPaint);
+        ), 7 + i * 4, errorPaint);
       }
     }
   }

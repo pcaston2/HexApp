@@ -5,7 +5,6 @@ import 'package:flutter_guid/flutter_guid.dart';
 import 'package:hex_game/boardTheme.dart';
 import 'settings.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:path_provider/path_provider.dart';
 
 import 'board.dart';
 
