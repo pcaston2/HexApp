@@ -731,6 +731,132 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                           Navigator.of(context).pop();
                                         }
                                     ),
+                                    ListTile(
+                                        leading: Icon(Icons.brush_rounded, color: BoardTheme.antique().foreground.value),
+                                        title: Text('Antique'),
+                                        onTap: () {
+                                          _gameState.value.board.theme = BoardTheme.antique();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        }
+                                    ),
+                                    ListTile(
+                                        leading: Icon(Icons.brush_rounded, color: BoardTheme.adventure().foreground.value),
+                                        title: Text('Adventure'),
+                                        onTap: () {
+                                          _gameState.value.board.theme = BoardTheme.adventure();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        }
+                                    ),
+                                    ListTile(
+                                        leading: Icon(Icons.brush_rounded, color: BoardTheme.fall().foreground.value),
+                                        title: Text('Fall'),
+                                        onTap: () {
+                                          _gameState.value.board.theme = BoardTheme.fall();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        }
+                                    ),
+                                    ListTile(
+                                        leading: Icon(Icons.brush_rounded, color: BoardTheme.desaturation().foreground.value),
+                                        title: Text('Desaturation'),
+                                        onTap: () {
+                                          _gameState.value.board.theme = BoardTheme.desaturation();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        }
+                                    ),
+                                    ListTile(
+                                        leading: Icon(Icons.brush_rounded, color: BoardTheme.vintage().foreground.value),
+                                        title: Text('Vintage'),
+                                        onTap: () {
+                                          _gameState.value.board.theme = BoardTheme.vintage();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        }
+                                    ),
+                                    ListTile(
+                                        leading: Icon(Icons.brush_rounded, color: BoardTheme.contemporary().foreground.value),
+                                        title: Text('Contemporary'),
+                                        onTap: () {
+                                          _gameState.value.board.theme = BoardTheme.contemporary();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        }
+                                    ),
+                                    ListTile(
+                                        leading: Icon(Icons.brush_rounded, color: BoardTheme.woods().foreground.value),
+                                        title: Text('Woods'),
+                                        onTap: () {
+                                          _gameState.value.board.theme = BoardTheme.woods();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        }
+                                    ),
+                                    ListTile(
+                                        leading: Icon(Icons.brush_rounded, color: BoardTheme.marigold().path.value),
+                                        title: Text('Marigold'),
+                                        onTap: () {
+                                          _gameState.value.board.theme = BoardTheme.marigold();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        }
+                                    ),
+                                    ListTile(
+                                        leading: Icon(Icons.brush_rounded, color: BoardTheme.pastel().foreground.value),
+                                        title: Text('Pastel'),
+                                        onTap: () {
+                                          _gameState.value.board.theme = BoardTheme.pastel();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        }
+                                    ),
+                                    ListTile(
+                                        leading: Icon(Icons.brush_rounded, color: BoardTheme.neutral().foreground.value),
+                                        title: Text('Neutral'),
+                                        onTap: () {
+                                          _gameState.value.board.theme = BoardTheme.neutral();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        }
+                                    ),
+                                    ListTile(
+                                        leading: Icon(Icons.brush_rounded, color: BoardTheme.army().foreground.value),
+                                        title: Text('Army'),
+                                        onTap: () {
+                                          _gameState.value.board.theme = BoardTheme.army();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        }
+                                    ),
+                                    ListTile(
+                                        leading: Icon(Icons.brush_rounded, color: BoardTheme.cold().foreground.value),
+                                        title: Text('Cold'),
+                                        onTap: () {
+                                          _gameState.value.board.theme = BoardTheme.cold();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        }
+                                    ),
+                                    ListTile(
+                                        leading: Icon(Icons.brush_rounded, color: BoardTheme.mellow().foreground.value),
+                                        title: Text('Mellow'),
+                                        onTap: () {
+                                          _gameState.value.board.theme = BoardTheme.mellow();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        }
+                                    ),
+                                    ListTile(
+                                        leading: Icon(Icons.brush_rounded, color: BoardTheme.greek().foreground.value),
+                                        title: Text('Greek'),
+                                        onTap: () {
+                                          _gameState.value.board.theme = BoardTheme.greek();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        }
+                                    ),
                                   ]
                               ),
                             ]),

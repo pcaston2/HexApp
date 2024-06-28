@@ -90,11 +90,12 @@ class HexPainter extends CustomPainter {
           center.y + _gameState.pointer.point.y - vertex.y));
     }
     final paint = Paint()
-      ..color = Colors.blueAccent.withAlpha(80)
-      ..strokeWidth = 17
+      ..color = Colors.blueAccent.withAlpha(64)
+      ..strokeWidth = offsets.length == 1 ? 35 : (offsets.length == 2 ? 26 : 15)
       ..strokeCap = StrokeCap.round
       ..blendMode = BlendMode.difference
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 5.0);
     //offsets.forEach((Offset offset) => canvas.drawCircle(offset, 5, paint));
     //offsets.forEach((Offset offset) => canvas.drawCircle(offset, 10, paint));
     if (offsets.length == 1) {
@@ -104,7 +105,11 @@ class HexPainter extends CustomPainter {
     } else {
       var poly = [...offsets];
       poly.add(poly.first);
-      canvas.drawPoints(PointMode.polygon, poly, paint);
+      var path = Path();
+      path.moveTo(poly.first.dx, poly.first.dy);
+      poly.skip(1).forEach((e) => path.lineTo(e.dx,e.dy));
+      canvas.drawPath(path, paint);
+      //canvas.drawPoints(PointMode.polygon, poly, paint);
     }
   }
 
@@ -382,6 +387,7 @@ class HexPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeJoin = StrokeJoin.miter
       ..strokeWidth = 15
+      ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 2.0)
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
@@ -429,8 +435,8 @@ class HexPainter extends CustomPainter {
     drawTrailEndPiece(_gameState.board, center, canvas, theme, trailPulse, tips);
   }
 
-  void drawCurrentTrail(
-      Board board, Point center, Canvas canvas, BoardTheme theme, double trailPulse, double trailFade) {
+  void drawCurrentTrail(Board board, Point center, Canvas canvas,
+      BoardTheme theme, double trailPulse, double trailFade) {
     if (board.trail.length > 1) {
       final trailPaint = Paint()
         ..color = (board.isFinished
@@ -438,8 +444,9 @@ class HexPainter extends CustomPainter {
                 ? theme.trail.brighten(20).value
                 : theme.trail.darken(10).value)
             : theme.trail.brighten((trailPulse * 5).round()).value).withOpacity(trailFade)
-        ..strokeWidth = 10
+        ..strokeWidth = 8
         ..style = PaintingStyle.stroke
+        ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 3.0)
         ..strokeCap = StrokeCap.round;
       List<Offset> trailOffset = <Offset>[];
       board.trail.forEach((Hex h) => trailOffset.add(new Offset(
@@ -463,9 +470,10 @@ class HexPainter extends CustomPainter {
             ? board.theme.trail.brighten(20).value
             : board.theme.trail.darken(10).value)
             : board.theme.trail.value)
-        ..strokeWidth = 10
+        ..strokeWidth = 8
         ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round;
+        ..strokeCap = StrokeCap.round
+        ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 3.0);
 
       var current = board.tail!.localPoint;
       var to = next.localPoint;
@@ -497,10 +505,11 @@ class HexPainter extends CustomPainter {
           center.y + board.tail!.point.y - board.tail!.midpoint.y);
       final endPaint = Paint()
         ..style = PaintingStyle.fill
+        ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 3.0)
         ..shader = RadialGradient(
           colors: [
-            theme.trail.brighten(20).value.withOpacity(trailFade),
-            theme.trail.darken(10).value.withOpacity(trailFade),
+            theme.trail.brighten(5).value.withOpacity(trailFade),
+            theme.trail.darken(2).value.withOpacity(trailFade),
             (board.isFinished
                 ? (board.isSuccess
                     ? theme.trail.brighten(30).value
@@ -511,7 +520,7 @@ class HexPainter extends CustomPainter {
           center: offset,
           radius: hexSize / 5.0,
         ));
-      canvas.drawCircle(offset, hexSize / 3.5, endPaint);
+      canvas.drawCircle(offset, hexSize / 4.0, endPaint);
     }
   }
 
@@ -520,10 +529,11 @@ class HexPainter extends CustomPainter {
     if (board.trail.length > 0) {
       final startPaint = Paint()
         ..style = PaintingStyle.fill
+        ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 3.0)
         ..shader = RadialGradient(
           colors: [
-            theme.trail.darken(20).value.withOpacity(trailFade),
             theme.trail.darken(5).value.withOpacity(trailFade),
+            theme.trail.darken(2).value.withOpacity(trailFade),
             (board.isFinished
               ? (board.isSuccess
                     ? theme.trail.brighten(30).value
@@ -542,11 +552,11 @@ class HexPainter extends CustomPainter {
             center.x +
                 board.head.point.x +
                 board.head.midpoint.x +
-                vertex.y / 3.0,
+                vertex.y / 3.5,
             center.y +
                 board.head.point.y -
                 board.head.midpoint.y -
-                vertex.x / 3.0));
+                vertex.x / 3.5));
       }
       Path path = Path();
       path.addPolygon(pieceOffset, true);

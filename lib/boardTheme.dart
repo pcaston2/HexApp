@@ -198,6 +198,188 @@ class BoardTheme {
     ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
   }
 
+  BoardTheme.antique() {
+    background.value = ext.HexColor.fromHex("#f0d7ac");
+    border.value = ext.HexColor.fromHex("#a9908c");
+    foreground.value = ext.HexColor.fromHex("#a5c1cd");
+    path.value = ext.HexColor.fromHex("#d8af60");
+    trail.value = ext.HexColor.fromHex("#f7f1cf");
+    ruleColors[RuleColorIndex.First]!.value = mat.Colors.grey[600]!;
+    ruleColors[RuleColorIndex.Second]!.value = mat.Colors.deepOrangeAccent[100]!;
+    ruleColors[RuleColorIndex.Third]!.value = mat.Colors.redAccent;
+    ruleColors[RuleColorIndex.Fourth]!.value = mat.Colors.lightGreenAccent;
+    ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
+  }
+
+  BoardTheme.adventure() {
+    background.value = ext.HexColor.fromHex("#86d7b6");
+    border.value = ext.HexColor.fromHex("#27214f");
+    foreground.value = ext.HexColor.fromHex("#569eb4");
+    path.value = ext.HexColor.fromHex("#ff6a3f");
+    trail.value = ext.HexColor.fromHex("f6e08a");
+    ruleColors[RuleColorIndex.First]!.value = mat.Colors.grey[600]!;
+    ruleColors[RuleColorIndex.Second]!.value = mat.Colors.pink[200]!;
+    ruleColors[RuleColorIndex.Third]!.value = mat.Colors.red;
+    ruleColors[RuleColorIndex.Fourth]!.value = mat.Colors.lightGreenAccent;
+    ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
+  }
+
+  BoardTheme.fall() {
+    background.value = ext.HexColor.fromHex("#3b5166");
+    border.value = ext.HexColor.fromHex("#ff3c38");
+    foreground.value = ext.HexColor.fromHex("#a23e48");
+    path.value = ext.HexColor.fromHex("#ff8c43");
+    trail.value = ext.HexColor.fromHex("fff275");
+    ruleColors[RuleColorIndex.First]!.value = mat.Colors.grey[600]!;
+    ruleColors[RuleColorIndex.Second]!.value = mat.Colors.pink[200]!;
+    ruleColors[RuleColorIndex.Third]!.value = mat.Colors.red;
+    ruleColors[RuleColorIndex.Fourth]!.value = mat.Colors.lightGreenAccent;
+    ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
+  }
+
+  BoardTheme.desaturation() {
+    background.value = ext.HexColor.fromHex("#716893");
+    border.value = ext.HexColor.fromHex("#371e3b");
+    foreground.value = ext.HexColor.fromHex("#97bab2");
+    path.value = ext.HexColor.fromHex("#6d9db1");
+    trail.value = ext.HexColor.fromHex("f0e3b7");
+    ruleColors[RuleColorIndex.First]!.value = mat.Colors.grey[600]!;
+    ruleColors[RuleColorIndex.Second]!.value = mat.Colors.pink[200]!;
+    ruleColors[RuleColorIndex.Third]!.value = mat.Colors.red;
+    ruleColors[RuleColorIndex.Fourth]!.value = mat.Colors.lightGreenAccent;
+    ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
+  }
+
+  BoardTheme.vintage() {
+    background.value = ext.HexColor.fromHex("#6e7973");
+    border.value = ext.HexColor.fromHex("#403931");
+    foreground.value = ext.HexColor.fromHex("#e7b99f");
+    path.value = ext.HexColor.fromHex("#b1b2a2");
+    trail.value = ext.HexColor.fromHex("#e4dace");
+    ruleColors[RuleColorIndex.First]!.value = mat.Colors.grey[600]!;
+    ruleColors[RuleColorIndex.Second]!.value = mat.Colors.pink[200]!;
+    ruleColors[RuleColorIndex.Third]!.value = mat.Colors.red;
+    ruleColors[RuleColorIndex.Fourth]!.value = mat.Colors.lightGreenAccent;
+    ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
+  }
+
+  BoardTheme.contemporary() {
+    background.value = ext.HexColor.fromHex("#6cc084");
+    border.value = ext.HexColor.fromHex("#33333b");
+    foreground.value = ext.HexColor.fromHex("#f2aca0");
+    path.value = ext.HexColor.fromHex("#f16a67");
+    trail.value = ext.HexColor.fromHex("#dfe2d1");
+    ruleColors[RuleColorIndex.First]!.value = mat.Colors.grey[600]!;
+    ruleColors[RuleColorIndex.Second]!.value = mat.Colors.pink[200]!;
+    ruleColors[RuleColorIndex.Third]!.value = mat.Colors.red;
+    ruleColors[RuleColorIndex.Fourth]!.value = mat.Colors.lightGreenAccent;
+    ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
+  }
+
+  BoardTheme.woods() {
+    background.value = ext.HexColor.fromHex("#3d455c");
+    border.value = ext.HexColor.fromHex("#61412a");
+    foreground.value = ext.HexColor.fromHex("#9aacb8");
+    path.value = ext.HexColor.fromHex("#b37b56");
+    trail.value = ext.HexColor.fromHex("#dde2e5");
+    ruleColors[RuleColorIndex.First]!.value = mat.Colors.grey[600]!;
+    ruleColors[RuleColorIndex.Second]!.value = mat.Colors.pink[200]!;
+    ruleColors[RuleColorIndex.Third]!.value = mat.Colors.red;
+    ruleColors[RuleColorIndex.Fourth]!.value = mat.Colors.lightGreenAccent;
+    ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
+  }
+
+  BoardTheme.marigold() {
+    background.value = ext.HexColor.fromHex("#ab3e17");
+    border.value = ext.HexColor.fromHex("#48120f");
+    foreground.value = ext.HexColor.fromHex("#f9f3e7");
+    path.value = ext.HexColor.fromHex("#e6cc8f");
+    trail.value = ext.HexColor.fromHex("#f0aa52");
+    ruleColors[RuleColorIndex.First]!.value = mat.Colors.grey[600]!;
+    ruleColors[RuleColorIndex.Second]!.value = mat.Colors.pink[200]!;
+    ruleColors[RuleColorIndex.Third]!.value = mat.Colors.red;
+    ruleColors[RuleColorIndex.Fourth]!.value = mat.Colors.lightGreenAccent;
+    ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
+  }
+
+  BoardTheme.pastel() {
+    background.value = ext.HexColor.fromHex("#fae3d9");
+    border.value = ext.HexColor.fromHex("#4abbf3");
+    foreground.value = ext.HexColor.fromHex("#61bfbf");
+    path.value = ext.HexColor.fromHex("#bbded7");
+    trail.value = ext.HexColor.fromHex("#ffb7bb");
+    ruleColors[RuleColorIndex.First]!.value = mat.Colors.grey[600]!;
+    ruleColors[RuleColorIndex.Second]!.value = mat.Colors.pink[200]!;
+    ruleColors[RuleColorIndex.Third]!.value = mat.Colors.red;
+    ruleColors[RuleColorIndex.Fourth]!.value = mat.Colors.lightGreenAccent;
+    ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
+  }
+
+  BoardTheme.neutral() {
+    background.value = ext.HexColor.fromHex("#e25f6f");
+    border.value = ext.HexColor.fromHex("#4d3849");
+    foreground.value = ext.HexColor.fromHex("#fbb89e");
+    path.value = ext.HexColor.fromHex("#866669");
+    trail.value = ext.HexColor.fromHex("#fbd5a6");
+    ruleColors[RuleColorIndex.First]!.value = mat.Colors.grey[500]!;
+    ruleColors[RuleColorIndex.Second]!.value = mat.Colors.pink[200]!;
+    ruleColors[RuleColorIndex.Third]!.value = mat.Colors.red;
+    ruleColors[RuleColorIndex.Fourth]!.value = mat.Colors.lightGreenAccent;
+    ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
+  }
+
+  BoardTheme.army() {
+    background.value = ext.HexColor.fromHex("#037367");
+    border.value = ext.HexColor.fromHex("#002820");
+    foreground.value = ext.HexColor.fromHex("#7b885a");
+    path.value = ext.HexColor.fromHex("#7ad4cb");
+    trail.value = ext.HexColor.fromHex("#f2ce38");
+    ruleColors[RuleColorIndex.First]!.value = mat.Colors.grey[500]!;
+    ruleColors[RuleColorIndex.Second]!.value = mat.Colors.pink[200]!;
+    ruleColors[RuleColorIndex.Third]!.value = mat.Colors.red;
+    ruleColors[RuleColorIndex.Fourth]!.value = mat.Colors.lightGreenAccent;
+    ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
+  }
+
+  BoardTheme.cold() {
+    background.value = ext.HexColor.fromHex("#6c4f6e");
+    border.value = ext.HexColor.fromHex("#3a324a");
+    foreground.value = ext.HexColor.fromHex("#747081");
+    path.value = ext.HexColor.fromHex("#d1d3ce");
+    trail.value = ext.HexColor.fromHex("#6a82a8");
+    ruleColors[RuleColorIndex.First]!.value = mat.Colors.grey[500]!;
+    ruleColors[RuleColorIndex.Second]!.value = mat.Colors.pink[200]!;
+    ruleColors[RuleColorIndex.Third]!.value = mat.Colors.red;
+    ruleColors[RuleColorIndex.Fourth]!.value = mat.Colors.lightGreenAccent;
+    ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
+  }
+
+  BoardTheme.mellow() {
+    background.value = ext.HexColor.fromHex("#193445");
+    border.value = ext.HexColor.fromHex("#e9c87b");
+    foreground.value = ext.HexColor.fromHex("#9aacba");
+    path.value = ext.HexColor.fromHex("#c3d3e0");
+    trail.value = ext.HexColor.fromHex("#e2b49a");
+    ruleColors[RuleColorIndex.First]!.value = mat.Colors.grey[500]!;
+    ruleColors[RuleColorIndex.Second]!.value = mat.Colors.pink[200]!;
+    ruleColors[RuleColorIndex.Third]!.value = mat.Colors.red;
+    ruleColors[RuleColorIndex.Fourth]!.value = mat.Colors.lightGreenAccent;
+    ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
+  }
+
+  BoardTheme.greek() {
+    background.value = ext.HexColor.fromHex("#ffecce");
+    border.value = ext.HexColor.fromHex("#8c4613");
+    foreground.value = ext.HexColor.fromHex("#6a8e24");
+    path.value = ext.HexColor.fromHex("#66cd00");
+    trail.value = ext.HexColor.fromHex("#ff6247");
+    ruleColors[RuleColorIndex.First]!.value = mat.Colors.grey[600]!;
+    ruleColors[RuleColorIndex.Second]!.value = mat.Colors.pink[200]!;
+    ruleColors[RuleColorIndex.Third]!.value = mat.Colors.red;
+    ruleColors[RuleColorIndex.Fourth]!.value = mat.Colors.lightGreenAccent;
+    ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
+  }
+
   factory BoardTheme() {
     return BoardTheme.yellow();
   }
