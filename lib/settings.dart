@@ -53,4 +53,8 @@ class Settings {
 
   Settings._(SharedPreferences sharedPreferences, String storagePath)
       : _prefs = sharedPreferences, _storagePath = storagePath;
+
+  Future<void> reset() async {
+    await _prefs.clear();
+  }
 }

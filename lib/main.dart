@@ -34,8 +34,12 @@ late Settings settings;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   settings = await Settings.getInstance();
-  await loadStory("main");
+  await loadStories();
   runApp(MaterialApp(title: "Thex", home: MainMenu()));
+}
+
+Future<void> loadStories() async {
+  await loadStory("main");
 }
 
 Future<void> loadStory(String storyName) async {

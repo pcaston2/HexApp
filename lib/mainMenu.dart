@@ -52,6 +52,18 @@ class MainMenuWidget extends State<MainMenu> {
                   });
                 },
             ),
+            Visibility(
+              visible: settings.developer,
+              child: ElevatedButton.icon(
+                        icon: Icon(Icons.build_rounded),
+                        iconAlignment: IconAlignment.end,
+                        label: Text("Reset"),
+                        onPressed: () async {
+                            await loadStories();
+                            await settings.reset();
+                        }
+                    )
+            )
           ],
         )
     );
