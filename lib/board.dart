@@ -12,6 +12,7 @@ import 'piece.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'settings.dart';
 
+
 part 'boardValidator.dart';
 part 'hexPieceEntry.dart';
 part 'board.g.dart';
@@ -28,6 +29,7 @@ const String BOARD_FILE_EXTENSION = "jhexboard";
 @JsonSerializable(explicitToJson: true)
 class Board {
   String name = "Board";
+
 
   late bool completed;
 

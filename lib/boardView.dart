@@ -3,6 +3,7 @@ part of 'main.dart';
 class GameState {
   Board board = Board.sample();
   BoardFlow flow = BoardFlow();
+  Story story = Story();
   Hex pointer = Hex.origin();
   List<Piece> lastUsed = [StartPiece(), EndPiece(), PathPiece(),BreakPiece(), ErasePiece()];
   BoardAnimation boardAnimation = new BoardAnimation();
@@ -17,10 +18,19 @@ Point traceOffset = Point.origin();
 class BoardView extends StatefulWidget {
   final Board _board;
   final BoardFlow _flow;
-  BoardView(this._board, this._flow) : super();
+  final Story _story;
+  BoardView(this._board, this._flow, this._story) : super();
 
   @override
-  _HexWidgetState createState() => _HexWidgetState(_board, _flow);
+  _HexWidgetState createState() {
+    GameAnalytics.addProgressionEvent({
+      "progressionStatus": 1,
+      "progression01": _story.name,
+      "progression02": _flow.name,
+      "progression03": _board.name
+    });
+    return _HexWidgetState(_board, _flow, _story);
+  }
 }
 
 class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
@@ -45,6 +55,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+
 
     beckonController = AnimationController(
       vsync: this,
@@ -133,10 +144,11 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  _HexWidgetState(Board board, BoardFlow flow) {
+  _HexWidgetState(Board board, BoardFlow flow, story) {
     _gameState = ValueNotifier<GameState>(GameState());
     _gameState.value.board = board;
     _gameState.value.flow = flow;
+    _gameState.value.story = story;
   }
 
   void _choosePieceFromMenu(Piece piece) {

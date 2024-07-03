@@ -38,6 +38,18 @@ class Settings {
     return _storagePath;
   }
 
+  String get board {
+    return _prefs.getString("board") ?? "Base Case";
+  }
+
+  String get flow {
+    return _prefs.getString("flow") ?? "Trace Route";
+  }
+
+  String get story {
+    return _prefs.getString("story") ?? "Hot Path";
+  }
+
   static Future<Settings> getInstance() async {
     if (_instance == null) {
       final sharedPreferences = await SharedPreferences.getInstance();

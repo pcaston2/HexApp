@@ -189,7 +189,7 @@ class Flows extends State<FlowSelection> {
                     onTap: () async {
                       var result = await Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => BoardSelection(flows[index])),
+                        MaterialPageRoute(builder: (context) => BoardSelection(flows[index], _story)),
                       );
                       if (result != null && result) {
                         flows[index].completed = true;

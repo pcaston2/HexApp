@@ -35,6 +35,9 @@ dependencies:
   qr_flutter: ^4.1.0
   archive: ^3.6.1
   circular_menu: ^4.0.0
+  gameanalytics_sdk: ^1.2.7
+
+
 
 
   # The following adds the Cupertino Icons font to your application.

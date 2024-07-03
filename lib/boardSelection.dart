@@ -2,16 +2,18 @@ part of 'main.dart';
 
 class BoardSelection extends StatefulWidget {
   @override
-  Boards createState() => new Boards(_flow);
+  Boards createState() => new Boards(_flow, _story);
   final BoardFlow _flow;
-  BoardSelection(this._flow);
+  final Story _story;
+  BoardSelection(this._flow, this._story);
 }
 
 
 
 class Boards extends State<BoardSelection> {
   BoardFlow _flow;
-  Boards(this._flow);
+  Story _story;
+  Boards(this._flow, this._story);
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -200,7 +202,7 @@ class Boards extends State<BoardSelection> {
                             board: boards[index],
                             title: Text(boards[index].name),
                             onTap: () {
-                              pushBoard(context, boards, index, _flow);
+                              pushBoard(context, boards, index, _flow, _story);
                             }
                         )
                         );
@@ -212,14 +214,14 @@ class Boards extends State<BoardSelection> {
 
   }
 
-  Future<void> pushBoard(BuildContext context, List<Board> boards,int index, BoardFlow flow) async {
-    var result = await Navigator.push( context, MaterialPageRoute(builder: (context) => BoardView(boards[index], flow)));
+  Future<void> pushBoard(BuildContext context, List<Board> boards,int index, BoardFlow flow, Story story) async {
+    var result = await Navigator.push( context, MaterialPageRoute(builder: (context) => BoardView(boards[index], flow, story)));
     if (result != null && result) {
       if (boards.every((b) => b.completed)) {
         Navigator.pop(context, true);
       }
       if (boards.length > index +1) {
-        pushBoard(context, boards, ++index, flow);
+        pushBoard(context, boards, ++index, flow, story);
       }
     }
   }

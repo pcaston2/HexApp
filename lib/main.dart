@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:gameanalytics_sdk/gameanalytics.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,6 +36,10 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   settings = await Settings.getInstance();
   await loadStories();
+  GameAnalytics.configureAutoDetectAppVersion(true);
+  GameAnalytics.initialize("4dca4a4b41d0772a7b8d4076268b7a7f", "7250dba7e4f6ecb8634fae21b6bda7365de9c400");
+  GameAnalytics.setEnabledInfoLog(true);
+  GameAnalytics.setEnabledVerboseLog(true);
   runApp(MaterialApp(title: "Thex", home: MainMenu()));
 }
 

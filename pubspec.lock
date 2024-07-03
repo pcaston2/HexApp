@@ -320,6 +320,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.0"
+  gameanalytics_sdk:
+    dependency: "direct main"
+    description:
+      name: gameanalytics_sdk
+      sha256: "055f4f916c78b486ffca202be4e4fb5abc3da37229faa95738b8ee2d05f916b0"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.7"
   glob:
     dependency: transitive
     description:
