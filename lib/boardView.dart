@@ -24,7 +24,7 @@ class BoardView extends StatefulWidget {
   @override
   _HexWidgetState createState() {
     GameAnalytics.addProgressionEvent({
-      "progressionStatus": 1,
+      "progressionStatus": 1, //START
       "progression01": _story.name,
       "progression02": _flow.name,
       "progression03": _board.name
@@ -35,6 +35,8 @@ class BoardView extends StatefulWidget {
 
 class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
   late ValueNotifier<GameState> _gameState;
+
+  double? _rating = null;
 
   late HexPainter painter;
 
@@ -181,6 +183,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+
     return ValueListenableBuilder(
         valueListenable: _gameState,
         builder: (context, value, child) => Scaffold(
@@ -904,7 +907,6 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                   child: GestureDetector(
                                       trackpadScrollCausesScale: true,
                                       behavior: HitTestBehavior.translucent,
-                                      onLongPressEnd: (details) {},
                                       onTapUp: (details) {
                                         var p = Point(details.localPosition.dx,
                                             details.localPosition.dy);
@@ -947,8 +949,6 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                             _gameState.value.board.save();
                                           }
                                           setState(() => _gameState);
-                                        } else {
-                                          //set state try to start
                                         }
                                       },
                                       onScaleEnd: (details) {
@@ -959,21 +959,78 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                           if (_gameState.value.board.hasEnded) {
                                             if (tracing) {
                                               setState(() {
-                                                if (_gameState.value.board
-                                                    .trySolve()) {
+                                                if (_gameState.value.board.trySolve()) {
+
+
+
                                                   soundPlayer.play(
                                                       audioSound.PANEL_SUCCESS);
-                                                  if (_gameState.value.board
-                                                          .completed ==
-                                                      false) {
-                                                    _gameState.value.board
-                                                        .completed = true;
-                                                    _gameState.value.board
-                                                        .save();
+
+                                                  if (!_gameState.value.board.completed) {
+                                                    showDialog(
+                                                        context: context,
+                                                        builder: (BuildContext context) =>
+                                                            AlertDialog(
+                                                              title: Text('Congratulations!'),
+                                                              content: SingleChildScrollView(
+                                                                child: ListBody(
+                                                                  children: [
+                                                                    Text('You solved ${_gameState.value.board.name}'),
+                                                                    Text('Please take a moment to rate this puzzle'),
+
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                              actions: [
+                                                                RatingStars(
+                                                                    valueLabelVisibility: false,
+                                                                    value: 5,
+                                                                    starSize: 40,
+                                                                    onValueChanged: (v) {
+                                                                      setState(
+                                                                              () {
+                                                                            _rating = v;
+                                                                            print(_rating);
+                                                                            Navigator.of(context).pop();
+                                                                          }
+                                                                      );
+                                                                    }
+                                                                ),
+                                                                TextButton(
+                                                                  child: Text('Heck no!'),
+                                                                  onPressed: () {
+                                                                    Navigator.of(context).pop();
+                                                                  },
+                                                                ),
+                                                              ],
+                                                            ));
+                                                    var gaMap = {
+                                                      "progressionStatus": 2, //SUCCESS
+                                                      "progression01": _gameState.value.story.name,
+                                                      "progression02": _gameState.value.flow.name,
+                                                      "progression03": _gameState.value.board.name,
+                                                    };
+                                                    if (_rating != null) {
+                                                      gaMap["score"] = _rating!;
+                                                    }
+                                                    GameAnalytics.addProgressionEvent(gaMap);
+                                                    _gameState.value.board.completed = true;
+                                                    _gameState.value.board.save();
+
                                                   }
                                                 } else {
                                                   soundPlayer.play(
                                                       audioSound.PANEL_FAILURE);
+                                                  if (!_gameState.value.board.completed) {
+                                                    GameAnalytics
+                                                        .addProgressionEvent({
+                                                      "progressionStatus": 3,
+                                                      //FAILURE
+                                                      "progression01": _gameState.value.story.name,
+                                                      "progression02": _gameState.value.flow.name,
+                                                      "progression03": _gameState.value.board.name,
+                                                    });
+                                                  }
                                                   fadeController.reset();
                                                   fadeController.forward();
                                                   errorController.reset();
