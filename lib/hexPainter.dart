@@ -120,8 +120,8 @@ class HexPainter extends CustomPainter {
       ..style = PaintingStyle.fill
       ..shader = RadialGradient(
         colors: [
-          theme.path.darken(30).value,
-          theme.path.darken(20).value,
+          theme.path.darken(15).value,
+          theme.path.darken(5).value,
           theme.path.value,
         ],
       ).createShader(Rect.fromCircle(
@@ -149,8 +149,8 @@ class HexPainter extends CustomPainter {
       ..style = PaintingStyle.fill
       ..shader = RadialGradient(
         colors: [
-          theme.path.brighten(20).value,
-          theme.path.darken(20).value,
+          theme.path.brighten(15).value,
+          theme.path.brighten(5).value,
           theme.path.value,
         ],
       ).createShader(Rect.fromCircle(
@@ -321,7 +321,7 @@ class HexPainter extends CustomPainter {
       canvas.drawCircle(Offset(
         center.x + hex.point.x + hex.midpoint.x,
         center.y + hex.point.y - hex.midpoint.y,
-      ), 7+i*4, cornerPaint);
+      ), 11-i*4, cornerPaint);
     }
 
     if (errorPulse != 0 && errors.isNotEmpty) {
@@ -334,7 +334,7 @@ class HexPainter extends CustomPainter {
         canvas.drawCircle(Offset(
           center.x + hex.point.x + hex.midpoint.x,
           center.y + hex.point.y - hex.midpoint.y,
-        ), 7 + i * 4, errorPaint);
+        ), 11 - i * 4, errorPaint);
       }
     }
   }
