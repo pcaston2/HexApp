@@ -86,7 +86,7 @@ class Vertex extends Hex {
 
   @override
   String toString() {
-    return "($q,$r) " + vertexType.toString();
+    return "Vertex ($q,$r) " + vertexType.toString();
   }
 
 

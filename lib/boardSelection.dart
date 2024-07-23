@@ -132,9 +132,8 @@ class Boards extends State<BoardSelection> {
                       if (newIndex > oldIndex) {
                         newIndex--;
                       }
-                      var temp = _flow.boardPaths[oldIndex];
-                      _flow.boardPaths[oldIndex] = _flow.boardPaths[newIndex];
-                      _flow.boardPaths[newIndex]  = temp;
+                      var moved = _flow.boardPaths.removeAt(oldIndex);
+                      _flow.boardPaths.insert(newIndex, moved);
                       _flow.save().then((data) => setState(() {})
                       );
                     },

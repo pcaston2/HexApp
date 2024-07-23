@@ -132,9 +132,8 @@ class Flows extends State<FlowSelection> {
                       if (newIndex > oldIndex) {
                         newIndex--;
                       }
-                      var temp = _story.flowPaths[oldIndex];
-                      _story.flowPaths[oldIndex] = _story.flowPaths[newIndex];
-                      _story.flowPaths[newIndex] = temp;
+                      var moved = _story.flowPaths.removeAt(oldIndex);
+                      _story.flowPaths.insert(newIndex, moved);
                       _story.save().then((data) => setState(() {})
                       );
                     },

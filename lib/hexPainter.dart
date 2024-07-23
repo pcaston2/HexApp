@@ -171,6 +171,9 @@ class HexPainter extends CustomPainter {
 
   void drawColorRule(Hex hex, Point center, Canvas canvas, SequenceRule colorRule, BoardTheme theme, double errorPulse, List<BoardValidationError> errors) {
     var colorOffset = 0;
+    if (colorRule.colors.isEmpty) {
+      drawErrorPiece(hex, center, colorRule, canvas);
+    }
     for (var color in colorRule.colors) {
       var colorPaint = Paint()
       ..color = theme.ruleColors[color]!.value

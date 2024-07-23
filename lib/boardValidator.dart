@@ -14,6 +14,7 @@ enum BoardValidationErrorType {
   noColorAtSequence,
   colorNotInSequence,
   colorNotSatisfied,
+  noColorsRemaining,
 }
 
 class BoardValidator {
@@ -30,6 +31,14 @@ class BoardValidator {
       errors.addAll(validateDots());
       errors.addAll(validateEdges());
       errors.addAll(validateCorners());
+    }
+    if (errors.isNotEmpty) {
+      var index = 0;
+      print("Errors:");
+      for(var e in errors) {
+        index++;
+        print("${index}. ${e.toString()}");
+      }
     }
   }
 
@@ -110,10 +119,15 @@ class BoardValidator {
             }
           }
         }
-        if (!previousColors.isEmpty) {
+        if (previousColors.isNotEmpty) {
           for (var sequenceRule in sequenceRules) {
             if (!previousFaces.contains(sequenceRule.key)) {
-              if (!sequenceRule.value.colors.remove(previousColors.last)) {
+              if (sequenceRule.value.colors.isEmpty) {
+                colorErrors.add(new BoardValidationError(
+                  sequenceRule.key, sequenceRule.value,
+                  BoardValidationErrorType.noColorsRemaining
+                ));
+              }else if (!sequenceRule.value.colors.remove(previousColors.last)) {
                 colorErrors.add(new BoardValidationColorError(
                     sequenceRule.key, sequenceRule.value,
                     BoardValidationErrorType.colorNotInSequence,

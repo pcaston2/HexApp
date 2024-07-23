@@ -41,7 +41,11 @@ Future<void> main() async {
   GameAnalytics.initialize("4dca4a4b41d0772a7b8d4076268b7a7f", "7250dba7e4f6ecb8634fae21b6bda7365de9c400");
   GameAnalytics.setEnabledInfoLog(true);
   GameAnalytics.setEnabledVerboseLog(true);
-  runApp(MaterialApp(title: "Thex", home: MainMenu()));
+  runApp(MaterialApp(
+      title: "Thex",
+      home: MainMenu(),
+      debugShowCheckedModeBanner: false,
+  ));
 }
 
 Future<void> loadStories() async {

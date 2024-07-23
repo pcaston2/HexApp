@@ -104,7 +104,7 @@ class Edge extends Hex {
 
   @override
   String toString() {
-    return "($q,$r) " + edgeType.toString();
+    return "Edge ($q,$r) " + edgeType.toString();
   }
 
   @override

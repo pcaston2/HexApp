@@ -311,8 +311,13 @@ class Board {
           var first = pieces.first;
           if (first.runtimeType == SequenceRule) {
             var color = first as SequenceRule;
+            //Unnecessary once adding blank sequences is gone
+            if (color.colors.isEmpty) {
+              pieces.remove(first);
+              return true;
+            }
+            color.colors.removeLast();
             if (color.colors.isNotEmpty) {
-              color.colors.removeLast();
               return true;
             }
           }
@@ -342,12 +347,6 @@ class Board {
       //check other items on the board
       _map.putIfAbsent(hex, () => new List<Piece>.empty(growable: true));
       var pieces = _map[hex]!;
-      if (pieces.any((Piece p) => p is BreakPiece)) {
-        return false;
-      }
-      if (piece is BreakPiece && pieces.isNotEmpty) {
-        return false;
-      }
       if (piece.runtimeType == EdgeRule) {
         if (pieces.any((Piece p) => p.runtimeType == EdgeRule)) {
           EdgeRule existing =

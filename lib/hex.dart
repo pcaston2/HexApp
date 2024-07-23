@@ -267,6 +267,11 @@ class Hex {
     }
   }
 
+  @override
+  String toString() {
+    return "Hex ($q,$r)";
+  }
+
 
   Map<String, dynamic> toJson() {
     var json = baseJson();
