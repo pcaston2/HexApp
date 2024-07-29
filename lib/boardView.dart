@@ -872,6 +872,15 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                           Navigator.of(context).pop();
                                         }
                                     ),
+                                    ListTile(
+                                        leading: Icon(Icons.brush_rounded, color: BoardTheme.plain().foreground.value),
+                                        title: Text('Plain'),
+                                        onTap: () {
+                                          _gameState.value.board.theme = BoardTheme.plain();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        }
+                                    ),
                                   ]
                               ),
                             ]),

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter_rating_stars/flutter_rating_stars.dart';
 import 'package:gameanalytics_sdk/gameanalytics.dart';
 import 'package:audioplayers/audioplayers.dart';

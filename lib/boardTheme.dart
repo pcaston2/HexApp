@@ -380,6 +380,19 @@ class BoardTheme {
     ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.deepPurpleAccent;
   }
 
+  BoardTheme.plain() {
+    background.value = mat.Colors.grey[700]!;
+    border.value = mat.Colors.white;
+    foreground.value = mat.Colors.grey[200]!;
+    path.value = mat.Colors.grey[600]!;
+    trail.value = mat.Colors.grey[800]!;
+    ruleColors[RuleColorIndex.First]!.value = mat.Colors.white;
+    ruleColors[RuleColorIndex.Second]!.value = mat.Colors.black;
+    ruleColors[RuleColorIndex.Third]!.value = mat.Colors.red;
+    ruleColors[RuleColorIndex.Fourth]!.value = mat.Colors.green;
+    ruleColors[RuleColorIndex.Fifth]!.value = mat.Colors.blue;
+  }
+
   factory BoardTheme() {
     return BoardTheme.yellow();
   }
