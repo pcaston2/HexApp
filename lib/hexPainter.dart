@@ -35,7 +35,10 @@ class HexPainter extends CustomPainter {
     for (var entry in entries) {
       var hex = entry.key;
       var piece = entry.value;
+
       var errors = _gameState.board.errors.where((BoardValidationError e) => e.hex == hex && e.piece.runtimeType == piece.runtimeType).toList();
+
+
 
       if (piece is PathPiece) {
         drawPathPiece(hex, center, canvas, _theme);
@@ -261,6 +264,9 @@ class HexPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     var m = hex.midpoint.rotate(90);
+    if (edgeRule.count == 0) {
+      drawErrorPiece(hex, center, edgeRule, canvas);
+    }
     if (edgeRule.count == 1) {
       canvas.drawLine(
           Offset(center.x + hex.point.x + m.x * 0.6,

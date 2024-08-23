@@ -6,6 +6,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter_guid/flutter_guid.dart';
 
 import 'boardTheme.dart';
+import 'colorTrail.dart';
 import 'hex.dart';
 import 'piece.dart';
 

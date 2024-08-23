@@ -969,9 +969,6 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                             if (tracing) {
                                               setState(() {
                                                 if (_gameState.value.board.trySolve()) {
-
-
-
                                                   soundPlayer.play(
                                                       audioSound.PANEL_SUCCESS);
 
