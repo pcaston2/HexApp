@@ -180,6 +180,8 @@ class Flows extends State<FlowSelection> {
                               );
                             }
                           );
+                        } else {
+                          return false;
                         }
                     },
                     child: FlowTile(
