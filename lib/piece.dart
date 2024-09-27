@@ -1,5 +1,6 @@
 
 
+import 'package:flutter/foundation.dart';
 import 'package:hex_game/boardTheme.dart';
 import 'package:json_annotation/json_annotation.dart';
 
@@ -38,8 +39,8 @@ abstract class Piece {
     }
   }
 
-  Piece clone() {
-    return Piece.fromJson(this.toJson());
+  N clone<N>() {
+    return Piece.fromJson(this.toJson()) as N;
   }
 
   fromJson(Map<String, dynamic> json);

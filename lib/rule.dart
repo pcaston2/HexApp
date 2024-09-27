@@ -2,11 +2,39 @@ part of 'piece.dart';
 
 abstract class Rule extends Piece {
 
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    return other.runtimeType == runtimeType;
+  }
+
+  @override
+  String toString() {
+    return runtimeType.toString();
+  }
 }
 
 abstract class ColoredRule extends Rule {
   RuleColorIndex color;
   ColoredRule({this.color = RuleColorIndex.First}) : super();
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other.runtimeType != runtimeType) {
+      return false;
+    } else {
+      return (this.color == (other as ColoredRule).color);
+    }
+  }
+  @override
+  String toString() {
+    return "${runtimeType.toString()} (${color})";
+  }
 }
 
 @JsonSerializable()
@@ -43,6 +71,23 @@ class SequenceRule extends Rule {
 
   @override
   fromJson(Map<String, dynamic> json) => _$SequenceRuleFromJson(json);
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other.runtimeType != SequenceRule) {
+      return false;
+    } else {
+      return listEquals(colors, (other as SequenceRule).colors);
+    }
+  }
+
+  @override
+  String toString() {
+    return "${runtimeType.toString()} ${colors}";
+  }
 }
 
 @JsonSerializable()
@@ -104,3 +149,4 @@ class CornerRule extends ColoredRule {
   @override
   num get order => 25;
 }
+
