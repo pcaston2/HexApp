@@ -102,7 +102,7 @@ class BoardValidator {
       var localDotRules =
           rules.where((e) => e.value is DotRule && e.key == current).toList();
       var localCornerRules = rules
-          .where((e) => e.value is CornerRule && e.key.edges.contains(current))
+          .where((e) => e.value is CornerRule && e.key.vertices.contains(current))
           .toList();
       var newFaces = faces.where((f) => !previousFaces.contains(f));
       var localSequenceRule = rules.singleWhereOrNull(
@@ -231,6 +231,8 @@ class BoardValidator {
     } else {
       rules.removeWhere((e) =>
           e.value is SequenceRule && (e.value as SequenceRule).colors.isEmpty);
+      rules.removeWhere((e) =>
+          e.value is DotRule);
       if (rules.isNotEmpty) {
         var finalErrors = rules
             .where((e) => !(e.value is SequenceRule))

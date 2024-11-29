@@ -16,9 +16,6 @@ class HexPainter extends CustomPainter {
     var center = Point(size.width / 2, size.height / 2);
     var _theme = _gameState.board.theme;
     var _animation = _gameState.boardAnimation;
-    drawBoard(center, canvas, _theme);
-    var entries = _gameState.board.flatten();
-    entries.sort((a, b) => a.value.order.compareTo(b.value.order));
     double trailPulse = 0;
     double trailFade = 1;
     double errorPulse = 0;
@@ -31,6 +28,10 @@ class HexPainter extends CustomPainter {
         errorPulse = _gameState.boardAnimation.error;
       }
     }
+    drawBoard(center, canvas, _theme, _gameState.board, trailFade);
+    var entries = _gameState.board.flatten();
+    entries.sort((a, b) => a.value.order.compareTo(b.value.order));
+
 
     for (var entry in entries) {
       var hex = entry.key;
@@ -51,7 +52,7 @@ class HexPainter extends CustomPainter {
       } else if (piece is DotRule) {
         drawDotRule(hex, center, canvas, piece, _theme, errorPulse, errors);
       } else if (piece is SequenceRule) {
-        drawColorRule(hex, center, canvas, piece, _theme, errorPulse, errors);
+        drawSequenceRule(hex, center, canvas, piece, _theme, errorPulse, errors);
       } else if (piece is EdgeRule) {
         drawEdgeRule(hex, center, canvas, piece, _theme, errorPulse, errors);
       } else if (piece is CornerRule) {
@@ -63,7 +64,7 @@ class HexPainter extends CustomPainter {
     if (_gameState.board.mode == BoardMode.designer) {
       drawDesignSelection(center, canvas);
     } else {
-      drawTrail(center, canvas, _theme, trailPulse, trailFade);
+      drawTrail(center, size, canvas, _theme, trailPulse, trailFade);
     }
     if (_gameState.board.mode == BoardMode.play) {
       for (var entry in entries) {
@@ -172,7 +173,7 @@ class HexPainter extends CustomPainter {
     canvas.drawPath(path, startPaint);
   }
 
-  void drawColorRule(Hex hex, Point center, Canvas canvas, SequenceRule colorRule, BoardTheme theme, double errorPulse, List<BoardValidationError> errors) {
+  void drawSequenceRule(Hex hex, Point center, Canvas canvas, SequenceRule colorRule, BoardTheme theme, double errorPulse, List<BoardValidationError> errors) {
     var colorOffset = 0;
     if (colorRule.colors.isEmpty) {
       drawErrorPiece(hex, center, colorRule, canvas);
@@ -192,25 +193,31 @@ class HexPainter extends CustomPainter {
         var corner = new Offset(
             center.x + hex.point.x + hex.midpoint.x + vertex.x * 0.75 * (1 - colorOffset*0.08),
             center.y + hex.point.y - hex.midpoint.y - vertex.y * 0.75 * (1 - colorOffset*0.08));
-        canvas.drawLine(
-            corner, corner + Offset(rotationA.x, -rotationA.y), colorPaint);
-        canvas.drawLine(
-            corner, corner + Offset(rotationB.x, -rotationB.y), colorPaint);
+
+        List<Offset> path = [];
+        path.add(corner + Offset(rotationA.x, -rotationA.y));
+        path.add(corner);
+        path.add(corner);
+        path.add(corner + Offset(rotationB.x, -rotationB.y));
+        canvas.drawPoints(PointMode.lines, path, colorPaint);
       }
       colorOffset++;
     }
 
     if (errorPulse != 0 && errors.isNotEmpty) {
       final errorPaint = Paint()
-        ..color = (errorPulse < 0 ? Colors.black : Colors.red).withOpacity(errorPulse.abs())
+        ..color = (errorPulse < 0 ? Colors.white.withOpacity(errorPulse.abs()) : Colors.transparent)
+        ..blendMode = BlendMode.difference
         ..strokeWidth = 2
-        ..strokeCap = StrokeCap.round;
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke;
       var colorOffset = 0;
       for (var color in colorRule.colors) {
-        if (
-        errors.any((e) => e.runtimeType == BoardValidationError) ||
-        errors.whereType<BoardValidationColorError>().any((e) => e.color == color)
-        ) {
+        var sameColors = colorRule.colors.take(1+colorOffset).where((c) => c == color).toList();
+        var matchingErrors = errors.whereType<BoardValidationColorError>().where((e) => e.color == color).toList();
+        var currentColorOffsetIsError = matchingErrors.length >= sameColors.length;
+        var generalError = errors.any((e) => e.runtimeType == BoardValidationError);
+        if (generalError || currentColorOffsetIsError) {
           for (var vertex in Hex
               .origin()
               .vertexOffsets) {
@@ -222,13 +229,15 @@ class HexPainter extends CustomPainter {
                     vertex.x * 0.75 * (1 - colorOffset * 0.08),
                 center.y + hex.point.y - hex.midpoint.y -
                     vertex.y * 0.75 * (1 - colorOffset * 0.08));
-            canvas.drawLine(
-                corner, corner + Offset(rotationA.x, -rotationA.y), errorPaint);
-            canvas.drawLine(
-                corner, corner + Offset(rotationB.x, -rotationB.y), errorPaint);
+            List<Offset> path = [];
+            path.add(corner + Offset(rotationA.x, -rotationA.y));
+            path.add(corner);
+            path.add(corner);
+            path.add(corner + Offset(rotationB.x, -rotationB.y));
+            canvas.drawPoints(PointMode.lines, path, errorPaint);
           }
-          colorOffset++;
         }
+        colorOffset++;
       }
     }
   }
@@ -251,7 +260,8 @@ class HexPainter extends CustomPainter {
 
     if (errorPulse != 0 && errors.isNotEmpty) {
       final errorPaint = Paint()
-          ..color = (errorPulse < 0 ? Colors.black : Colors.red).withOpacity(errorPulse.abs());
+          ..color = (errorPulse < 0 ? Colors.white.withOpacity(errorPulse.abs()) : Colors.transparent)
+          ..blendMode = BlendMode.difference;
           canvas.drawPath(path, errorPaint);
     }
   }
@@ -260,8 +270,9 @@ class HexPainter extends CustomPainter {
       Hex hex, Point center, Canvas canvas, EdgeRule edgeRule, BoardTheme theme, double errorPulse, List<BoardValidationError> errors) {
     final edgePaint = Paint()
       ..color = theme.ruleColors[edgeRule.color]!.value
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
+      ..strokeWidth = (3 - edgeRule.count) * 3
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
 
     var m = hex.midpoint.rotate(90);
     if (edgeRule.count == 0) {
@@ -292,8 +303,11 @@ class HexPainter extends CustomPainter {
     }
     if (errorPulse != 0 && errors.isNotEmpty) {
       final errorPaint = Paint()
-        ..color = (errorPulse < 0 ? Colors.black : Colors.red).withOpacity(errorPulse.abs())
-        ..strokeWidth = 3;
+        ..color = (errorPulse < 0 ? Colors.white.withOpacity(errorPulse.abs()) : Colors.transparent)
+        ..blendMode = BlendMode.difference
+        ..strokeWidth = (3 - edgeRule.count) * 3
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
       var m = hex.midpoint.rotate(90);
       if (edgeRule.count == 1) {
         canvas.drawLine(
@@ -335,8 +349,8 @@ class HexPainter extends CustomPainter {
 
     if (errorPulse != 0 && errors.isNotEmpty) {
       final errorPaint = Paint()
-        ..color = (errorPulse < 0 ? Colors.black : Colors.red).withOpacity(
-            errorPulse.abs())
+        ..color = (errorPulse < 0 ? Colors.white.withOpacity(errorPulse.abs()) : Colors.transparent)
+        ..blendMode = BlendMode.difference
         ..strokeWidth = 2
         ..style = PaintingStyle.stroke;
       for (int i = 0; i < cornerRule.count; i++) {
@@ -372,7 +386,7 @@ class HexPainter extends CustomPainter {
     canvas.drawLine(pieceOffset[1], pieceOffset[1] + scalar, pathPaint);
   }
 
-  void drawBoard(Point center, Canvas canvas, BoardTheme theme) {
+  void drawBoard(Point center, Canvas canvas, BoardTheme theme, Board board, double trailFade) {
     List<Offset> boardOffset = <Offset>[];
     var vertexes = vertex.values;
     vertexes.forEach((Point p) => boardOffset.add(Offset(
@@ -382,6 +396,7 @@ class HexPainter extends CustomPainter {
     boardPath.addPolygon(boardOffset, true);
     final boardFillPaint = Paint()
       ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 5.0)
       ..shader = RadialGradient(
         colors: [
           theme.foreground.brighten(30).value,
@@ -392,6 +407,7 @@ class HexPainter extends CustomPainter {
         radius: hexSize * 2 * _gameState.board.size,
       ));
     canvas.drawPath(boardPath, boardFillPaint);
+
     final boardEdgePaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeJoin = StrokeJoin.miter
@@ -433,26 +449,31 @@ class HexPainter extends CustomPainter {
     canvas.drawRect(fillRect, fillPaint);
   }
 
-  void drawTrail(Point center, Canvas canvas, BoardTheme theme, double trailPulse, double trailFade) {
-    double tips = max(0,trailFade-(1-trailFade));
-    double mid = min(1,trailFade * 2);
-    drawCurrentTrail(_gameState.board, center, canvas, theme, trailPulse, mid);
-    if (!_gameState.board.hasEnded) {
-      drawIncrementalTrail(_gameState.board, center, canvas);
-    }
-    drawTrailStartPiece(_gameState.board, center, canvas, theme, trailPulse, tips);
-    drawTrailEndPiece(_gameState.board, center, canvas, theme, trailPulse, tips);
+  void drawTrail(Point center, Size size, Canvas canvas, BoardTheme theme, double trailPulse, double trailFade) {
+    canvas.saveLayer(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        Paint()..color = Colors.transparent.withAlpha((255.0 * (
+                _gameState.board.isFinished ?
+                trailFade :
+                1-trailPulse*0.40
+            )).round()));
+
+    drawCurrentTrail(_gameState.board, center, canvas, theme);
+    drawTrailStartPiece(_gameState.board, center, canvas, theme);
+    drawTrailEndPiece(_gameState.board, center, canvas, theme);
+    canvas.restore();
   }
 
   void drawCurrentTrail(Board board, Point center, Canvas canvas,
-      BoardTheme theme, double trailPulse, double trailFade) {
+      BoardTheme theme) {
+
     if (board.trail.length > 1) {
       final trailPaint = Paint()
         ..color = (board.isFinished
             ? (board.isSuccess
                 ? theme.trail.brighten(20).value
                 : theme.trail.darken(10).value)
-            : theme.trail.brighten((trailPulse * 5).round()).value).withOpacity(trailFade)
+            : theme.trail.value)
         ..strokeWidth = 8
         ..style = PaintingStyle.stroke
         ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 3.0)
@@ -464,6 +485,23 @@ class HexPainter extends CustomPainter {
       if ((board.next != null) && board.trail.contains(board.next) && !board.hasEnded) {
         trailOffset.removeLast();
       }
+
+      var next = board.next;
+      if (!_gameState.board.hasEnded) {
+        if (next != null) {
+
+          var current = board.tail!.localPoint;
+          var to = next.localPoint;
+          var distance = (board.crosshair!-current).magnitude;
+          var maxDistance = (to - current).magnitude;
+          if (distance > maxDistance) {
+            distance = maxDistance;
+          }
+          var scaleTo = (to-current).unitVector * distance + current;
+          trailOffset.add(Offset(scaleTo.x + center.x, scaleTo.y + center.y));
+        }
+      }
+
       Path trailPath = Path();
       trailPath.addPolygon(trailOffset, false);
       canvas.drawPath(trailPath, trailPaint);
@@ -471,43 +509,11 @@ class HexPainter extends CustomPainter {
   }
 
   void drawIncrementalTrail(Board board, Point center, Canvas canvas) {
-    var next = board.next;
-    if (next != null) {
-      final incrementalPaint = Paint()
-        ..color = (board.isFinished
-            ? (board.isSuccess
-            ? board.theme.trail.brighten(20).value
-            : board.theme.trail.darken(10).value)
-            : board.theme.trail.value)
-        ..strokeWidth = 8
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 3.0);
 
-      var current = board.tail!.localPoint;
-      var to = next.localPoint;
-      var distance = (board.crosshair!-current).magnitude;
-      var maxDistance = (to - current).magnitude;
-      if (distance > maxDistance) {
-        distance = maxDistance;
-      }
-      var scaleTo = (to-current).unitVector * distance + current;
-
-      if (board.trail.contains(next)) {
-        var previous = board.trail.reversed.skip(1).first.localPoint;
-        canvas.drawLine(Offset(previous.x + center.x, previous.y + center.y),
-            Offset(scaleTo.x + center.x, scaleTo.y + center.y),
-            incrementalPaint);
-      } else {
-        canvas.drawLine(Offset(current.x + center.x, current.y + center.y),
-            Offset(scaleTo.x + center.x, scaleTo.y + center.y),
-            incrementalPaint);
-      }
-    }
   }
 
   void drawTrailEndPiece(
-      Board board, Point center, Canvas canvas, BoardTheme theme, double trailPulse, double trailFade) {
+      Board board, Point center, Canvas canvas, BoardTheme theme) {
     if (board.hasEnded) {
       var offset = new Offset(
           center.x + board.tail!.point.x + board.tail!.midpoint.x,
@@ -517,13 +523,13 @@ class HexPainter extends CustomPainter {
         ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 3.0)
         ..shader = RadialGradient(
           colors: [
-            theme.trail.brighten(5).value.withOpacity(trailFade),
-            theme.trail.darken(2).value.withOpacity(trailFade),
+            theme.trail.brighten(5).value,
+            theme.trail.darken(2).value,
             (board.isFinished
                 ? (board.isSuccess
                     ? theme.trail.brighten(30).value
                     : theme.trail.darken(10).value)
-                : theme.trail.brighten((trailPulse * 5).round()).value).withOpacity(trailFade)
+                : theme.trail.value)
           ],
         ).createShader(Rect.fromCircle(
           center: offset,
@@ -534,20 +540,20 @@ class HexPainter extends CustomPainter {
   }
 
   void drawTrailStartPiece(
-      Board board, Point center, Canvas canvas, BoardTheme theme, double trailPulse, double trailFade) {
+      Board board, Point center, Canvas canvas, BoardTheme theme) {
     if (board.trail.length > 0) {
       final startPaint = Paint()
         ..style = PaintingStyle.fill
         ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 3.0)
         ..shader = RadialGradient(
           colors: [
-            theme.trail.darken(5).value.withOpacity(trailFade),
-            theme.trail.darken(2).value.withOpacity(trailFade),
+            theme.trail.darken(5).value,
+            theme.trail.darken(2).value,
             (board.isFinished
               ? (board.isSuccess
                     ? theme.trail.brighten(30).value
                     : theme.trail.darken(10).value)
-                : theme.trail.brighten((trailPulse * 5).round()).value).withOpacity(trailFade)
+                : theme.trail.value)
           ],
         ).createShader(Rect.fromCircle(
           center: new Offset(

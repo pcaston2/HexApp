@@ -80,9 +80,9 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
 
     pulseController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 250),
+      duration: Duration(milliseconds: 500),
     );
-    Tween<double> pulseTween = Tween(begin: -1, end: 1);
+    Tween<double> pulseTween = Tween(begin: 1, end: 0);
     pulse = pulseTween.animate(pulseController)
       ..addListener(() {
         _gameState.value.boardAnimation.pulse = pulse.value;

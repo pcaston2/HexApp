@@ -372,7 +372,7 @@ class Board {
           var color = (piece as SequenceRule).colors.single;
           SequenceRule existing = pieces.singleWhere((Piece p) =>
           p.runtimeType == SequenceRule) as SequenceRule;
-          if (existing.colors.length >= 3) {
+          if (existing.colors.length >= 5) {
             return false;
           } else {
             existing.colors.add(color);
