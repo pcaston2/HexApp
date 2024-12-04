@@ -23,12 +23,14 @@ class BoardView extends StatefulWidget {
 
   @override
   _HexWidgetState createState() {
+    /*
     GameAnalytics.addProgressionEvent({
       "progressionStatus": 1, //START
       "progression01": _story.name,
       "progression02": _flow.name,
       "progression03": _board.name
     });
+    */
     return _HexWidgetState(_board, _flow, _story);
   }
 }
@@ -1019,7 +1021,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                                     if (_rating != null) {
                                                       gaMap["score"] = _rating!;
                                                     }
-                                                    GameAnalytics.addProgressionEvent(gaMap);
+                                                    //GameAnalytics.addProgressionEvent(gaMap);
                                                     _gameState.value.board.completed = true;
                                                     _gameState.value.board.save();
 
@@ -1028,6 +1030,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                                   soundPlayer.play(
                                                       audioSound.PANEL_FAILURE);
                                                   if (!_gameState.value.board.completed) {
+                                                    /*
                                                     GameAnalytics
                                                         .addProgressionEvent({
                                                       "progressionStatus": 3,
@@ -1036,6 +1039,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                                       "progression02": _gameState.value.flow.name,
                                                       "progression03": _gameState.value.board.name,
                                                     });
+                                                        */
                                                   }
                                                   fadeController.reset();
                                                   fadeController.forward();

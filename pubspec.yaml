@@ -34,7 +34,6 @@ dependencies:
   shared_preferences: ^2.2.3
   qr_flutter: ^4.1.0
   archive: ^3.6.1
-  gameanalytics_sdk: ^1.2.7
   flutter_rating_stars: ^1.1.0
 
 
