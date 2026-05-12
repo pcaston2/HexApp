@@ -6,6 +6,7 @@ class GameState {
   Story story = Story();
   Hex pointer = Hex.origin();
   List<Piece> lastUsed = [StartPiece(), EndPiece(), PathPiece(),BreakPiece(), ErasePiece()];
+  List<Piece> pieceList = [StartPiece(), EndPiece(), PathPiece(), BreakPiece(), DotRule(), EdgeRule(), CornerRule(), SequenceRule(), ErasePiece()];
   BoardAnimation boardAnimation = new BoardAnimation();
   RuleColorIndex ruleColor = RuleColorIndex.First;
 }
@@ -975,6 +976,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                                       audioSound.PANEL_SUCCESS);
 
                                                   if (!_gameState.value.board.completed) {
+                                                    /*
                                                     showDialog(
                                                         context: context,
                                                         builder: (BuildContext context) =>
@@ -1021,6 +1023,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                                     if (_rating != null) {
                                                       gaMap["score"] = _rating!;
                                                     }
+                                                    */
                                                     //GameAnalytics.addProgressionEvent(gaMap);
                                                     _gameState.value.board.completed = true;
                                                     _gameState.value.board.save();
@@ -1139,8 +1142,9 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                       child: CustomPaint(
                                           painter: HexPainter(
                                               _gameState.value)))))))),
+
               Visibility(
-                visible: _gameState.value.board.mode == BoardMode.designer,
+                visible: false,
                 child: Align(
                 alignment: Alignment.topCenter,
                   child: Wrap(
@@ -1151,7 +1155,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                     children: [
                       for (var piece in _gameState.value.lastUsed)
                         Transform.scale(
-                          scale: (1/(((_gameState.value.lastUsed.indexOf(piece)+2))/3))*1.15,
+                          scale: (1/(((_gameState.value.lastUsed.indexOf(piece)+2))/3))*1.5,
                           child: PieceButton(
                               piece,
                               (() {
@@ -1163,6 +1167,33 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                     ]
                   )
                 )
+              ),
+              Visibility(
+                visible: _gameState.value.board.mode == BoardMode.designer,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child:
+                    Wrap(
+                      direction: Axis.vertical,
+                      spacing: 10,
+                      runAlignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.end,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        for (var piece in _gameState.value.pieceList)
+                          Transform.scale(
+                              scale: (_gameState.value.lastUsed.first == piece ? 1.5 : 1),
+                              child: PieceButton(
+                                piece,
+                                (() {
+                                  _choosePiece(piece);
+                                }),
+                                _gameState.value.board.theme.ruleColors[_gameState.value.ruleColor]!.value,
+                              )
+                          )
+                      ],
+                    )
+                ),
               ),
               Visibility(
                 visible: _gameState.value.board.mode == BoardMode.designer,

@@ -129,6 +129,15 @@ class Hex {
     return closest.key;
   }
 
+
+  static double getOffsetFromClosest(Point p) {
+    int q = ((2.0 / 3.0 * p.x) / hexSize).round();
+    int r = ((-1.0 / 3.0 * p.x + math.sqrt(3) / 3 * p.y) / hexSize).round();
+    Hex currHex = new Hex.position(q, r);
+    var offset = new Point(-(currHex.point.x - p.x), currHex.point.y - p.y);
+    return offset.magnitude;
+  }
+
   static Hex getHexPartFromPoint(Point p) {
     int q = ((2.0 / 3.0 * p.x) / hexSize).round();
     int r = ((-1.0 / 3.0 * p.x + math.sqrt(3) / 3 * p.y) / hexSize).round();

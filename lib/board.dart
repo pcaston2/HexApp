@@ -308,7 +308,7 @@ class Board {
       if (_map.containsKey(hex)) {
         List<Piece> pieces = _map[hex]!;
         if (pieces.isNotEmpty) {
-          pieces.sort((a, b) => b.order.compareTo(a.order));
+          pieces.sort((a, b) => (b.runtimeType == CornerRule ? 325 : b.order).compareTo((a.runtimeType == CornerRule ? 325 : a.order)));
           var first = pieces.first;
           if (first.runtimeType == SequenceRule) {
             var color = first as SequenceRule;
