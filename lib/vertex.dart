@@ -39,6 +39,8 @@ class Vertex extends Hex {
   @override
   List<Vertex> get vertices => [this];
 
+  List<Vertex> get adjacentVertices => edges.expand((e) => e.vertices).toSet().where((v) => v != this).toList();
+
   @override
   get vertexOffsets {
     var points = List.empty(growable: true);

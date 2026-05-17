@@ -3,11 +3,12 @@ import 'dart:ui';
 
 import 'package:flutter_rating_stars/flutter_rating_stars.dart';
 //import 'package:gameanalytics_sdk/gameanalytics.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hex_game/pieceButton.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:archive/archive.dart';
 import 'dart:math';
 import 'settings.dart';
@@ -32,10 +33,12 @@ part 'boardAnimation.dart';
 part 'mainMenu.dart';
 
 late Settings settings;
+late SoundPlayer soundPlayer;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   settings = await Settings.getInstance();
+  soundPlayer = await SoundPlayer.create();
   await loadStories();
   //GameAnalytics.configureAutoDetectAppVersion(true);
   //GameAnalytics.initialize("4dca4a4b41d0772a7b8d4076268b7a7f", "7250dba7e4f6ecb8634fae21b6bda7365de9c400");

@@ -8,6 +8,7 @@ class Settings {
   static Settings? _instance;
   final SharedPreferences _prefs;
   final String _storagePath;
+  final String? _downloadPath;
 
 
   bool get sound {
@@ -38,6 +39,10 @@ class Settings {
     return _storagePath;
   }
 
+  String? get downloadPath {
+    return _downloadPath;
+  }
+
   String get board {
     return _prefs.getString("board") ?? "Base Case";
   }
@@ -54,17 +59,32 @@ class Settings {
     if (_instance == null) {
       final sharedPreferences = await SharedPreferences.getInstance();
       Directory appStorage = await getApplicationDocumentsDirectory();
+
+      String? downloadPath;
+      if (Platform.isAndroid) {
+        final List<Directory>? externalDirs = await getExternalStorageDirectories(type: StorageDirectory.downloads);
+        if (externalDirs != null && externalDirs.isNotEmpty) {
+          downloadPath = externalDirs.first.path;
+        } else {
+          // Fallback to a common path if getExternalStorageDirectories fails
+          downloadPath = "/storage/emulated/0/Download";
+        }
+      } else {
+        Directory? downloadDirectory = await getDownloadsDirectory();
+        downloadPath = downloadDirectory?.path;
+      }
+
       Directory storageDirectory = Directory('${appStorage.path}/thex');
       if (!(await storageDirectory.exists())) {
         await storageDirectory.create();
       }
-      _instance = Settings._(sharedPreferences, storageDirectory.path);
+      _instance = Settings._(sharedPreferences, storageDirectory.path, downloadPath);
     }
     return _instance!;
   }
 
-  Settings._(SharedPreferences sharedPreferences, String storagePath)
-      : _prefs = sharedPreferences, _storagePath = storagePath;
+  Settings._(SharedPreferences sharedPreferences, String storagePath, String? downloadPath)
+      : _prefs = sharedPreferences, _storagePath = storagePath, _downloadPath = downloadPath;
 
   Future<void> reset() async {
     await _prefs.clear();

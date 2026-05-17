@@ -101,8 +101,11 @@ class BoardValidator {
           .toList();
       var localDotRules =
           rules.where((e) => e.value is DotRule && e.key == current).toList();
-      var localCornerRules = rules
-          .where((e) => e.value is CornerRule && e.key.vertices.contains(current))
+      var localCornerEdgeRules = rules
+          .where((e) => e.value is CornerRule && e.key.runtimeType == Edge && e.key.vertices.contains(current))
+          .toList();
+      var localCornerVertexRules = rules
+          .where((e) => e.value is CornerRule && e.key.runtimeType == Vertex && (e.key as Vertex).adjacentVertices.contains(current))
           .toList();
       var newFaces = faces.where((f) => !previousFaces.contains(f));
       var localSequenceRule = rules.singleWhereOrNull(
@@ -182,9 +185,11 @@ class BoardValidator {
         }
       }
 
-      var localColoredRules = List<MapEntry<Hex, Rule>>.from(localEdgeRules)
+      var localColoredRules = List<MapEntry<Hex, Rule>>
+          .from(localEdgeRules)
         ..addAll(localDotRules)
-        ..addAll(localCornerRules)
+        ..addAll(localCornerEdgeRules)
+        ..addAll(localCornerVertexRules)
         ..cast<MapEntry<Hex, ColoredRule>>();
       if (localColoredRules.isEmpty) { //Skip trail if no rules
         return getColorTrail(trail.skip(1).toList(), rules, colorOrder, faces)
@@ -391,15 +396,24 @@ class BoardValidator {
     List<BoardValidationError> cornerErrors = [];
     var cornerRules = _board.getPiece<CornerRule>();
     for (var entry in cornerRules) {
-      Edge edge = entry.key as Edge;
+      List<Vertex> corners;
       CornerRule cornerRule = entry.value;
-      List<Vertex> corners = new List<Vertex>.from(edge.vertices);
+      Hex hex;
+      if (entry.key.runtimeType == Edge) {
+        Edge edge = entry.key as Edge;
+        hex = edge;
+        corners = new List<Vertex>.from(edge.vertices);
+      } else {
+        Vertex vertex = entry.key as Vertex;
+        hex = vertex;
+        corners = new List<Vertex>.from(vertex.adjacentVertices);
+      }
       int expected = cornerRule.count;
       int traversed =
           corners.where((Vertex v) => _board.trail.contains(v)).toList().length;
       if (traversed != expected) {
         cornerErrors.add(BoardValidationError(
-            edge,
+            hex,
             cornerRule,
             traversed < expected
                 ? BoardValidationErrorType.cornerNotTraversed

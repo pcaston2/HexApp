@@ -344,7 +344,7 @@ class HexPainter extends CustomPainter {
       canvas.drawCircle(Offset(
         center.x + hex.point.x + hex.midpoint.x,
         center.y + hex.point.y - hex.midpoint.y,
-      ), 11-i*4, cornerPaint);
+      ), 12-i*3, cornerPaint);
     }
 
     if (errorPulse != 0 && errors.isNotEmpty) {
@@ -357,7 +357,7 @@ class HexPainter extends CustomPainter {
         canvas.drawCircle(Offset(
           center.x + hex.point.x + hex.midpoint.x,
           center.y + hex.point.y - hex.midpoint.y,
-        ), 11 - i * 4, errorPaint);
+        ), 12 - i * 3, errorPaint);
       }
     }
   }

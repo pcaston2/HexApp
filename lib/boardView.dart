@@ -43,8 +43,6 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
 
   late HexPainter painter;
 
-  SoundPlayer soundPlayer = SoundPlayer();
-
   late Animation<double> beckon;
   late AnimationController beckonController;
 
@@ -887,6 +885,14 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                   ]
                               ),
                             ]),
+
+                        ListTile(
+                            leading: Icon(Icons.share, color: Colors.blue),
+                            title: Text("Share Board"),
+                            onTap: () async {
+                              await _gameState.value.board.share();
+                            }
+                        )
                       ],
                     ),
                   ),

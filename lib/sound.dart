@@ -7,45 +7,48 @@ enum audioSound {
   TRACING_END
 }
 
-Map <audioSound, AudioPlayer> audioPlayers = {
-  audioSound.PANEL_SUCCESS: SoundPlayer.configureSound("Success.mp3"),
-  audioSound.PANEL_FAILURE: SoundPlayer.configureSound("Fail.mp3"),
-  audioSound.TRACING_END: SoundPlayer.configureSound("Abort.mp3"),
-  audioSound.TRACING_START: SoundPlayer.configureSound("Activate.mp3"),
+Map <audioSound, String> audioFiles = {
+  audioSound.PANEL_SUCCESS: "assets/Success.mp3",
+  audioSound.PANEL_FAILURE: "assets/Fail.mp3",
+  audioSound.TRACING_END: "assets/Abort.mp3",
+  audioSound.TRACING_START: "assets/Activate.mp3",
 };
 
 class SoundPlayer {
-  late AudioPlayer audioPlayer;
-  late AudioCache audioCache;
-  SoundPlayer() {
-    //AudioPlayer.logEnabled = true;
-    //if (kIsWeb) {
-      audioPlayer = new AudioPlayer();
-      audioPlayer.setPlayerMode(PlayerMode.lowLatency);
-    //} else {
-    //  audioCache = new AudioCache();
-    //  audioCache.loadAll(audioFiles.values.toList());
-    //}
-  }
+  final Map<audioSound, AudioSource> _sources = {};
 
-  static AudioPlayer configureSound(String assetName) {
-    var player = AudioPlayer();
-    player.setSourceAsset(assetName);
-    player.setPlayerMode(PlayerMode.lowLatency);
-    player.setReleaseMode(ReleaseMode.stop);
-    return player;
+  SoundPlayer._internal(); // Private constructor
+
+  static Future<SoundPlayer> create() async {
+    var service = SoundPlayer._internal();
+    try {
+      await SoLoud.instance.init();
+    } catch (e) {
+      debugPrint("SoLoud initialization failed: $e");
+    }
+    await service.initSounds();
+    return service;
   }
 
   void play(audioSound sound) {
-    if (settings.sound) {
-      var player = audioPlayers[sound]!;
+    final source = _sources[sound];
+    if (source != null) {
+      SoLoud.instance.play(source);
+    }
+  }
+
+  Future<void> initSounds () async {
+    for (var entry in audioFiles.entries) {
       try {
-        player.stop();
-        player.resume();
-      } catch (ex) {
-        print(ex);
+        final source = await SoLoud.instance.loadAsset(entry.value);
+        _sources[entry.key] = source;
+      } catch (e) {
+        debugPrint("Error loading sound ${entry.value}: $e");
       }
     }
   }
-}
 
+  void dispose() {
+    SoLoud.instance.deinit();
+  }
+}

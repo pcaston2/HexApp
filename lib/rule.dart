@@ -130,8 +130,8 @@ class CornerRule extends ColoredRule {
   int get count => _count;
 
   set count(int newCount) {
-    if (newCount > 2) {
-      throw new Exception("Cannot set corner rule to have more than two");
+    if (newCount > 3) {
+      throw new Exception("Cannot set corner rule to have more than three");
     } else if (newCount < 1) {
       throw new Exception("Cannot set corner rule to have less than one");
     }

@@ -11,6 +11,8 @@ import 'hex.dart';
 import 'piece.dart';
 
 import 'package:json_annotation/json_annotation.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'settings.dart';
 
 
@@ -287,6 +289,38 @@ class Board {
     await f.writeAsString(json.encode(toJson()));
   }
 
+  Future<void> share() async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final path = '${tempDir.path}/board_$guid.$BOARD_FILE_EXTENSION';
+      File f = File(path);
+      await f.writeAsString(json.encode(toJson()));
+      await Share.shareXFiles([XFile(path)], text: 'Check out my board: $name');
+    } catch (e) {
+      print("Error sharing board: $e");
+    }
+  }
+
+  Future<String?> saveToDownloads() async {
+    var settings = await Settings.getInstance();
+    if (settings.downloadPath == null) {
+      return null;
+    }
+    try {
+      Directory d = Directory(settings.downloadPath!);
+      if (!await d.exists()) {
+        await d.create(recursive: true);
+      }
+      String path = '${settings.downloadPath}/board_$guid.$BOARD_FILE_EXTENSION';
+      File f = File(path);
+      await f.writeAsString(json.encode(toJson()));
+      return path;
+    } catch (e) {
+      print("Error saving to downloads: $e");
+      return null;
+    }
+  }
+
   bool putPiece(Hex hex, Piece piece) {
     //TODO: Move this to the pieces
     if (!pieceOnBoard(hex)) {
@@ -296,7 +330,7 @@ class Board {
     if (piece.runtimeType == SequenceRule && hex.runtimeType != Hex) {
       return false;
     }
-    if ((piece.runtimeType == EdgeRule || piece.runtimeType == CornerRule) && hex.runtimeType != Edge) {
+    if (piece.runtimeType == EdgeRule && hex.runtimeType != Edge) {
       return false;
     }
     if ((piece.runtimeType == StartPiece ||
@@ -362,7 +396,15 @@ class Board {
         if (pieces.any((Piece p) => p.runtimeType == CornerRule)) {
           CornerRule existing = pieces.singleWhere((Piece p) =>
           p.runtimeType == CornerRule) as CornerRule;
-          existing.count = existing.count == 1 ? 2 : 1;
+          if (hex.runtimeType == Vertex) {
+            var newCount = existing.count+1;
+            if (newCount >= 4) {
+              newCount = 1;
+            }
+            existing.count = newCount;
+          } else {
+            existing.count = existing.count == 1 ? 2 : 1;
+          }
         } else {
           pieces.add(piece);
         }
