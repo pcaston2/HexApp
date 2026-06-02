@@ -38,10 +38,10 @@ jobs:
       - name: Zip Release Artifacts
         shell: powershell
         run: |
-          Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath "build/windows/x64/runner/HexApp-Windows.zip"
+          Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath "build/windows/x64/runner/THEX-Windows.zip"
 
       - name: Create Release with CLI
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload v0.0.1 ${{ github.ref_name }} build/windows/x64/runner/HexApp-Windows.zip --clobber
+          gh release upload 'Release Master' build/windows/x64/runner/THEX-Windows.zip --clobber
