@@ -44,4 +44,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload v0.0.1 ${{ github.ref_name }} build/windows/x64/runner/HexApp-Windows.zip --title "Release ${{ github.ref_name }}" --notes "Automated build assets." --clobber
+          gh release upload v0.0.1 ${{ github.ref_name }} build/windows/x64/runner/HexApp-Windows.zip --clobber
