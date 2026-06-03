@@ -53,7 +53,11 @@ class MainMenuWidget extends State<MainMenu> {
     return Scaffold(
       appBar: AppBar(
         title: Center(
-            child: Text('THEX')
+            child: Image.asset(
+              'assets/thex-title-transparency.png',
+              height: 40,
+              fit: BoxFit.contain,
+            ),
         )
       ),
       body:
