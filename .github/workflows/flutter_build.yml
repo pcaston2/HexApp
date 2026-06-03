@@ -69,12 +69,6 @@ jobs:
         run: |
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
 
-      - name: Get Dependencies
-        run: flutter pub get
-
-      - name: Clean Build
-        run: flutter clean
-
       - name: Build Android APK
         run: flutter build apk --release
 
