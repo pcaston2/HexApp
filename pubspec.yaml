@@ -99,6 +99,7 @@ flutter:
 
 flutter_launcher_icons:
   image_path: "assets/thex-logo.png"
+  android: true
   windows:
     generate: true
     icon_size: 256
