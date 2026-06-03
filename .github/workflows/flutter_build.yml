@@ -44,4 +44,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload master build/windows/x64/runner/THEX-Windows.zip --clobber
+          gh release upload v0.0.1 build/windows/x64/runner/THEX-Windows.zip --clobber
