@@ -47,6 +47,7 @@ dependencies:
   cupertino_icons: ^1.0.0
 
 dev_dependencies:
+  flutter_launcher_icons: ^0.13.1
   build_runner: ^2.4.9
   json_serializable:
   flutter_test:
@@ -95,3 +96,10 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+flutter_launcher_icons:
+  image_path: "assets/thex-logo.png"
+  windows:
+    generate: true
+    icon_size: 256
+
