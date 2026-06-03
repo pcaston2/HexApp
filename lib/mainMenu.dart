@@ -8,6 +8,46 @@ class MainMenu extends StatefulWidget {
 
 
 class MainMenuWidget extends State<MainMenu> {
+  Future<void> _exportAll() async {
+    try {
+      var settings = await Settings.getInstance();
+      var workingDir = Directory(settings.storagePath);
+      List<FileSystemEntity> files = workingDir.listSync();
+      var jhexFiles = files.where((entity) =>
+          entity is File &&
+          (entity.path.endsWith(".jhexboard") ||
+              entity.path.endsWith(".jhexflow") ||
+              entity.path.endsWith(".jhexstory")));
+
+      if (jhexFiles.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("No jhex files found to export.")));
+        return;
+      }
+
+      var archive = Archive();
+      for (var entity in jhexFiles) {
+        var file = entity as File;
+        var bytes = await file.readAsBytes();
+        archive.addFile(
+            ArchiveFile(p.basename(file.path), bytes.length, bytes));
+      }
+
+      var zipData = ZipEncoder().encode(archive);
+      if (zipData == null) throw Exception("Failed to encode zip");
+
+      final tempDir = await getTemporaryDirectory();
+      final zipPath = '${tempDir.path}/thex_export.zip';
+      File zipFile = File(zipPath);
+      await zipFile.writeAsBytes(zipData);
+
+      await Share.shareXFiles([XFile(zipPath)], text: 'THEX Export');
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Export failed: $e")));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,15 +95,27 @@ class MainMenuWidget extends State<MainMenu> {
             ),
             Visibility(
               visible: settings.developer,
-              child: ElevatedButton.icon(
-                        icon: Icon(Icons.build_rounded),
-                        iconAlignment: IconAlignment.end,
-                        label: Text("Reset"),
-                        onPressed: () async {
-                            await loadStories();
-                            await settings.reset();
-                        }
-                    )
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ElevatedButton.icon(
+                      icon: Icon(Icons.download_rounded),
+                      iconAlignment: IconAlignment.end,
+                      label: Text("Export All"),
+                      onPressed: _exportAll
+                  ),
+                  ElevatedButton.icon(
+                      icon: Icon(Icons.build_rounded),
+                      iconAlignment: IconAlignment.end,
+                      label: Text("Reset"),
+                      onPressed: () async {
+                        await loadStories();
+                        await settings.reset();
+                        setState(() {});
+                      }
+                  ),
+                ],
+              ),
             )
           ],
         )

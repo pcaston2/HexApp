@@ -21,49 +21,85 @@ class Boards extends State<BoardSelection> {
         floatingActionButton:
         Visibility(
         visible: settings.developer,
-        child: FloatingActionButton(
-          tooltip: "Add a Board",
-          child: Icon(Icons.add_rounded),
-          onPressed: () {
-            TextEditingController _textFieldController =
-            TextEditingController();
-            showDialog(
-                context: context,
-                builder: (context) {
-                  return AlertDialog(
-                    title: Text('Please Name Your Board:'),
-                    content: TextField(
-                      controller: _textFieldController,
-                      decoration: InputDecoration(hintText: "My Board"),
-                    ),
-                    actions: <Widget>[
-                      TextButton(
-                        child: Text('CANCEL'),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                      ),
-                      TextButton(
-                        child: Text('OK'),
-                        onPressed: () {
-                          Board.createBoard(_textFieldController.text).then((Board newBoard) {
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            FloatingActionButton(
+              heroTag: "import",
+              tooltip: "Import a Board",
+              child: Icon(Icons.file_upload_rounded),
+              onPressed: () async {
+                FilePickerResult? result = await FilePicker.platform.pickFiles(
+                  type: FileType.custom,
+                  allowedExtensions: ['jhexboard'],
+                );
 
-                            newBoard.save();
-                            _flow.boardPaths.add(newBoard.guid);
-                            _flow.save().then((value) => setState(() {}));
-                            final ScaffoldMessengerState scaffoldMessenger =
-                            ScaffoldMessenger.of(context);
-                            scaffoldMessenger.showSnackBar(SnackBar(
-                                content: Text(
-                                    "Created Board ${_textFieldController.text}")));
-                          });
-                          Navigator.pop(context);
-                        },
-                      ),
-                    ],
-                  );
-                });
-          },
+                if (result != null) {
+                  File file = File(result.files.single.path!);
+                  String content = await file.readAsString();
+                  try {
+                    Board newBoard = Board.fromJson(jsonDecode(content));
+                    newBoard = newBoard.clone();
+                    await newBoard.save();
+                    _flow.boardPaths.add(newBoard.guid);
+                    await _flow.save();
+                    setState(() {});
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text("Imported Board ${newBoard.name}")));
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text("Error importing board: $e")));
+                  }
+                }
+              },
+            ),
+            SizedBox(height: 16),
+            FloatingActionButton(
+              heroTag: "add",
+              tooltip: "Add a Board",
+              child: Icon(Icons.add_rounded),
+              onPressed: () {
+                TextEditingController _textFieldController =
+                TextEditingController();
+                showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: Text('Please Name Your Board:'),
+                        content: TextField(
+                          controller: _textFieldController,
+                          decoration: InputDecoration(hintText: "My Board"),
+                        ),
+                        actions: <Widget>[
+                          TextButton(
+                            child: Text('CANCEL'),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                          TextButton(
+                            child: Text('OK'),
+                            onPressed: () {
+                              Board.createBoard(_textFieldController.text).then((Board newBoard) {
+
+                                newBoard.save();
+                                _flow.boardPaths.add(newBoard.guid);
+                                _flow.save().then((value) => setState(() {}));
+                                final ScaffoldMessengerState scaffoldMessenger =
+                                ScaffoldMessenger.of(context);
+                                scaffoldMessenger.showSnackBar(SnackBar(
+                                    content: Text(
+                                        "Created Board ${_textFieldController.text}")));
+                              });
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      );
+                    });
+              },
+            ),
+          ],
         )
         ),
         appBar: AppBar(
