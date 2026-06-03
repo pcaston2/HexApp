@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "ca" "\0"
-            VALUE "FileDescription", "A new Flutter project." "\0"
+            VALUE "FileDescription", "Thex puzzle game." "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "my_first_flutter_app" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2020 ca. All rights reserved." "\0"
-            VALUE "OriginalFilename", "my_first_flutter_app.exe" "\0"
-            VALUE "ProductName", "my_first_flutter_app" "\0"
+            VALUE "InternalName", "thex" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2024. All rights reserved." "\0"
+            VALUE "OriginalFilename", "thex.exe" "\0"
+            VALUE "ProductName", "Thex" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
