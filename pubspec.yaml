@@ -100,6 +100,8 @@ flutter:
 flutter_launcher_icons:
   image_path: "assets/thex-logo.png"
   android: true
+  adaptive_icon_background: "#DCEDD3"
+  adaptive_icon_foreground: "assets/thex-icon.png"
   windows:
     generate: true
     icon_size: 256
