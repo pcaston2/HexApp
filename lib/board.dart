@@ -280,6 +280,13 @@ class Board {
     return board;
   }
 
+  static Future<Board> fromImport(String jsonContent) async {
+    Board board = Board.fromJson(jsonDecode(jsonContent));
+    board._guid = Guid.newGuid;
+    await board.save();
+    return board;
+  }
+
   Future<void> save() async {
     if (mode == BoardMode.designer) {
       completed = false;

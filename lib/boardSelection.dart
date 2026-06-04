@@ -32,23 +32,24 @@ class Boards extends State<BoardSelection> {
                 FilePickerResult? result = await FilePicker.platform.pickFiles(
                   type: FileType.custom,
                   allowedExtensions: ['jhexboard'],
+                  allowMultiple: true,
                 );
 
                 if (result != null) {
-                  File file = File(result.files.single.path!);
-                  String content = await file.readAsString();
                   try {
-                    Board newBoard = Board.fromJson(jsonDecode(content));
-                    newBoard = newBoard.clone();
-                    await newBoard.save();
-                    _flow.boardPaths.add(newBoard.guid);
+                    for (var file in result.files) {
+                      File f = File(file.path!);
+                      String content = await f.readAsString();
+                      Board newBoard = await Board.fromImport(content);
+                      _flow.boardPaths.add(newBoard.guid);
+                    }
                     await _flow.save();
                     setState(() {});
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text("Imported Board ${newBoard.name}")));
+                        content: Text("Imported ${result.files.length} Board(s)")));
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text("Error importing board: $e")));
+                        content: Text("Error importing board(s): $e")));
                   }
                 }
               },
