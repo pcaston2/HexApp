@@ -41,7 +41,22 @@ class MainMenuWidget extends State<MainMenu> {
       File zipFile = File(zipPath);
       await zipFile.writeAsBytes(zipData);
 
-      await Share.shareXFiles([XFile(zipPath)], text: 'THEX Export');
+      if (Platform.isWindows) {
+        String? outputFile = await FilePicker.platform.saveFile(
+          dialogTitle: 'Save Export As',
+          fileName: 'thex_export.zip',
+          type: FileType.custom,
+          allowedExtensions: ['zip'],
+        );
+
+        if (outputFile != null) {
+          await zipFile.copy(outputFile);
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Export saved to $outputFile")));
+        }
+      } else {
+        await Share.shareXFiles([XFile(zipPath)], text: 'THEX Export');
+      }
     } catch (e) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("Export failed: $e")));

@@ -13,6 +13,7 @@ import 'piece.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:file_picker/file_picker.dart';
 import 'settings.dart';
 
 
@@ -302,7 +303,21 @@ class Board {
       final path = '${tempDir.path}/board_$guid.$BOARD_FILE_EXTENSION';
       File f = File(path);
       await f.writeAsString(json.encode(toJson()));
-      await Share.shareXFiles([XFile(path)], text: 'Check out my board: $name');
+
+      if (Platform.isWindows) {
+        String? outputFile = await FilePicker.platform.saveFile(
+          dialogTitle: 'Save Board As',
+          fileName: 'board_$guid.$BOARD_FILE_EXTENSION',
+          type: FileType.custom,
+          allowedExtensions: [BOARD_FILE_EXTENSION],
+        );
+
+        if (outputFile != null) {
+          await f.copy(outputFile);
+        }
+      } else {
+        await Share.shareXFiles([XFile(path)], text: 'Check out my board: $name');
+      }
     } catch (e) {
       print("Error sharing board: $e");
     }
