@@ -35,6 +35,22 @@ class Settings {
     _prefs.setBool(name, true);
   }
 
+  void setComplete(String hash) {
+    List<String> completed = _prefs.getStringList('complete') ?? [];
+    if (!completed.contains(hash)) {
+      completed.add(hash);
+      _prefs.setStringList('complete', completed);
+    }
+  }
+
+  bool isComplete(String hash) {
+    return (_prefs.getStringList('complete') ?? []).contains(hash);
+  }
+
+  void clearComplete() {
+    _prefs.remove('complete');
+  }
+
   String get storagePath {
     return _storagePath;
   }

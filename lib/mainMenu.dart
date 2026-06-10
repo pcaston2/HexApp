@@ -135,6 +135,16 @@ class MainMenuWidget extends State<MainMenu> {
                       onPressed: _exportAll
                   ),
                   ElevatedButton.icon(
+                      icon: Icon(Icons.delete_sweep_rounded),
+                      iconAlignment: IconAlignment.end,
+                      label: Text("Clear Progress"),
+                      onPressed: () {
+                        settings.clearComplete();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Progress cleared.")));
+                      }
+                  ),
+                  ElevatedButton.icon(
                       icon: Icon(Icons.build_rounded),
                       iconAlignment: IconAlignment.end,
                       label: Text("Reset"),
