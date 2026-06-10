@@ -74,12 +74,20 @@ class Stories extends State<StorySelection> {
                     List<ListTile>.generate(stories.length, (int index) {
                       return StoryTile(
                         story: stories[index],
+                        completed: settings.isComplete(stories[index].guid),
                         title: Text(stories[index].name),
                         onTap: () async {
-                          await Navigator.push(
+                          var result = await Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => FlowSelection(stories[index])),
                           );
+                          if (!mounted) return;
+                          setState(() {});
+                          if (result != null && result) {
+                            settings.setComplete(stories[index].guid);
+                            stories[index].save();
+                            setState(() {});
+                          }
                         }
                       );
                     }) : [Text("There aren't any stories yet, try adding one!")]);

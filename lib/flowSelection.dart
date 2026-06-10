@@ -186,15 +186,21 @@ class Flows extends State<FlowSelection> {
                     },
                     child: FlowTile(
                     flow: flows[index],
+                    completed: settings.isComplete(flows[index].guid),
                     title: Text(flows[index].name),
                     onTap: () async {
                       var result = await Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => BoardSelection(flows[index], _story)),
                       );
+                      if (!mounted) return;
+                      setState(() {});
                       if (result != null && result) {
-                        flows[index].completed = true;
+                        settings.setComplete(flows[index].guid);
                         flows[index].save();
+                        if (flows.every((f) => settings.isComplete(f.guid))) {
+                          Navigator.pop(context, true);
+                        }
                       }
                     }
                   ));

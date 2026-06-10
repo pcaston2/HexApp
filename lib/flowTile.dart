@@ -4,7 +4,8 @@ import 'boardFlow.dart';
 
 class FlowTile extends ListTile {
   final BoardFlow flow;
-  FlowTile({required this.flow, required Widget title, required GestureTapCallback onTap}) : super(
+  final bool completed;
+  FlowTile({required this.flow, this.completed = false, required Widget title, required GestureTapCallback onTap}) : super(
       title: title,
       onTap: onTap,
       leading: Visibility(child:
@@ -14,7 +15,7 @@ class FlowTile extends ListTile {
             size: 24.0,
             semanticLabel: "Completed",
         ),
-        visible: flow.completed,
+        visible: completed,
       )
   );
 }

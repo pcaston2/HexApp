@@ -4,7 +4,8 @@ import 'story.dart';
 
 class StoryTile extends ListTile {
   final Story story;
-  StoryTile({required this.story, required Widget title, required GestureTapCallback onTap}) : super(
+  final bool completed;
+  StoryTile({required this.story, this.completed = false, required Widget title, required GestureTapCallback onTap}) : super(
     title: title,
     onTap: onTap,
     leading: Visibility(child:
@@ -14,7 +15,7 @@ class StoryTile extends ListTile {
         size: 24.0,
         semanticLabel: "Completed"
       ),
-      visible: story.completed,
+      visible: completed,
     )
   );
 }

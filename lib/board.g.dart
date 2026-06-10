@@ -8,7 +8,6 @@ part of 'board.dart';
 
 Board _$BoardFromJson(Map<String, dynamic> json) => Board()
   ..name = json['name'] as String
-  ..completed = json['completed'] as bool
   ..map = (json['map'] as List<dynamic>)
       .map((e) => HexPieceEntry.fromJson(e as Map<String, dynamic>))
       .toList()
@@ -19,7 +18,6 @@ Board _$BoardFromJson(Map<String, dynamic> json) => Board()
 
 Map<String, dynamic> _$BoardToJson(Board instance) => <String, dynamic>{
       'name': instance.name,
-      'completed': instance.completed,
       'map': instance.map.map((e) => e.toJson()).toList(),
       'theme': instance.theme.toJson(),
       'tutorial': instance.tutorial,

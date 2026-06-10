@@ -16,8 +16,6 @@ class Story {
   String name;
   late Guid _guid;
 
-  late bool completed;
-
   String get guid {
     return _guid.value;
   }
@@ -32,7 +30,6 @@ class Story {
 
   Story.named(this.name) {
     _guid = Guid.newGuid;
-    completed = false;
   }
 
   factory Story.fromJson(Map<String, dynamic> json) => _$StoryFromJson(json);
@@ -85,7 +82,8 @@ class Story {
       try {
         File file = File(fse.path);
         String s = await file.readAsString();
-        stories.add(Story.fromJson(json.decode(s)));
+        Story story = Story.fromJson(json.decode(s));
+        stories.add(story);
       } on Exception catch (ex) {
         print(ex);
       }

@@ -19,8 +19,6 @@ class BoardFlow {
   @JsonKey(includeFromJson: false, includeToJson: false)
   late Guid _guid;
 
-  late bool completed;
-
   String get guid {
     return _guid.value;
   }
@@ -36,7 +34,6 @@ class BoardFlow {
   BoardFlow.named(this.name)
   {
     _guid = Guid.newGuid;
-    completed = false;
   }
 
   factory BoardFlow.fromJson(Map<String, dynamic> json) => _$BoardFlowFromJson(json);
@@ -76,7 +73,8 @@ class BoardFlow {
       try {
         File file = File("${settings.storagePath}/board_$boardPath.$BOARD_FILE_EXTENSION");
         String s = await file.readAsString();
-        boards.add(Board.fromJson(json.decode(s)));
+        Board b = Board.fromJson(json.decode(s));
+        boards.add(b);
       } on Exception catch (ex) {
         print(ex);
       }

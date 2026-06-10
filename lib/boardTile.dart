@@ -4,7 +4,8 @@ import 'board.dart';
 
 class BoardTile extends ListTile {
   final Board board;
-  BoardTile({required this.board, required Widget title, required GestureTapCallback onTap}) :
+  final bool completed;
+  BoardTile({required this.board, this.completed = false, required Widget title, required GestureTapCallback onTap}) :
         super(title: title,
           leading: Visibility(
             child: Icon(
@@ -13,7 +14,7 @@ class BoardTile extends ListTile {
               size: 24.0,
               semanticLabel: 'Completed',
             ),
-            visible: board.completed
+            visible: completed
           ),
           onTap: onTap);
 }

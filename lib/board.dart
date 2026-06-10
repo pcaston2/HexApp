@@ -35,8 +35,6 @@ class Board {
   String name = "Board";
 
 
-  late bool completed;
-
   Map<Hex, List<Piece>> _map = new Map<Hex, List<Piece>>();
 
   @JsonKey(includeToJson: false, includeFromJson: false)
@@ -252,7 +250,6 @@ class Board {
   Board() : this.named("Board");
 
   Board.named(this.name) {
-    completed = false;
     _guid = Guid.newGuid;
     _size = 3;
     _mode = BoardMode.play;
@@ -289,9 +286,6 @@ class Board {
   }
 
   Future<void> save() async {
-    if (mode == BoardMode.designer) {
-      completed = false;
-    }
     var settings = await Settings.getInstance();
     File f = File('${settings.storagePath}/board_$guid.$BOARD_FILE_EXTENSION');
     await f.writeAsString(json.encode(toJson()));

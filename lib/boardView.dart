@@ -275,7 +275,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                       tooltip: 'Next',
                       child: const Icon(Icons.navigate_next_rounded),
                     ),
-                    visible: _gameState.value.board.completed &&
+                    visible: settings.isComplete(_gameState.value.board.guid) &&
                         _gameState.value.board.mode == BoardMode.play,
                   ),
                 ]),
@@ -981,7 +981,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                                   soundPlayer.play(
                                                       audioSound.PANEL_SUCCESS);
 
-                                                  if (!_gameState.value.board.completed) {
+                                                  if (!settings.isComplete(_gameState.value.board.guid)) {
                                                     /*
                                                     showDialog(
                                                         context: context,
@@ -1031,14 +1031,14 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                                     }
                                                     */
                                                     //GameAnalytics.addProgressionEvent(gaMap);
-                                                    _gameState.value.board.completed = true;
+                                                    settings.setComplete(_gameState.value.board.guid);
                                                     _gameState.value.board.save();
 
                                                   }
                                                 } else {
                                                   soundPlayer.play(
                                                       audioSound.PANEL_FAILURE);
-                                                  if (!_gameState.value.board.completed) {
+                                                  if (!settings.isComplete(_gameState.value.board.guid)) {
                                                     /*
                                                     GameAnalytics
                                                         .addProgressionEvent({

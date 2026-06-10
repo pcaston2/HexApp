@@ -236,6 +236,7 @@ class Boards extends State<BoardSelection> {
                             child:
                             BoardTile(
                             board: boards[index],
+                            completed: settings.isComplete(boards[index].guid),
                             title: Text(boards[index].name),
                             onTap: () {
                               pushBoard(context, boards, index, _flow, _story);
@@ -252,12 +253,15 @@ class Boards extends State<BoardSelection> {
 
   Future<void> pushBoard(BuildContext context, List<Board> boards,int index, BoardFlow flow, Story story) async {
     var result = await Navigator.push( context, MaterialPageRoute(builder: (context) => BoardView(boards[index], flow, story)));
+    
+    if (!mounted) return;
+    setState(() {});
+    
     if (result != null && result) {
-      if (boards.every((b) => b.completed)) {
+      if (boards.every((b) => settings.isComplete(b.guid))) {
         Navigator.pop(context, true);
-      }
-      if (boards.length > index +1) {
-        pushBoard(context, boards, ++index, flow, story);
+      } else if (boards.length > index + 1) {
+        pushBoard(context, boards, index + 1, flow, story);
       }
     }
   }
