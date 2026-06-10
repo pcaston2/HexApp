@@ -20,19 +20,12 @@ class BoardView extends StatefulWidget {
   final Board _board;
   final BoardFlow _flow;
   final Story _story;
-  BoardView(this._board, this._flow, this._story) : super();
+  final int _index;
+  BoardView(this._board, this._flow, this._story, this._index) : super();
 
   @override
   _HexWidgetState createState() {
-    /*
-    GameAnalytics.addProgressionEvent({
-      "progressionStatus": 1, //START
-      "progression01": _story.name,
-      "progression02": _flow.name,
-      "progression03": _board.name
-    });
-    */
-    return _HexWidgetState(_board, _flow, _story);
+    return _HexWidgetState(_board, _flow, _story, _index);
   }
 }
 
@@ -42,6 +35,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
   double? _rating = null;
 
   late HexPainter painter;
+  int _index;
 
   late Animation<double> beckon;
   late AnimationController beckonController;
@@ -55,10 +49,44 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
   late Animation<double> error;
   late AnimationController errorController;
 
+  late Animation<double> nextPulse;
+  late AnimationController nextPulseController;
+  late Animation<double> nextErrorPulse;
+  late AnimationController nextErrorPulseController;
+  int _pulseCount = 0;
+
   @override
   void initState() {
     super.initState();
 
+    nextPulseController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 500),
+    );
+    nextPulse = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: nextPulseController, curve: Curves.easeInOut),
+    );
+    nextPulseController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        nextPulseController.reverse();
+      } else if (status == AnimationStatus.dismissed) {
+        if (_pulseCount > 0) {
+          _pulseCount--;
+          if (_pulseCount > 0) {
+            nextPulseController.forward();
+          }
+        }
+      }
+    });
+
+    nextErrorPulseController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 600),
+    );
+    nextErrorPulse = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.9), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 0.9, end: 1.0), weight: 50),
+    ]).animate(CurvedAnimation(parent: nextErrorPulseController, curve: Curves.easeInOut));
 
     beckonController = AnimationController(
       vsync: this,
@@ -144,10 +172,12 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
     fadeController.dispose();
     errorController.dispose();
     beckonController.dispose();
+    nextPulseController.dispose();
+    nextErrorPulseController.dispose();
     super.dispose();
   }
 
-  _HexWidgetState(Board board, BoardFlow flow, story) {
+  _HexWidgetState(Board board, BoardFlow flow, story, this._index) {
     _gameState = ValueNotifier<GameState>(GameState());
     _gameState.value.board = board;
     _gameState.value.flow = flow;
@@ -246,6 +276,14 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 //crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  FloatingActionButton(
+                    heroTag: "previous",
+                    onPressed: () {
+                      Navigator.pop(context, "back");
+                    },
+                    tooltip: 'Previous',
+                    child: const Icon(Icons.navigate_before_rounded),
+                  ),
                   Visibility(
                       visible: settings.developer,
                       child: FloatingActionButton(
@@ -266,17 +304,55 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                           child: _gameState.value.board.mode == BoardMode.play
                               ? Icon(Icons.design_services_rounded)
                               : Icon(Icons.play_arrow_rounded))),
-                  Visibility(
-                    child: FloatingActionButton(
-                      heroTag: "next",
-                      onPressed: () => setState(() {
-                        Navigator.pop(context, true);
-                      }),
-                      tooltip: 'Next',
-                      child: const Icon(Icons.navigate_next_rounded),
-                    ),
-                    visible: settings.isComplete(_gameState.value.board.guid) &&
-                        _gameState.value.board.mode == BoardMode.play,
+                  AnimatedBuilder(
+                    animation: Listenable.merge([nextPulseController, nextErrorPulseController]),
+                    builder: (context, child) {
+                      bool isCompleted = settings.isComplete(_gameState.value.board.guid);
+                      bool isError = nextErrorPulseController.isAnimating;
+                      
+                      double scale = isCompleted ? nextPulse.value : 1.0;
+                      if (isError) {
+                        scale = nextErrorPulse.value;
+                      }
+
+                      List<BoxShadow>? shadows;
+                      if (isError) {
+                        shadows = [
+                          BoxShadow(
+                            color: Colors.red.withValues(alpha: 0.8),
+                            blurRadius: 20,
+                            spreadRadius: 6,
+                          ),
+                        ];
+                      } else if (isCompleted) {
+                        shadows = [
+                          BoxShadow(
+                            color: Colors.green.withValues(alpha: 0.5),
+                            blurRadius: 15,
+                            spreadRadius: 4,
+                          ),
+                        ];
+                      }
+
+                      return Transform.scale(
+                        scale: scale,
+                        child: Container(
+                          decoration: shadows != null ? BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: shadows,
+                          ) : null,
+                          child: FloatingActionButton(
+                            heroTag: "next",
+                            onPressed: () => setState(() {
+                              Navigator.pop(context, true);
+                            }),
+                            elevation: isCompleted ? 12 : 6,
+                            tooltip: 'Next',
+                            child: const Icon(Icons.navigate_next_rounded),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ]),
             drawer: _gameState.value.board.mode == BoardMode.play
@@ -1033,11 +1109,13 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                                     //GameAnalytics.addProgressionEvent(gaMap);
                                                     settings.setComplete(_gameState.value.board.guid);
                                                     _gameState.value.board.save();
-
                                                   }
+                                                  _pulseCount = 3;
+                                                  nextPulseController.forward(from: 0);
                                                 } else {
                                                   soundPlayer.play(
                                                       audioSound.PANEL_FAILURE);
+                                                  nextErrorPulseController.forward(from: 0);
                                                   if (!settings.isComplete(_gameState.value.board.guid)) {
                                                     /*
                                                     GameAnalytics

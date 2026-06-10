@@ -251,17 +251,35 @@ class Boards extends State<BoardSelection> {
 
   }
 
-  Future<void> pushBoard(BuildContext context, List<Board> boards,int index, BoardFlow flow, Story story) async {
-    var result = await Navigator.push( context, MaterialPageRoute(builder: (context) => BoardView(boards[index], flow, story)));
-    
-    if (!mounted) return;
-    setState(() {});
-    
-    if (result != null && result) {
-      if (boards.every((b) => settings.isComplete(b.guid))) {
-        Navigator.pop(context, true);
-      } else if (boards.length > index + 1) {
-        pushBoard(context, boards, index + 1, flow, story);
+  Future pushBoard(BuildContext context, List<Board> boards, int index, BoardFlow flow, Story story) async {
+    while (true) {
+      var result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => BoardView(boards[index], flow, story, index)));
+
+      if (!mounted) return;
+      setState(() {});
+
+      if (result == true) { // Next button pressed
+        if (boards.length > index + 1) {
+          index++;
+          continue;
+        } else {
+          if (boards.every((b) => settings.isComplete(b.guid))) {
+            Navigator.pop(context, true);
+          }
+          return true;
+        }
+      } else if (result == "back") {
+        if (index > 0) {
+          index--;
+          continue;
+        } else {
+          return null; // Exit to flow list
+        }
+      } else {
+        return null; // Normal exit
       }
     }
   }
