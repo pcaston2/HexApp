@@ -490,6 +490,14 @@ class Board {
   }
 
   bool moveTo(Hex hex) {
+    if (hex == tail) return false;
+
+    if (hasEnded && crosshair != null) {
+      if ((tail!.localPoint - crosshair!).magnitude < hexSize * 0.75) {
+        return false;
+      }
+    }
+
     if (adjacent.contains(hex)) {
       if (hex == previous) {
         trail.removeLast();
