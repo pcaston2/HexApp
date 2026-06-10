@@ -498,6 +498,28 @@ class Board {
       }
       return true;
     } else {
+      // Backward jump: if we are hovering the one before previous, pop twice
+      if (trail.length >= 3 && hex == trail[trail.length - 3]) {
+        trail.removeLast();
+        trail.removeLast();
+        return true;
+      }
+
+      // Forward jump: if we are hovering a neighbour of a neighbour
+      for (var neighbor in adjacent) {
+        if (neighbor == previous) continue;
+
+        // Temporarily simulate moving to the neighbor to check its adjacents
+        _trail.add(neighbor);
+        bool canJump = adjacent.contains(hex) && !trail.sublist(0, trail.length - 1).contains(hex);
+        _trail.removeLast();
+
+        if (canJump) {
+          _trail.add(neighbor);
+          _trail.add(hex);
+          return true;
+        }
+      }
       return false;
     }
   }
