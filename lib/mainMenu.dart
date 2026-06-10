@@ -9,18 +9,25 @@ class MainMenu extends StatefulWidget {
 
 class MainMenuWidget extends State<MainMenu> {
   Future<void> _exportAll() async {
+    final messenger = ScaffoldMessenger.of(context);
     try {
       var settings = await Settings.getInstance();
       var workingDir = Directory(settings.storagePath);
+      
+      if (!await workingDir.exists()) {
+        messenger.showSnackBar(SnackBar(content: Text("Storage directory not found.")));
+        return;
+      }
+
       List<FileSystemEntity> files = workingDir.listSync();
       var jhexFiles = files.where((entity) =>
           entity is File &&
           (entity.path.endsWith(".jhexboard") ||
               entity.path.endsWith(".jhexflow") ||
-              entity.path.endsWith(".jhexstory")));
+              entity.path.endsWith(".jhexstory"))).toList();
 
       if (jhexFiles.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
             SnackBar(content: Text("No jhex files found to export.")));
         return;
       }
@@ -41,6 +48,8 @@ class MainMenuWidget extends State<MainMenu> {
       File zipFile = File(zipPath);
       await zipFile.writeAsBytes(zipData);
 
+      if (!mounted) return;
+
       if (Platform.isWindows) {
         String? outputFile = await FilePicker.platform.saveFile(
           dialogTitle: 'Save Export As',
@@ -51,15 +60,17 @@ class MainMenuWidget extends State<MainMenu> {
 
         if (outputFile != null) {
           await zipFile.copy(outputFile);
-          ScaffoldMessenger.of(context).showSnackBar(
+          messenger.showSnackBar(
               SnackBar(content: Text("Export saved to $outputFile")));
         }
       } else {
-        await Share.shareXFiles([XFile(zipPath)], text: 'THEX Export');
+        await Share.shareXFiles(
+          [XFile(zipPath, mimeType: 'application/zip')], 
+          text: 'THEX Export'
+        );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Export failed: $e")));
+      messenger.showSnackBar(SnackBar(content: Text("Export failed: $e")));
     }
   }
 
