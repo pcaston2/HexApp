@@ -118,6 +118,7 @@ class Flows extends State<FlowSelection> {
           ])
               : Text(_story.name),
         ),
+        backgroundColor: settings.developer ? null : Colors.blueGrey.shade900,
         body: FutureBuilder(
             future: _story.flows,
             builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -125,87 +126,120 @@ class Flows extends State<FlowSelection> {
                 return new Text('Getting your flows...');
               } else {
                 List<BoardFlow> flows = snapshot.data;
-                //Text(flows.length.toString());
-                return ReorderableListView(
-                    buildDefaultDragHandles: settings.developer,
-                    onReorder: (int oldIndex, int newIndex) {
-                      if (newIndex > oldIndex) {
-                        newIndex--;
-                      }
-                      var moved = _story.flowPaths.removeAt(oldIndex);
-                      _story.flowPaths.insert(newIndex, moved);
-                      _story.save().then((data) => setState(() {})
-                      );
-                    },
-                    header: flows.isEmpty ? Text("There aren't any flows yet, try adding one!") : Text("Pick a flow or add some more!"),
-                    children:
-                        flows.isNotEmpty ?
-                        List<Dismissible>.generate(flows.length, (int index) {
-                  return
-                    Dismissible(
-                      direction: settings.developer ? DismissDirection.endToStart : DismissDirection.none,
-                      background: Container(
-                        color: Colors.redAccent,
-                        child: Icon(Icons.remove_rounded),
-                      ),
-                      key: ValueKey(flows[index].guid),
-                      onDismissed: (direction) {
-                        if (direction == DismissDirection.endToStart) {
-                          _story.deleteAt(index).then((data) => setState(() {}));
+
+                if (settings.developer) {
+                  return ReorderableListView(
+                      buildDefaultDragHandles: true,
+                      onReorder: (int oldIndex, int newIndex) {
+                        if (newIndex > oldIndex) {
+                          newIndex--;
                         }
+                        var moved = _story.flowPaths.removeAt(oldIndex);
+                        _story.flowPaths.insert(newIndex, moved);
+                        _story.save().then((data) => setState(() {})
+                        );
                       },
-                      confirmDismiss: (DismissDirection direction) async {
-                        if (direction == DismissDirection.endToStart) {
-                          return await showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: const Text("Delete Flow?"),
-                                content: const Text(
-                                  "Are you sure you want to delete this flow?"),
-                                actions: <Widget>[
-                                  TextButton(
-                                    child: Text('Heck no!'),
-                                    onPressed: () {
-                                      Navigator.of(context).pop(false);
-                                    }
-                                  ),
-                                  TextButton(
-                                    child: Text('You bet!'),
-                                    onPressed: () {
-                                      Navigator.of(context).pop(true);
-                                    }
-                                  )
-                                ],
-                              );
-                            }
-                          );
-                        } else {
-                          return false;
-                        }
-                    },
-                    child: FlowTile(
-                    flow: flows[index],
-                    completed: settings.isComplete(flows[index].guid),
-                    title: Text(flows[index].name),
-                    onTap: () async {
-                      var result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => BoardSelection(flows[index], _story)),
-                      );
-                      if (!mounted) return;
-                      setState(() {});
-                      if (result != null && result) {
-                        settings.setComplete(flows[index].guid);
-                        flows[index].save();
-                        if (flows.every((f) => settings.isComplete(f.guid))) {
-                          Navigator.pop(context, true);
+                      header: flows.isEmpty ? Text("There aren't any flows yet, try adding one!") : Text("Pick a flow or add some more!"),
+                      children:
+                          List<Dismissible>.generate(flows.length, (int index) {
+                    return
+                      Dismissible(
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          color: Colors.redAccent,
+                          child: Icon(Icons.remove_rounded),
+                        ),
+                        key: ValueKey(flows[index].guid),
+                        onDismissed: (direction) {
+                          if (direction == DismissDirection.endToStart) {
+                            _story.deleteAt(index).then((data) => setState(() {}));
+                          }
+                        },
+                        confirmDismiss: (DismissDirection direction) async {
+                          if (direction == DismissDirection.endToStart) {
+                            return await showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text("Delete Flow?"),
+                                  content: const Text(
+                                    "Are you sure you want to delete this flow?"),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      child: Text('Heck no!'),
+                                      onPressed: () {
+                                        Navigator.of(context).pop(false);
+                                      }
+                                    ),
+                                    TextButton(
+                                      child: Text('You bet!'),
+                                      onPressed: () {
+                                        Navigator.of(context).pop(true);
+                                      }
+                                    )
+                                  ],
+                                );
+                              }
+                            );
+                          } else {
+                            return false;
+                          }
+                      },
+                      child: FlowTile(
+                      flow: flows[index],
+                      completed: settings.isComplete(flows[index].guid),
+                      title: Text(flows[index].name),
+                      onTap: () async {
+                        var result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => BoardSelection(flows[index], _story)),
+                        );
+                        if (!mounted) return;
+                        setState(() {});
+                        if (result != null && result) {
+                          settings.setComplete(flows[index].guid);
+                          flows[index].save();
+                          if (flows.every((f) => settings.isComplete(f.guid))) {
+                            Navigator.pop(context, true);
+                          }
                         }
                       }
-                    }
-                  ));
-                }): []
-                );
+                    ));
+                  })
+                  );
+                } else {
+                  return GridView.builder(
+                    padding: const EdgeInsets.all(20),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 15,
+                      mainAxisSpacing: 15,
+                    ),
+                    itemCount: flows.length,
+                    itemBuilder: (context, index) {
+                      return FlowGridTile(
+                        flow: flows[index],
+                        completed: settings.isComplete(flows[index].guid),
+                        index: index,
+                        onTap: () async {
+                          var result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => BoardSelection(flows[index], _story)),
+                          );
+                          if (!mounted) return;
+                          setState(() {});
+                          if (result != null && result) {
+                            settings.setComplete(flows[index].guid);
+                            flows[index].save();
+                            if (flows.every((f) => settings.isComplete(f.guid))) {
+                              Navigator.pop(context, true);
+                            }
+                          }
+                        },
+                      );
+                    },
+                  );
+                }
               }
             }));
   }

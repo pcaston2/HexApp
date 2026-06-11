@@ -61,6 +61,7 @@ class Stories extends State<StorySelection> {
       appBar: AppBar(
         title: Text('Stories'),
       ),
+      backgroundColor: settings.developer ? null : Colors.blueGrey.shade900,
       body: FutureBuilder(
         future: Story.getStories(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -68,29 +69,62 @@ class Stories extends State<StorySelection> {
             return new Text("Getting your stories...");
           } else {
             List<Story> stories = snapshot.data;
-            return ListView(
-              children:
-                stories.isNotEmpty ?
-                    List<ListTile>.generate(stories.length, (int index) {
-                      return StoryTile(
-                        story: stories[index],
-                        completed: settings.isComplete(stories[index].guid),
-                        title: Text(stories[index].name),
-                        onTap: () async {
-                          var result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => FlowSelection(stories[index])),
-                          );
-                          if (!mounted) return;
-                          setState(() {});
-                          if (result != null && result) {
-                            settings.setComplete(stories[index].guid);
-                            stories[index].save();
+
+            if (settings.developer) {
+              return ListView(
+                children:
+                  stories.isNotEmpty ?
+                      List<ListTile>.generate(stories.length, (int index) {
+                        return StoryTile(
+                          story: stories[index],
+                          completed: settings.isComplete(stories[index].guid),
+                          title: Text(stories[index].name),
+                          onTap: () async {
+                            var result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => FlowSelection(stories[index])),
+                            );
+                            if (!mounted) return;
                             setState(() {});
+                            if (result != null && result) {
+                              settings.setComplete(stories[index].guid);
+                              stories[index].save();
+                              setState(() {});
+                            }
                           }
-                        }
+                        );
+                      }) : [Text("There aren't any stories yet, try adding one!")]);
+            } else {
+              return GridView.builder(
+                padding: const EdgeInsets.all(20),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 15,
+                  mainAxisSpacing: 15,
+                ),
+                itemCount: stories.length,
+                itemBuilder: (context, index) {
+                  return StoryGridTile(
+                    story: stories[index],
+                    completed: settings.isComplete(stories[index].guid),
+                    index: index,
+                    onTap: () async {
+                      var result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => FlowSelection(stories[index])),
                       );
-                    }) : [Text("There aren't any stories yet, try adding one!")]);
+                      if (!mounted) return;
+                      setState(() {});
+                      if (result != null && result) {
+                        settings.setComplete(stories[index].guid);
+                        stories[index].save();
+                        setState(() {});
+                      }
+                    },
+                  );
+                },
+              );
+            }
           }
         }
       )
