@@ -27,6 +27,14 @@ class Settings {
     _prefs.setBool('dev', value);
   }
 
+  bool get isDeveloperUnlocked {
+    return _prefs.getBool('devUnlocked') ?? false;
+  }
+
+  void set isDeveloperUnlocked(bool value) {
+    _prefs.setBool('devUnlocked', value);
+  }
+
   bool getLoaded(String name) {
     return _prefs.getBool(name) ?? false;
   }
@@ -104,5 +112,8 @@ class Settings {
 
   Future<void> reset() async {
     await _prefs.clear();
+    developer = false;
+    isDeveloperUnlocked = false;
+    clearComplete();
   }
 }

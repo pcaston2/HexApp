@@ -285,7 +285,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                     child: const Icon(Icons.navigate_before_rounded),
                   ),
                   Visibility(
-                      visible: settings.developer,
+                      visible: settings.developer && settings.isDeveloperUnlocked,
                       child: FloatingActionButton(
                           heroTag: "mode",
                           onPressed: () => setState(() {

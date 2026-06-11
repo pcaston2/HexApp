@@ -8,6 +8,7 @@ class MainMenu extends StatefulWidget {
 
 
 class MainMenuWidget extends State<MainMenu> {
+  int _devClickCount = 0;
   Future<void> _exportAll() async {
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -109,19 +110,37 @@ class MainMenuWidget extends State<MainMenu> {
               onPressed: () {
                 setState(() {
                   settings.sound = !settings.sound;
+                  if (!settings.isDeveloperUnlocked) {
+                    _devClickCount++;
+                    if (_devClickCount >= 10) {
+                      settings.isDeveloperUnlocked = true;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("You are now a developer!")));
+                    } else if (_devClickCount > 5) {
+                      ScaffoldMessenger.of(context).clearSnackBars();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("You are now ${10 - _devClickCount} steps away from being a developer."),
+                            duration: Duration(seconds: 1),
+                          ));
+                    }
+                  }
                 });
               },
               label: Text(settings.sound ? "Sound" : "No Sound"),
             ),
-            ElevatedButton.icon(
-                icon: Icon((settings.developer ? Icons.design_services_rounded : Icons.play_arrow_rounded)),
-                iconAlignment: IconAlignment.end,
-                label: Text(settings.developer ? "Design Mode" : "Play Mode"),
-                onPressed: () {
-                  setState(() {
-                    settings.developer = !settings.developer;
-                  });
-                },
+            Visibility(
+              visible: settings.isDeveloperUnlocked,
+              child: ElevatedButton.icon(
+                  icon: Icon((settings.developer ? Icons.play_arrow_rounded : Icons.design_services_rounded)),
+                  iconAlignment: IconAlignment.end,
+                  label: Text(settings.developer ? "Switch to Play Mode" : "Switch to Design Mode"),
+                  onPressed: () {
+                    setState(() {
+                      settings.developer = !settings.developer;
+                    });
+                  },
+              ),
             ),
             Visibility(
               visible: settings.developer,
@@ -149,9 +168,13 @@ class MainMenuWidget extends State<MainMenu> {
                       iconAlignment: IconAlignment.end,
                       label: Text("Reset"),
                       onPressed: () async {
-                        await loadStories();
                         await settings.reset();
-                        setState(() {});
+                        await loadStories();
+                        setState(() {
+                          _devClickCount = 0;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("All settings and progress reset.")));
                       }
                   ),
                 ],
