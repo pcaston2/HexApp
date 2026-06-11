@@ -98,6 +98,7 @@ class MainMenuWidget extends State<MainMenu> {
               iconAlignment: IconAlignment.end,
               label: Text("Play"),
               onPressed: () {
+                if (settings.haptic) HapticFeedback.mediumImpact();
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => StorySelection()),
@@ -108,6 +109,7 @@ class MainMenuWidget extends State<MainMenu> {
               icon: Icon((settings.sound ? Icons.volume_up_rounded : Icons.volume_mute_rounded)),
               iconAlignment: IconAlignment.end,
               onPressed: () {
+                if (settings.haptic) HapticFeedback.selectionClick();
                 setState(() {
                   settings.sound = !settings.sound;
                   if (!settings.isDeveloperUnlocked) {
@@ -129,6 +131,17 @@ class MainMenuWidget extends State<MainMenu> {
               },
               label: Text(settings.sound ? "Sound" : "No Sound"),
             ),
+            ElevatedButton.icon(
+              icon: Icon((settings.haptic ? Icons.vibration_rounded : Icons.phonelink_erase_rounded)),
+              iconAlignment: IconAlignment.end,
+              onPressed: () {
+                setState(() {
+                  settings.haptic = !settings.haptic;
+                  if (settings.haptic) HapticFeedback.mediumImpact();
+                });
+              },
+              label: Text(settings.haptic ? "Haptics" : "No Haptics"),
+            ),
             Visibility(
               visible: settings.isDeveloperUnlocked,
               child: ElevatedButton.icon(
@@ -136,6 +149,7 @@ class MainMenuWidget extends State<MainMenu> {
                   iconAlignment: IconAlignment.end,
                   label: Text(settings.developer ? "Switch to Play Mode" : "Switch to Design Mode"),
                   onPressed: () {
+                    if (settings.haptic) HapticFeedback.mediumImpact();
                     setState(() {
                       settings.developer = !settings.developer;
                     });
@@ -151,13 +165,17 @@ class MainMenuWidget extends State<MainMenu> {
                       icon: Icon(Icons.download_rounded),
                       iconAlignment: IconAlignment.end,
                       label: Text("Export All"),
-                      onPressed: _exportAll
+                      onPressed: () {
+                        if (settings.haptic) HapticFeedback.mediumImpact();
+                        _exportAll();
+                      }
                   ),
                   ElevatedButton.icon(
                       icon: Icon(Icons.delete_sweep_rounded),
                       iconAlignment: IconAlignment.end,
                       label: Text("Clear Progress"),
                       onPressed: () {
+                        if (settings.haptic) HapticFeedback.heavyImpact();
                         settings.clearComplete();
                         ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("Progress cleared.")));
@@ -168,6 +186,7 @@ class MainMenuWidget extends State<MainMenu> {
                       iconAlignment: IconAlignment.end,
                       label: Text("Reset"),
                       onPressed: () async {
+                        if (settings.haptic) HapticFeedback.heavyImpact();
                         await settings.reset();
                         await loadStories();
                         setState(() {

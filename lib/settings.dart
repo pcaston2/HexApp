@@ -19,6 +19,14 @@ class Settings {
     _prefs.setBool('sound', value);
   }
 
+  bool get haptic {
+    return _prefs.getBool('haptic') ?? true;
+  }
+
+  void set haptic(bool value) {
+    _prefs.setBool('haptic', value);
+  }
+
   bool get developer {
     return _prefs.getBool('dev') ?? false;
   }
@@ -114,6 +122,7 @@ class Settings {
     await _prefs.clear();
     developer = false;
     isDeveloperUnlocked = false;
+    haptic = true;
     clearComplete();
   }
 }

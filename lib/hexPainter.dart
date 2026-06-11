@@ -83,7 +83,6 @@ class HexPainter extends CustomPainter {
       drawCrosshair(canvas, center, _gameState.board.crosshair);
     }
 
-
     //ViewFocalpoint(center, canvas, localFocalStart);
   }
 

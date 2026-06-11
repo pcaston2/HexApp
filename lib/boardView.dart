@@ -55,6 +55,9 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
   late AnimationController nextErrorPulseController;
   int _pulseCount = 0;
 
+  double _hapticDistanceCounter = 0;
+  Point? _lastTracePoint;
+
   @override
   void initState() {
     super.initState();
@@ -163,6 +166,26 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
           errorController.repeat(reverse: true);
         }
       });
+  }
+
+  void _hapticSuccess() async {
+    if (!settings.haptic) return;
+    await HapticFeedback.selectionClick();
+    await Future.delayed(Duration(milliseconds: 50));
+    await HapticFeedback.lightImpact();
+    await Future.delayed(Duration(milliseconds: 50));
+    await HapticFeedback.mediumImpact();
+    await Future.delayed(Duration(milliseconds: 50));
+    await HapticFeedback.heavyImpact();
+  }
+
+  void _hapticFailure() async {
+    if (!settings.haptic) return;
+    await HapticFeedback.heavyImpact();
+    await Future.delayed(Duration(milliseconds: 50));
+    await HapticFeedback.mediumImpact();
+    await Future.delayed(Duration(milliseconds: 50));
+    await HapticFeedback.lightImpact();
   }
 
   @override
@@ -1054,6 +1077,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                             if (tracing) {
                                               setState(() {
                                                 if (_gameState.value.board.trySolve()) {
+                                                  _hapticSuccess();
                                                   soundPlayer.play(
                                                       audioSound.PANEL_SUCCESS);
 
@@ -1110,9 +1134,11 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                                     settings.setComplete(_gameState.value.board.guid);
                                                     _gameState.value.board.save();
                                                   }
+                                                  
                                                   _pulseCount = 3;
                                                   nextPulseController.forward(from: 0);
                                                 } else {
+                                                  _hapticFailure();
                                                   soundPlayer.play(
                                                       audioSound.PANEL_FAILURE);
                                                   nextErrorPulseController.forward(from: 0);
@@ -1148,6 +1174,8 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                         }
                                       },
                                       onScaleStart: (details) {
+                                        _hapticDistanceCounter = 0;
+                                        _lastTracePoint = Point(details.localFocalPoint.dx, details.localFocalPoint.dy);
                                         if (_gameState.value.board.mode ==
                                             BoardMode.play) {
                                           var p = Point(
@@ -1171,6 +1199,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                                   .crosshair = h.localPoint);
                                               if (_gameState.value.board
                                                   .isStart(h)) {
+                                                if (settings.haptic) HapticFeedback.heavyImpact();
                                                 _gameState.value.board
                                                     .startAt(h);
                                                 soundPlayer.play(
@@ -1206,10 +1235,26 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                         }
                                       },
                                       onScaleUpdate: (details) {
-                                        var p = Point(
+                                        var currentPoint = Point(
                                             details.localFocalPoint.dx,
                                             details.localFocalPoint.dy);
-                                        p -=
+
+                                        if (_lastTracePoint != null) {
+                                          double dist = (currentPoint - _lastTracePoint!).magnitude;
+                                          _hapticDistanceCounter += dist;
+
+                                          // Trigger haptic every 30 pixels moved
+                                          const double hapticInterval = 30.0;
+                                          if (_hapticDistanceCounter >= hapticInterval) {
+                                            if (settings.haptic && tracing) {
+                                              HapticFeedback.selectionClick();
+                                            }
+                                            _hapticDistanceCounter %= hapticInterval;
+                                          }
+                                        }
+                                        _lastTracePoint = currentPoint;
+
+                                        var p = currentPoint -
                                             _gameState.value.board.screenCenter;
                                         p += traceOffset;
                                         if (_gameState.value.board.crosshair !=
@@ -1219,6 +1264,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                         }
                                         var h = Hex.getHexPartFromPoint(p);
                                         if (_gameState.value.board.moveTo(h)) {
+                                          if (settings.haptic) HapticFeedback.lightImpact();
                                           setState(
                                               () => _gameState.value.board);
                                         }
