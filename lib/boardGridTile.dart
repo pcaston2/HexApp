@@ -37,7 +37,7 @@ class BoardGridTile extends StatelessWidget {
           Text(
             board.name,
             style: TextStyle(
-              color: Colors.white.withOpacity(completed ? 1.0 : 0.7),
+              color: Colors.white.withValues(alpha: completed ? 1.0 : 0.7),
               fontSize: 12,
               fontWeight: completed ? FontWeight.bold : FontWeight.normal,
             ),
@@ -96,7 +96,7 @@ class _HexTilePainter extends CustomPainter {
     } else {
       // Ghost Hex
       final ghostPaint = Paint()
-        ..color = Colors.white.withOpacity(0.2)
+        ..color = Colors.white.withValues(alpha: 0.2)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2;
       
@@ -107,7 +107,7 @@ class _HexTilePainter extends CustomPainter {
     final textSpan = TextSpan(
       text: '$index',
       style: TextStyle(
-        color: completed ? Colors.white : Colors.white.withOpacity(0.5),
+        color: completed ? Colors.white : Colors.white.withValues(alpha: 0.5),
         fontSize: radius * 0.8,
         fontWeight: FontWeight.bold,
       ),

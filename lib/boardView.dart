@@ -20,22 +20,20 @@ class BoardView extends StatefulWidget {
   final Board _board;
   final BoardFlow _flow;
   final Story _story;
-  final int _index;
-  BoardView(this._board, this._flow, this._story, this._index) : super();
+  BoardView(this._board, this._flow, this._story) : super();
 
   @override
   _HexWidgetState createState() {
-    return _HexWidgetState(_board, _flow, _story, _index);
+    return _HexWidgetState(_board, _flow, _story);
   }
 }
 
 class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
   late ValueNotifier<GameState> _gameState;
 
-  double? _rating = null;
+  //double? _rating = null;
 
   late HexPainter painter;
-  int _index;
 
   late Animation<double> beckon;
   late AnimationController beckonController;
@@ -200,7 +198,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  _HexWidgetState(Board board, BoardFlow flow, story, this._index) {
+  _HexWidgetState(Board board, BoardFlow flow, story) {
     _gameState = ValueNotifier<GameState>(GameState());
     _gameState.value.board = board;
     _gameState.value.flow = flow;
@@ -449,6 +447,32 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                                         );
                                       },
                                     ));
+                                  }),
+                              ListTile(
+                                  trailing: const Icon(Icons.psychology_rounded),
+                                  title: const Text("Solve"),
+                                  onTap: () {
+                                    var solutions = _gameState.value.board.solve(limit: 100);
+                                    final messenger = ScaffoldMessenger.of(context);
+                                    if (solutions.isEmpty) {
+                                      messenger.showSnackBar(const SnackBar(content: Text("No solutions found.")));
+                                    } else {
+                                      messenger.showSnackBar(SnackBar(content: Text("Found ${solutions.length} solution(s). Applying the first one.")));
+                                      setState(() {
+                                        _gameState.value.board.trail.clear();
+                                        _gameState.value.board.trail.addAll(solutions.first);
+                                        _gameState.value.board.mode = BoardMode.play;
+                                        _gameState.value.board.trySolve();
+                                      });
+                                    }
+                                    Navigator.pop(context);
+                                  }),
+                              ListTile(
+                                  trailing: const Icon(Icons.auto_awesome_rounded),
+                                  title: const Text("Generate"),
+                                  onTap: () {
+                                    Navigator.pop(context); // Close drawer
+                                    _showGeneratorDialog(context);
                                   }),
                               ListTile(
                                   trailing: Icon(Icons.arrow_back_rounded),
@@ -1353,5 +1377,108 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
               )
 
             ])));
+  }
+
+  void _showGeneratorDialog(BuildContext context) {
+    GeneratorSettings genSettings = GeneratorSettings();
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            Widget buildFreqSelector(String label, Frequency current, Function(Frequency) onChanged) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(label),
+                    DropdownButton<Frequency>(
+                      value: current,
+                      items: Frequency.values.map((f) => DropdownMenuItem(value: f, child: Text(f.name))).toList(),
+                      onChanged: (val) { if (val != null) setDialogState(() => onChanged(val)); },
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return AlertDialog(
+              title: const Text("Generate Puzzle"),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    buildFreqSelector("Dots", genSettings.dotFreq, (v) => genSettings.dotFreq = v),
+                    buildFreqSelector("Edges", genSettings.edgeFreq, (v) => genSettings.edgeFreq = v),
+                    buildFreqSelector("Corners", genSettings.cornerFreq, (v) => genSettings.cornerFreq = v),
+                    buildFreqSelector("Sequences", genSettings.sequenceFreq, (v) => genSettings.sequenceFreq = v),
+                    buildFreqSelector("Path Breaks", genSettings.breakFreq, (v) => genSettings.breakFreq = v),
+                    const Divider(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text("Starts"),
+                        DropdownButton<TerminalCount>(
+                          value: genSettings.startCount,
+                          items: TerminalCount.values.map((v) => DropdownMenuItem(value: v, child: Text(v.name))).toList(),
+                          onChanged: (val) { if (val != null) setDialogState(() => genSettings.startCount = val); },
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text("Ends"),
+                        DropdownButton<TerminalCount>(
+                          value: genSettings.endCount,
+                          items: TerminalCount.values.map((v) => DropdownMenuItem(value: v, child: Text(v.name))).toList(),
+                          onChanged: (val) { if (val != null) setDialogState(() => genSettings.endCount = val); },
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text("Tightness"),
+                        DropdownButton<Tightness>(
+                          value: genSettings.tightness,
+                          items: Tightness.values.map((v) => DropdownMenuItem(value: v, child: Text(v.name))).toList(),
+                          onChanged: (val) { if (val != null) setDialogState(() => genSettings.tightness = val); },
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text("Trail Length"),
+                        DropdownButton<TrailLength>(
+                          value: genSettings.trailLength,
+                          items: TrailLength.values.map((v) => DropdownMenuItem(value: v, child: Text(v.name))).toList(),
+                          onChanged: (val) { if (val != null) setDialogState(() => genSettings.trailLength = val); },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await BoardGenerator().generate(_gameState.value.board, genSettings);
+                    setState(() {});
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Puzzle Generated!")));
+                  },
+                  child: const Text("Generate"),
+                ),
+              ],
+            );
+          }
+        );
+      },
+    );
   }
 }

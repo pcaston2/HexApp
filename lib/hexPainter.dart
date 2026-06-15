@@ -502,7 +502,12 @@ class HexPainter extends CustomPainter {
       }
 
       Path trailPath = Path();
-      trailPath.addPolygon(trailOffset, false);
+      if (trailOffset.isNotEmpty) {
+        trailPath.moveTo(trailOffset.first.dx, trailOffset.first.dy);
+        for (int i = 1; i < trailOffset.length; i++) {
+          trailPath.lineTo(trailOffset[i].dx, trailOffset[i].dy);
+        }
+      }
       canvas.drawPath(trailPath, trailPaint);
     }
   }

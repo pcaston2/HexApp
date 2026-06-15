@@ -24,8 +24,6 @@ class Vertex extends Hex {
           Edge.from(EdgeDirection.North, Hex.from(this, -1, 1)),
           Edge.from(EdgeDirection.SouthWest, this)
         ];
-      default:
-        throw new Exception("Couldn't find correct vertex type");
     }
   }
 
@@ -81,8 +79,6 @@ class Vertex extends Hex {
         return [ Hex.from(this), Hex.from(this, 1, -1), Hex.from(this, 1, 0) ];
       case VertexType.West:
         return [ Hex.from(this), Hex.from(this, -1, 0), Hex.from(this, -1, 1) ];
-      default:
-        throw new Exception("Couldn't find correct vertex type");
     }
   }
 

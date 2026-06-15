@@ -37,8 +37,6 @@ class Edge extends Hex {
         return Edge.from(EdgeDirection.South, this);
       case EdgeType.West:
         return Edge.from(EdgeDirection.SouthEast, this);
-      default:
-        throw new Exception("Edge type not defined");
     }
   }
 
@@ -61,8 +59,6 @@ class Edge extends Hex {
             Vertex.from(VertexType.East, Hex.from(this, -1, 0)),
             Vertex.from(VertexType.West, this)
             ];
-         default:
-           throw new Exception("No vertexes defined for given edge type");
     }
   }
   @override
@@ -126,8 +122,6 @@ class Edge extends Hex {
         return [ Hex.from(this), Hex.from(this, 0, -1) ];
       case EdgeType.West:
         return [ Hex.from(this), Hex.from(this, -1, 0) ];
-      default:
-        return [ Hex.from(this), Hex.from(this, 0,0) ];
     }
   }
 
@@ -144,8 +138,6 @@ class Edge extends Hex {
         return EdgeDirection.North;
       case EdgeType.West:
         return EdgeDirection.NorthWest;
-      default:
-        throw new UnimplementedError("There is no direction for ${edgeType}");
     }
   }
 

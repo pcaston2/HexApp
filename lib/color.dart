@@ -41,12 +41,13 @@ class Color {
     if (percent < 0) {
       return brighten(-percent);
     }
+
     var f = 1 - percent / 100;
     return Color.from(mat.Color.fromARGB(
-        value.alpha,
-        (value.red * f).round(),
-        (value.green * f).round(),
-        (value.blue * f).round()));
+        (value.a * 255.0 * f).round().clamp(0,255),
+        (value.r * 255.0 * f).round().clamp(0,255),
+        (value.g * 255.0 * f).round().clamp(0,255),
+        (value.b * 255.0 * f).round().clamp(0,255)));
   }
 
   Color brighten([int percent = 10]) {
@@ -55,9 +56,9 @@ class Color {
     }
     var p = percent / 100;
     return Color.from(mat.Color.fromARGB(
-        value.alpha,
-        value.red + ((255 - value.red) * p).round(),
-        value.green + ((255 - value.green) * p).round(),
-        value.blue + ((255 - value.blue) * p).round()));
+        (value.a * 255.0).round().clamp(0,255),
+        (value.r * 255.0).round().clamp(0,255) + ((255 - (value.r * 255.0).round().clamp(0,255)) * p).round(),
+        (value.g * 255.0).round().clamp(0,255) + ((255 - (value.g * 255.0).round().clamp(0,255)) * p).round(),
+        (value.b * 255.0).round().clamp(0,255) + ((255 - (value.b * 255.0).round().clamp(0,255)) * p).round()));
   }
 }

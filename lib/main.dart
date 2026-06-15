@@ -1,9 +1,6 @@
 import 'dart:io';
 import 'dart:ui';
-import 'dart:convert';
 
-import 'package:flutter_rating_stars/flutter_rating_stars.dart';
-//import 'package:gameanalytics_sdk/gameanalytics.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,6 +27,7 @@ import 'colorTile.dart';
 import 'piece.dart';
 import 'board.dart';
 import 'hex.dart';
+import 'generator.dart';
 part 'hexPainter.dart';
 part 'sound.dart';
 part 'boardView.dart';

@@ -75,134 +75,252 @@ class MainMenuWidget extends State<MainMenu> {
     }
   }
 
+  Future<void> _pushRandomPuzzle() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final Random random = Random();
+
+    while (true) {
+      // 1. Setup a fresh temporary board
+      Board board = Board.named("Random Puzzle");
+      board.size = random.nextInt(3) + 3; // Size 3 to 5
+      board.mode = BoardMode.play;
+      
+      // 2. Randomize settings
+      GeneratorSettings genSettings = GeneratorSettings();
+      Frequency randomFreq() => Frequency.values[random.nextInt(Frequency.values.length)];
+      
+      genSettings.dotFreq = randomFreq();
+      genSettings.edgeFreq = randomFreq();
+      genSettings.cornerFreq = randomFreq();
+      genSettings.sequenceFreq = randomFreq();
+      genSettings.breakFreq = randomFreq();
+      genSettings.tightness = Tightness.values[random.nextInt(Tightness.values.length)];
+      genSettings.startCount = TerminalCount.values[random.nextInt(TerminalCount.values.length)];
+      genSettings.endCount = TerminalCount.values[random.nextInt(TerminalCount.values.length)];
+      genSettings.trailLength = TrailLength.values[random.nextInt(TrailLength.values.length)];
+
+      // 3. Generate
+      messenger.showSnackBar(const SnackBar(content: Text("Generating random puzzle..."), duration: Duration(milliseconds: 500)));
+      bool success = await BoardGenerator().generate(board, genSettings);
+      if (!success) {
+        // If generation failed all attempts, try again from the start of the while loop
+        continue;
+      }
+
+      // 4. Push view
+      var result = await navigator.push(
+        MaterialPageRoute(builder: (context) => BoardView(board, BoardFlow(), Story()))
+      );
+
+      if (!mounted) return;
+      
+      if (result == true) {
+        // "Next" was pressed, loop to generate a new one
+        continue;
+      } else {
+        // "Back" or other exit, return to main menu
+        return;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Center(
-            child: Image.asset(
-              'assets/thex-title-transparency.png',
-              height: 40,
-              fit: BoxFit.contain,
-            ),
-        )
-      ),
-      body:
-      Column(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-
-          children: <Widget>[
-            ElevatedButton.icon(
-              icon: Icon(Icons.play_arrow_rounded),
-              iconAlignment: IconAlignment.end,
-              label: Text("Play"),
-              onPressed: () {
-                if (settings.haptic) HapticFeedback.mediumImpact();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => StorySelection()),
-                );
-              },
-            ),
-            ElevatedButton.icon(
-              icon: Icon((settings.sound ? Icons.volume_up_rounded : Icons.volume_mute_rounded)),
-              iconAlignment: IconAlignment.end,
-              onPressed: () {
-                if (settings.haptic) HapticFeedback.selectionClick();
-                setState(() {
-                  settings.sound = !settings.sound;
-                  if (!settings.isDeveloperUnlocked) {
-                    _devClickCount++;
-                    if (_devClickCount >= 10) {
-                      settings.isDeveloperUnlocked = true;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("You are now a developer!")));
-                    } else if (_devClickCount > 5) {
-                      ScaffoldMessenger.of(context).clearSnackBars();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("You are now ${10 - _devClickCount} steps away from being a developer."),
-                            duration: Duration(seconds: 1),
-                          ));
-                    }
-                  }
-                });
-              },
-              label: Text(settings.sound ? "Sound" : "No Sound"),
-            ),
-            ElevatedButton.icon(
-              icon: Icon((settings.haptic ? Icons.vibration_rounded : Icons.phonelink_erase_rounded)),
-              iconAlignment: IconAlignment.end,
-              onPressed: () {
-                setState(() {
-                  settings.haptic = !settings.haptic;
-                  if (settings.haptic) HapticFeedback.mediumImpact();
-                });
-              },
-              label: Text(settings.haptic ? "Haptics" : "No Haptics"),
-            ),
-            Visibility(
-              visible: settings.isDeveloperUnlocked,
-              child: ElevatedButton.icon(
-                  icon: Icon((settings.developer ? Icons.play_arrow_rounded : Icons.design_services_rounded)),
-                  iconAlignment: IconAlignment.end,
-                  label: Text(settings.developer ? "Switch to Play Mode" : "Switch to Design Mode"),
-                  onPressed: () {
-                    if (settings.haptic) HapticFeedback.mediumImpact();
-                    setState(() {
-                      settings.developer = !settings.developer;
-                    });
-                  },
-              ),
-            ),
-            Visibility(
-              visible: settings.developer,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ElevatedButton.icon(
-                      icon: Icon(Icons.download_rounded),
-                      iconAlignment: IconAlignment.end,
-                      label: Text("Export All"),
-                      onPressed: () {
-                        if (settings.haptic) HapticFeedback.mediumImpact();
-                        _exportAll();
-                      }
-                  ),
-                  ElevatedButton.icon(
-                      icon: Icon(Icons.delete_sweep_rounded),
-                      iconAlignment: IconAlignment.end,
-                      label: Text("Clear Progress"),
-                      onPressed: () {
-                        if (settings.haptic) HapticFeedback.heavyImpact();
-                        settings.clearComplete();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Progress cleared.")));
-                      }
-                  ),
-                  ElevatedButton.icon(
-                      icon: Icon(Icons.build_rounded),
-                      iconAlignment: IconAlignment.end,
-                      label: Text("Reset"),
-                      onPressed: () async {
-                        if (settings.haptic) HapticFeedback.heavyImpact();
-                        await settings.reset();
-                        await loadStories();
-                        setState(() {
-                          _devClickCount = 0;
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("All settings and progress reset.")));
-                      }
-                  ),
-                ],
-              ),
-            )
-          ],
-        )
+    final ButtonStyle menuButtonStyle = ElevatedButton.styleFrom(
+      minimumSize: const Size(double.infinity, 56),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      elevation: 2,
     );
 
-
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.blueGrey.shade50,
+              Colors.blueGrey.shade200,
+              Colors.blueGrey.shade400,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Image.asset(
+                  'assets/thex-title-transparency.png',
+                  height: 60,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(height: 64),
+                ElevatedButton.icon(
+                  style: menuButtonStyle,
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  iconAlignment: IconAlignment.end,
+                  label: const Text("Play", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  onPressed: () {
+                    if (settings.haptic) HapticFeedback.mediumImpact();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => StorySelection()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  style: menuButtonStyle,
+                  icon: Icon((settings.sound ? Icons.volume_up_rounded : Icons.volume_mute_rounded)),
+                  iconAlignment: IconAlignment.end,
+                  onPressed: () {
+                    if (settings.haptic) HapticFeedback.selectionClick();
+                    setState(() {
+                      settings.sound = !settings.sound;
+                      if (!settings.isDeveloperUnlocked) {
+                        _devClickCount++;
+                        if (_devClickCount >= 10) {
+                          settings.isDeveloperUnlocked = true;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("You are now a developer!")));
+                        } else if (_devClickCount > 5) {
+                          ScaffoldMessenger.of(context).clearSnackBars();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("You are now ${10 - _devClickCount} steps away from being a developer."),
+                                duration: const Duration(seconds: 1),
+                              ));
+                        }
+                      }
+                    });
+                  },
+                  label: Text(settings.sound ? "Sound" : "No Sound"),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  style: menuButtonStyle,
+                  icon: Icon((settings.haptic ? Icons.vibration_rounded : Icons.phonelink_erase_rounded)),
+                  iconAlignment: IconAlignment.end,
+                  onPressed: () {
+                    setState(() {
+                      settings.haptic = !settings.haptic;
+                      if (settings.haptic) HapticFeedback.mediumImpact();
+                    });
+                  },
+                  label: Text(settings.haptic ? "Haptics" : "No Haptics"),
+                ),
+                if (settings.isDeveloperUnlocked) ...[
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    style: menuButtonStyle,
+                    icon: Icon((settings.developer ? Icons.play_arrow_rounded : Icons.design_services_rounded)),
+                    iconAlignment: IconAlignment.end,
+                    label: Text(settings.developer ? "Play Mode" : "Design Mode"),
+                    onPressed: () {
+                      if (settings.haptic) HapticFeedback.mediumImpact();
+                      setState(() {
+                        settings.developer = !settings.developer;
+                      });
+                    },
+                  ),
+                ],
+                if (settings.developer) ...[
+                  const SizedBox(height: 32),
+                  const Divider(color: Colors.white24),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    style: menuButtonStyle,
+                    icon: const Icon(Icons.casino_rounded),
+                    iconAlignment: IconAlignment.end,
+                    label: const Text("Random Puzzle"),
+                    onPressed: null,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: IconButton(
+                          tooltip: "Export All",
+                          icon: const Icon(Icons.download_rounded, color: Colors.white70),
+                          onPressed: () {
+                            if (settings.haptic) HapticFeedback.mediumImpact();
+                            _exportAll();
+                          },
+                        ),
+                      ),
+                      Expanded(
+                        child: IconButton(
+                          tooltip: "Clear Progress",
+                          icon: const Icon(Icons.delete_sweep_rounded, color: Colors.white70),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text("Clear Progress?"),
+                                content: const Text("This will erase all your solved puzzles. Are you sure?"),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(context), child: const Text("CANCEL")),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      if (settings.haptic) HapticFeedback.heavyImpact();
+                                      settings.clearComplete();
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text("Progress cleared.")));
+                                    },
+                                    child: const Text("CLEAR", style: TextStyle(color: Colors.red)),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      Expanded(
+                        child: IconButton(
+                          tooltip: "Reset All",
+                          icon: const Icon(Icons.build_rounded, color: Colors.white70),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text("Reset All?"),
+                                content: const Text("This will reset ALL settings and progress. Are you sure?"),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(context), child: const Text("CANCEL")),
+                                  TextButton(
+                                    onPressed: () async {
+                                      Navigator.pop(context);
+                                      if (settings.haptic) HapticFeedback.heavyImpact();
+                                      await settings.reset();
+                                      await loadStories();
+                                      setState(() {
+                                        _devClickCount = 0;
+                                      });
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text("All settings and progress reset.")));
+                                    },
+                                    child: const Text("RESET", style: TextStyle(color: Colors.red)),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

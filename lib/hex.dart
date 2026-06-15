@@ -169,8 +169,6 @@ class Hex {
           case EdgeDirection.SouthWest:
             return new Edge.position(EdgeType.East, currHex.q + hexOffset.q,
                 currHex.r + hexOffset.r);
-          default:
-            throw new Exception("Couldn't find correct edge type");
         }
       } else {
         var closestVertexDirection =
@@ -188,8 +186,6 @@ class Hex {
             return new Vertex.position(VertexType.East, currHex.q - 1, currHex.r + 1);
           case VertexDirection.SouthEast:
             return new Vertex.position(VertexType.West, currHex.q + 1, currHex.r);
-          default:
-            throw new Exception("Couldn't find correct vertex type");
         }
       }
     }

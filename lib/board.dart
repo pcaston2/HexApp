@@ -532,6 +532,55 @@ class Board {
     }
   }
 
+  List<List<Hex>> solve({int limit = 100}) {
+    List<List<Hex>> solutions = [];
+    List<Hex> originalTrail = List.from(_trail);
+    bool originalFinished = _finished;
+
+    try {
+      var startPieces = getPiece<StartPiece>();
+      if (startPieces.isEmpty) return [];
+
+      var endPieces = getPiece<EndPiece>();
+      if (endPieces.isEmpty) return [];
+
+      for (var start in startPieces) {
+        resetTrail();
+        _trail.add(start.key);
+        _solveRecursive(solutions, limit);
+        if (solutions.length >= limit) break;
+      }
+    } finally {
+      _trail = originalTrail;
+      _finished = originalFinished;
+    }
+
+    return solutions;
+  }
+
+  void _solveRecursive(List<List<Hex>> solutions, int limit) {
+    if (solutions.length >= limit) return;
+
+    if (hasEnded) {
+      _finished = true;
+      if (getErrors().isEmpty) {
+        solutions.add(List.from(_trail));
+      }
+      _finished = false;
+      return;
+    }
+
+    var nextMoves = List<Hex>.from(adjacent);
+    for (var move in nextMoves) {
+      if (move == previous) continue;
+
+      _trail.add(move);
+      _solveRecursive(solutions, limit);
+      _trail.removeLast();
+      if (solutions.length >= limit) break;
+    }
+  }
+
   List<MapEntry<Hex, T>> getPiece<T>() {
     return flatten()
         .where((MapEntry<Hex, Piece> entry) =>
