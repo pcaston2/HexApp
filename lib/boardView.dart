@@ -127,6 +127,20 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
   Point? _lastTracePoint;
   Hex? _lastDraggedPart;
   bool _isDraggingToPlace = false;
+  Timer? _idlePulseTimer;
+
+  void _resetIdlePulseTimer() {
+    _idlePulseTimer?.cancel();
+    if (tracing && settings.haptic && _gameState.value.board.mode == BoardMode.play) {
+      // A soft, low-frequency thrumming heartbeat while tracing
+      _idlePulseTimer = Timer(const Duration(milliseconds: 200), () {
+        if (tracing) {
+          Vibration.vibrate(duration: 15, amplitude: 50);
+          _resetIdlePulseTimer();
+        }
+      });
+    }
+  }
 
   final List<Map<String, dynamic>> _undoHistory = [];
   final List<Map<String, dynamic>> _redoHistory = [];
@@ -323,7 +337,8 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
       HapticFeedback.heavyImpact();
       return;
     }
-    Vibration.vibrate(duration: 40, amplitude: 255);
+    // A sharp, mechanical engagement feel
+    Vibration.vibrate(pattern: [0, 15, 20, 45], intensities: [0, 200, 0, 255]);
   }
 
   void _hapticPulse(double speed) {
@@ -332,16 +347,26 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
       HapticFeedback.selectionClick();
       return;
     }
-    int amplitude = (80 + (speed * 10)).clamp(80, 255).toInt();
-    Vibration.vibrate(duration: 10, amplitude: amplitude);
+
+    // Zip: high speed = very short, very intense bursts
+    // Thrum: low speed = slightly longer, softer, multi-hit texture
+    int intensity = (70 + (speed * 15)).clamp(70, 255).toInt();
+    int duration = (18 - (speed * 0.12)).clamp(7, 18).toInt();
+
+    // Use a secondary "echo" pulse to create a smoother, textured thrumming feel
+    Vibration.vibrate(
+      pattern: [0, duration, 5, duration ~/ 2],
+      intensities: [0, intensity, 0, (intensity * 0.7).toInt()]
+    );
   }
 
   void _hapticSuccess() async {
     if (!settings.haptic) return;
     if (_gameState.value.board.mode == BoardMode.play && _supportCustomHaptics) {
+      // "Rising circuit" - quickening pulses of vibration
       Vibration.vibrate(
-          pattern: [0, 100, 50, 100, 50, 100, 50, 400],
-          intensities: [0, 100, 0, 150, 0, 200, 0, 255]);
+          pattern: [0, 40, 120, 30, 80, 25, 50, 20, 30, 15, 20, 400],
+          intensities: [0, 80, 0, 120, 0, 160, 0, 200, 0, 230, 0, 255]);
     } else {
       await HapticFeedback.selectionClick();
       await Future.delayed(Duration(milliseconds: 50));
@@ -356,8 +381,9 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
   void _hapticFailure() async {
     if (!settings.haptic) return;
     if (_gameState.value.board.mode == BoardMode.play && _supportCustomHaptics) {
+      // "Power failure" - heavy thud then a dying stutter
       Vibration.vibrate(
-          pattern: [0, 300, 100, 200, 100, 100, 100, 50],
+          pattern: [0, 250, 100, 80, 120, 50, 150, 30],
           intensities: [0, 255, 0, 180, 0, 120, 0, 60]);
     } else {
       await HapticFeedback.heavyImpact();
@@ -370,6 +396,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
 
   @override
   void dispose() {
+    _idlePulseTimer?.cancel();
     _gameState.dispose();
     pulseController.dispose();
     fadeController.dispose();
@@ -1376,6 +1403,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                         setState(() => _gameState
                                             .value.board.crosshair = null);
                                         _lastDraggedPart = null;
+                                        _idlePulseTimer?.cancel();
                                         if (_isDraggingToPlace) {
                                           _isDraggingToPlace = false;
                                           _placePieceAtPointer();
@@ -1518,6 +1546,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                                       audioSound.TRACING_END);
                                                 }
                                                 tracing = true;
+                                                _resetIdlePulseTimer();
                                               } else {
                                                 tracing = false;
                                               }
@@ -1550,6 +1579,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                           if (_gameState
                                               .value.board.hasStarted) {
                                             tracing = false;
+                                            _idlePulseTimer?.cancel();
                                             _gameState.value.board.resetTrail();
                                             soundPlayer
                                                 .play(audioSound.TRACING_END);
@@ -1566,12 +1596,13 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                           double dist = (currentPoint - _lastTracePoint!).magnitude;
                                           _hapticDistanceCounter += dist;
 
-                                          // Trigger haptic every 30 pixels moved
-                                          const double hapticInterval = 30.0;
+                                          // Trigger haptic every 8 pixels moved for a more granular, smooth "thrumming" feel
+                                          const double hapticInterval = 8.0;
                                           if (_hapticDistanceCounter >= hapticInterval) {
                                             if (settings.haptic && (tracing || _gameState.value.board.mode == BoardMode.designer)) {
                                               if (_gameState.value.board.mode == BoardMode.play) {
                                                 _hapticPulse(dist);
+                                                _resetIdlePulseTimer();
                                               } else {
                                                 HapticFeedback.selectionClick();
                                               }
@@ -1597,6 +1628,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                             if (settings.haptic) {
                                               if (_gameState.value.board.mode == BoardMode.play) {
                                                 _hapticPulse(30); // Use a fixed "speed" for hex transitions
+                                                _resetIdlePulseTimer();
                                               } else {
                                                 HapticFeedback.lightImpact();
                                               }

@@ -1,5 +1,6 @@
 import 'package:vibration/vibration.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
