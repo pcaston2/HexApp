@@ -1,3 +1,4 @@
+import 'package:vibration/vibration.dart';
 import 'dart:io';
 import 'dart:ui';
 

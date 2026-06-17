@@ -315,24 +315,47 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
       });
   }
 
+  void _hapticThunk() {
+    if (!settings.haptic || _gameState.value.board.mode != BoardMode.play) return;
+    Vibration.vibrate(duration: 40, amplitude: 255);
+  }
+
+  void _hapticPulse(double speed) {
+    if (!settings.haptic || _gameState.value.board.mode != BoardMode.play) return;
+    int amplitude = (80 + (speed * 10)).clamp(80, 255).toInt();
+    Vibration.vibrate(duration: 10, amplitude: amplitude);
+  }
+
   void _hapticSuccess() async {
     if (!settings.haptic) return;
-    await HapticFeedback.selectionClick();
-    await Future.delayed(Duration(milliseconds: 50));
-    await HapticFeedback.lightImpact();
-    await Future.delayed(Duration(milliseconds: 50));
-    await HapticFeedback.mediumImpact();
-    await Future.delayed(Duration(milliseconds: 50));
-    await HapticFeedback.heavyImpact();
+    if (_gameState.value.board.mode == BoardMode.play) {
+      Vibration.vibrate(
+          pattern: [0, 100, 50, 100, 50, 100, 50, 400],
+          intensities: [0, 100, 0, 150, 0, 200, 0, 255]);
+    } else {
+      await HapticFeedback.selectionClick();
+      await Future.delayed(Duration(milliseconds: 50));
+      await HapticFeedback.lightImpact();
+      await Future.delayed(Duration(milliseconds: 50));
+      await HapticFeedback.mediumImpact();
+      await Future.delayed(Duration(milliseconds: 50));
+      await HapticFeedback.heavyImpact();
+    }
   }
 
   void _hapticFailure() async {
     if (!settings.haptic) return;
-    await HapticFeedback.heavyImpact();
-    await Future.delayed(Duration(milliseconds: 50));
-    await HapticFeedback.mediumImpact();
-    await Future.delayed(Duration(milliseconds: 50));
-    await HapticFeedback.lightImpact();
+    if (_gameState.value.board.mode == BoardMode.play) {
+      Vibration.vibrate(
+          pattern: [0, 300, 100, 200, 100, 100, 100, 50],
+          intensities: [0, 255, 0, 180, 0, 120, 0, 60]);
+    } else {
+      await HapticFeedback.heavyImpact();
+      await Future.delayed(Duration(milliseconds: 50));
+      await HapticFeedback.mediumImpact();
+      await Future.delayed(Duration(milliseconds: 50));
+      await HapticFeedback.lightImpact();
+    }
   }
 
   @override
@@ -1475,7 +1498,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                                   .crosshair = h.localPoint);
                                               if (_gameState.value.board
                                                   .isStart(h)) {
-                                                if (settings.haptic) HapticFeedback.heavyImpact();
+                                                _hapticThunk();
                                                 _gameState.value.board
                                                     .startAt(h);
                                                 soundPlayer.play(
@@ -1537,7 +1560,11 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                           const double hapticInterval = 30.0;
                                           if (_hapticDistanceCounter >= hapticInterval) {
                                             if (settings.haptic && (tracing || _gameState.value.board.mode == BoardMode.designer)) {
-                                              HapticFeedback.selectionClick();
+                                              if (_gameState.value.board.mode == BoardMode.play) {
+                                                _hapticPulse(dist);
+                                              } else {
+                                                HapticFeedback.selectionClick();
+                                              }
                                             }
                                             _hapticDistanceCounter %= hapticInterval;
                                           }
@@ -1557,7 +1584,13 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                           }
                                           var h = Hex.getHexPartFromPoint(p);
                                           if (_gameState.value.board.moveTo(h)) {
-                                            if (settings.haptic) HapticFeedback.lightImpact();
+                                            if (settings.haptic) {
+                                              if (_gameState.value.board.mode == BoardMode.play) {
+                                                _hapticPulse(30); // Use a fixed "speed" for hex transitions
+                                              } else {
+                                                HapticFeedback.lightImpact();
+                                              }
+                                            }
                                             setState(
                                                 () => _gameState.value.board);
                                           }
