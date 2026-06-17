@@ -127,6 +127,11 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
   Point? _lastTracePoint;
   Hex? _lastDraggedPart;
   bool _isDraggingToPlace = false;
+  bool _isTemporaryErase = false;
+  bool _secondaryButtonPressed = false;
+  bool _primaryButtonPressed = false;
+  bool _leftMenuExpanded = true;
+  bool _rightMenuExpanded = false;
   Timer? _idlePulseTimer;
 
   void _resetIdlePulseTimer() {
@@ -430,6 +435,9 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
     while (lastUsed.length > 7) {
       lastUsed.removeLast();
     }
+    setState(() {
+      _rightMenuExpanded = piece is ColoredRule || piece is SequenceRule;
+    });
   }
 
   PathPiece pathPiece = new PathPiece();
@@ -1371,14 +1379,44 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                               child: SizedBox(
                                   width: _gameState.value.board.screenSize.x,
                                   height: _gameState.value.board.screenSize.y,
-                                  child: GestureDetector(
-                                      trackpadScrollCausesScale: true,
-                                      behavior: HitTestBehavior.translucent,
+                                  child: Listener(
+                                      onPointerDown: (event) {
+                                        if (event.kind == PointerDeviceKind.mouse) {
+                                          if (event.buttons == 2) { // kSecondaryButton
+                                            _secondaryButtonPressed = true;
+                                          } else if (event.buttons == 1) { // kPrimaryButton
+                                            _primaryButtonPressed = true;
+                                          }
+                                        }
+                                      },
+                                      child: GestureDetector(
+                                          trackpadScrollCausesScale: true,
+                                          behavior: HitTestBehavior.translucent,
+                                          onSecondaryTapDown: (details) {
+                                            _secondaryButtonPressed = true;
+                                          },
+                                          onSecondaryTapUp: (details) {
+                                            _secondaryButtonPressed = false;
+                                        if (_gameState.value.board.mode == BoardMode.designer) {
+                                          var p = Point(details.localPosition.dx, details.localPosition.dy);
+                                          p -= _gameState.value.board.screenCenter;
+                                          var h = Hex.getHexPartFromPoint(p);
+                                          _captureState();
+                                          if (_gameState.value.board.putPiece(h, ErasePiece())) {
+                                            if (settings.haptic) HapticFeedback.lightImpact();
+                                            _gameState.value.board.save();
+                                            setState(() {});
+                                          }
+                                        }
+                                      },
+                                      onTapDown: (details) {
+                                        _primaryButtonPressed = true;
+                                      },
                                       onTapUp: (details) {
-                                        var p = Point(details.localPosition.dx,
-                                            details.localPosition.dy);
-                                        p -=
-                                            _gameState.value.board.screenCenter;
+                                        if (!_primaryButtonPressed) return;
+                                        _primaryButtonPressed = false;
+                                        var p = Point(details.localPosition.dx, details.localPosition.dy);
+                                        p -= _gameState.value.board.screenCenter;
                                         var h = Hex.getHexPartFromPoint(p);
                                         if (_gameState.value.board.mode ==
                                             BoardMode.designer) {
@@ -1386,6 +1424,9 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                               .pieceOnBoard(h)) {
                                             setState(() =>
                                                 _gameState.value.pointer = h);
+                                            if (_gameState.value.board.keys.contains(h)) {
+                                              _placePieceAtPointer();
+                                            }
                                           }
                                         } else {
                                           /*
@@ -1408,6 +1449,9 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                           _isDraggingToPlace = false;
                                           _placePieceAtPointer();
                                         }
+                                        _isTemporaryErase = false;
+                                        _secondaryButtonPressed = false;
+                                        _primaryButtonPressed = false;
                                         if (_gameState.value.board.mode ==
                                             BoardMode.play) {
                                           if (_gameState.value.board.hasEnded) {
@@ -1557,6 +1601,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                           beckonController.reset();
                                           beckonController.forward();
                                         } else if (_gameState.value.board.mode == BoardMode.designer) {
+                                          if (_secondaryButtonPressed || details.pointerCount == 2) return;
                                           traceOffset = Point.origin();
                                           var firstPiece = _gameState.value.lastUsed.first;
                                           if (firstPiece is PathPiece || firstPiece is BreakPiece || firstPiece is ErasePiece) {
@@ -1615,6 +1660,36 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                         var p = currentPoint -
                                             _gameState.value.board.screenCenter;
 
+                                        if (_gameState.value.board.mode == BoardMode.designer && (details.pointerCount == 2 || _secondaryButtonPressed)) {
+                                          var currentPart = Hex.getHexPartFromPoint(p);
+
+                                          if (!_isTemporaryErase) {
+                                            _isTemporaryErase = true;
+                                            _captureState();
+                                            _lastDraggedPart = currentPart;
+
+                                            setState(() {
+                                              _gameState.value.pointer = currentPart;
+                                            });
+                                            if (_gameState.value.board.putPiece(currentPart, ErasePiece())) {
+                                              if (settings.haptic) HapticFeedback.lightImpact();
+                                              _gameState.value.board.save();
+                                              setState(() {});
+                                            }
+                                          } else if (currentPart != _lastDraggedPart) {
+                                            setState(() {
+                                              _gameState.value.pointer = currentPart;
+                                            });
+                                            if (_gameState.value.board.putPiece(currentPart, ErasePiece())) {
+                                              if (settings.haptic) HapticFeedback.lightImpact();
+                                              _gameState.value.board.save();
+                                              setState(() {});
+                                            }
+                                            _lastDraggedPart = currentPart;
+                                          }
+                                          return;
+                                        }
+
                                         if (_gameState.value.board.mode ==
                                             BoardMode.play) {
                                           p += traceOffset;
@@ -1642,6 +1717,9 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                             var currentPart = Hex.getHexPartFromPoint(p);
                                             var lastPart = _lastDraggedPart;
                                             if (currentPart != lastPart) {
+                                              setState(() {
+                                                _gameState.value.pointer = currentPart;
+                                              });
                                               bool changed = false;
                                               if (firstPiece is PathPiece || firstPiece is BreakPiece) {
                                                 if (lastPart is Vertex && currentPart is Vertex) {
@@ -1682,7 +1760,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                       },
                                       child: CustomPaint(
                                           painter: HexPainter(
-                                              _gameState.value)))))))),
+                                              _gameState.value))))))))),
 
               Visibility(
                 visible: false,
@@ -1712,55 +1790,114 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
               Visibility(
                 visible: _gameState.value.board.mode == BoardMode.designer,
                 child: Align(
-                  alignment: Alignment.centerLeft,
-                  child:
-                    Wrap(
-                      direction: Axis.vertical,
-                      spacing: 10,
-                      runAlignment: WrapAlignment.center,
-                      crossAxisAlignment: WrapCrossAlignment.end,
-                      alignment: WrapAlignment.center,
-                      children: [
-                        for (var piece in _gameState.value.pieceList)
-                          Transform.scale(
-                              scale: (_gameState.value.lastUsed.first == piece ? 1.5 : 1),
-                              child: PieceButton(
-                                piece,
-                                (() {
-                                  _choosePiece(piece);
-                                }),
-                                _gameState.value.board.theme.ruleColors[_gameState.value.ruleColor]!.value,
-                              )
-                          )
-                      ],
+                    alignment: Alignment.topLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8.0, top: 16.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).canvasColor.withValues(alpha: 0.5),
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              icon: Icon(_leftMenuExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded),
+                              onPressed: () => setState(() => _leftMenuExpanded = !_leftMenuExpanded),
+                              tooltip: _leftMenuExpanded ? "Collapse Menu" : "Expand Menu",
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                            child: _leftMenuExpanded ? Wrap(
+                              direction: Axis.vertical,
+                              spacing: 15,
+                              runAlignment: WrapAlignment.center,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              alignment: WrapAlignment.center,
+                              children: [
+                                for (var piece in _gameState.value.pieceList)
+                                  Transform.scale(
+                                      scale: (_gameState.value.lastUsed.first == piece ? 1.5 : 1),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).canvasColor.withValues(alpha: 0.5),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: PieceButton(
+                                          piece,
+                                          (() {
+                                            _choosePiece(piece);
+                                          }),
+                                          _gameState.value.board.theme.ruleColors[_gameState.value.ruleColor]!.value,
+                                        ),
+                                      )
+                                  )
+                              ],
+                            ) : const SizedBox.shrink(),
+                          ),
+                        ],
+                      ),
                     )
                 ),
               ),
               Visibility(
                 visible: _gameState.value.board.mode == BoardMode.designer,
                 child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Wrap(
-                    direction: Axis.vertical,
-                    spacing: 5,
-                    runAlignment: WrapAlignment.center,
-                    crossAxisAlignment: WrapCrossAlignment.end,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      for (var colorIndex in _gameState.value.board.theme.ruleColors.keys)
-                        Transform.scale(
-                          scale: (colorIndex == _gameState.value.ruleColor ? 1.5 : 1),
-                          child: IconButton(
-                            tooltip: colorIndex.name,
-                            onPressed: () {
-                              _gameState.value.ruleColor = colorIndex;
-                            },
-                            icon: Icon(Icons.palette_rounded, color: _gameState.value.board.theme.ruleColors[colorIndex]!.value),
-                          )
-                        )
-                    ]
-                  )
-                )
+                    alignment: Alignment.topRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 8.0, top: 16.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).canvasColor.withValues(alpha: 0.5),
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              icon: Icon(_rightMenuExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded),
+                              onPressed: () => setState(() => _rightMenuExpanded = !_rightMenuExpanded),
+                              tooltip: _rightMenuExpanded ? "Collapse Palette" : "Expand Palette",
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                            child: _rightMenuExpanded ? Wrap(
+                              direction: Axis.vertical,
+                              spacing: 15,
+                              runAlignment: WrapAlignment.center,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              alignment: WrapAlignment.center,
+                              children: [
+                                for (var colorIndex in _gameState.value.board.theme.ruleColors.keys)
+                                  Transform.scale(
+                                      scale: (colorIndex == _gameState.value.ruleColor ? 1.5 : 1),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).canvasColor.withValues(alpha: 0.5),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: IconButton(
+                                          tooltip: colorIndex.name,
+                                          onPressed: () {
+                                            _gameState.value.ruleColor = colorIndex;
+                                          },
+                                          icon: Icon(Icons.palette_rounded, color: _gameState.value.board.theme.ruleColors[colorIndex]!.value),
+                                        ),
+                                      )
+                                  )
+                              ],
+                            ) : const SizedBox.shrink(),
+                          ),
+                        ],
+                      ),
+                    )
+                ),
               )
 
             ])));

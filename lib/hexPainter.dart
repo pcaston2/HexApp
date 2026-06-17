@@ -380,6 +380,14 @@ class HexPainter extends CustomPainter {
     List<Offset> pieceOffset = <Offset>[];
     hex.vertexOffsets.forEach((Point p) => pieceOffset.add(new Offset(
         center.x + hex.point.x + p.x, center.y + hex.point.y - p.y)));
+
+    final circlePaint = Paint()
+      ..color = theme.path.value
+      ..style = PaintingStyle.fill;
+    for (var offset in pieceOffset) {
+      canvas.drawCircle(offset, 4, circlePaint);
+    }
+
     var scalar = (pieceOffset[0] - pieceOffset[1]) * 0.42;
     canvas.drawLine(pieceOffset[0], pieceOffset[0] - scalar, pathPaint);
     canvas.drawLine(pieceOffset[1], pieceOffset[1] + scalar, pathPaint);

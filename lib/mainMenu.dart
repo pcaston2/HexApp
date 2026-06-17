@@ -131,7 +131,9 @@ class MainMenuWidget extends State<MainMenu> {
   Widget build(BuildContext context) {
     final ButtonStyle menuButtonStyle = ElevatedButton.styleFrom(
       minimumSize: const Size(double.infinity, 56),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: const BeveledRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(28)),
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 24),
       elevation: 2,
     );
@@ -240,7 +242,10 @@ class MainMenuWidget extends State<MainMenu> {
                     icon: const Icon(Icons.casino_rounded),
                     iconAlignment: IconAlignment.end,
                     label: const Text("Random Puzzle"),
-                    onPressed: null,
+                    onPressed: () {
+                      if (settings.haptic) HapticFeedback.mediumImpact();
+                      _pushRandomPuzzle();
+                    },
                   ),
                   const SizedBox(height: 8),
                   Row(
