@@ -315,20 +315,30 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
       });
   }
 
+  bool get _supportCustomHaptics => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+
   void _hapticThunk() {
     if (!settings.haptic || _gameState.value.board.mode != BoardMode.play) return;
+    if (!_supportCustomHaptics) {
+      HapticFeedback.heavyImpact();
+      return;
+    }
     Vibration.vibrate(duration: 40, amplitude: 255);
   }
 
   void _hapticPulse(double speed) {
     if (!settings.haptic || _gameState.value.board.mode != BoardMode.play) return;
+    if (!_supportCustomHaptics) {
+      HapticFeedback.selectionClick();
+      return;
+    }
     int amplitude = (80 + (speed * 10)).clamp(80, 255).toInt();
     Vibration.vibrate(duration: 10, amplitude: amplitude);
   }
 
   void _hapticSuccess() async {
     if (!settings.haptic) return;
-    if (_gameState.value.board.mode == BoardMode.play) {
+    if (_gameState.value.board.mode == BoardMode.play && _supportCustomHaptics) {
       Vibration.vibrate(
           pattern: [0, 100, 50, 100, 50, 100, 50, 400],
           intensities: [0, 100, 0, 150, 0, 200, 0, 255]);
@@ -345,7 +355,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
 
   void _hapticFailure() async {
     if (!settings.haptic) return;
-    if (_gameState.value.board.mode == BoardMode.play) {
+    if (_gameState.value.board.mode == BoardMode.play && _supportCustomHaptics) {
       Vibration.vibrate(
           pattern: [0, 300, 100, 200, 100, 100, 100, 50],
           intensities: [0, 255, 0, 180, 0, 120, 0, 60]);
