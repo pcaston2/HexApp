@@ -17,10 +17,80 @@ Point traceOffset = Point.origin();
 
 
 class BoardView extends StatefulWidget {
-  final Board _board;
+  final List<Board> _boards;
+  final int _index;
   final BoardFlow _flow;
   final Story _story;
-  BoardView(this._board, this._flow, this._story) : super();
+  BoardView(this._boards, this._index, this._flow, this._story) : super();
+
+  @override
+  State<BoardView> createState() => _BoardViewState();
+}
+
+class _BoardViewState extends State<BoardView> {
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: widget._index);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PageView.builder(
+      controller: _pageController,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: widget._boards.length,
+      itemBuilder: (context, index) {
+        return _BoardItemView(
+          widget._boards,
+          index,
+          widget._flow,
+          widget._story,
+          onNext: () {
+            if (index < widget._boards.length - 1) {
+              _pageController.nextPage(
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOut,
+              );
+            } else {
+              Navigator.pop(context, true);
+            }
+          },
+          onPrevious: () {
+            if (index > 0) {
+              _pageController.previousPage(
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOut,
+              );
+            } else {
+              Navigator.pop(context, "back");
+            }
+          },
+        );
+      },
+    );
+  }
+}
+
+class _BoardItemView extends StatefulWidget {
+  final List<Board> _boards;
+  final int _index;
+  final BoardFlow _flow;
+  final Story _story;
+  final VoidCallback onNext;
+  final VoidCallback onPrevious;
+
+  _BoardItemView(this._boards, this._index, this._flow, this._story, {required this.onNext, required this.onPrevious});
+
+  Board get _board => _boards[_index];
 
   @override
   _HexWidgetState createState() {
@@ -28,7 +98,7 @@ class BoardView extends StatefulWidget {
   }
 }
 
-class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
+class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixin {
   late ValueNotifier<GameState> _gameState;
 
   //double? _rating = null;
@@ -299,9 +369,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                 children: [
                   FloatingActionButton(
                     heroTag: "previous",
-                    onPressed: () {
-                      Navigator.pop(context, "back");
-                    },
+                    onPressed: widget.onPrevious,
                     tooltip: 'Previous',
                     child: const Icon(Icons.navigate_before_rounded),
                   ),
@@ -364,9 +432,7 @@ class _HexWidgetState extends State<BoardView> with TickerProviderStateMixin {
                           ) : null,
                           child: FloatingActionButton(
                             heroTag: "next",
-                            onPressed: () => setState(() {
-                              Navigator.pop(context, true);
-                            }),
+                            onPressed: widget.onNext,
                             elevation: isCompleted ? 12 : 6,
                             tooltip: 'Next',
                             child: const Icon(Icons.navigate_next_rounded),

@@ -79,6 +79,7 @@ class MainMenuWidget extends State<MainMenu> {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     final Random random = Random();
+    bool first = true;
 
     while (true) {
       // 1. Setup a fresh temporary board
@@ -109,10 +110,11 @@ class MainMenuWidget extends State<MainMenu> {
       }
 
       // 4. Push view
-      var result = await navigator.push(
-        MaterialPageRoute(builder: (context) => BoardView(board, BoardFlow(), Story()))
-      );
+      var result = await (first 
+        ? navigator.push(MaterialPageRoute(builder: (context) => BoardView([board], 0, BoardFlow(), Story())))
+        : navigator.pushReplacement(MaterialPageRoute(builder: (context) => BoardView([board], 0, BoardFlow(), Story()))));
 
+      first = false;
       if (!mounted) return;
       
       if (result == true) {
