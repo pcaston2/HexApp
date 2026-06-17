@@ -37,7 +37,7 @@ class BoardGridTile extends StatelessWidget {
           Text(
             board.name,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: completed ? 1.0 : 0.7),
+              color: Colors.blueGrey.shade900.withOpacity(completed ? 1.0 : 0.7),
               fontSize: 12,
               fontWeight: completed ? FontWeight.bold : FontWeight.normal,
             ),
@@ -67,6 +67,10 @@ class _HexTilePainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2 * 0.9;
 
+    // Fixed Gold theme for boards (replaces dynamic theme)
+    final Color primaryColor = Colors.amber.shade700;
+    final Color borderColor = Colors.amber.shade300;
+
     final path = Path();
     for (int i = 0; i < 6; i++) {
       double angle = i * math.pi / 3;
@@ -83,11 +87,11 @@ class _HexTilePainter extends CustomPainter {
     if (completed) {
       // Filled Hex
       final fillPaint = Paint()
-        ..color = theme.foreground.value
+        ..color = primaryColor
         ..style = PaintingStyle.fill;
       
       final borderPaint = Paint()
-        ..color = theme.border.value
+        ..color = borderColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = 4;
 
@@ -96,7 +100,7 @@ class _HexTilePainter extends CustomPainter {
     } else {
       // Ghost Hex
       final ghostPaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.2)
+        ..color = primaryColor.withOpacity(0.2)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2;
       
@@ -107,7 +111,7 @@ class _HexTilePainter extends CustomPainter {
     final textSpan = TextSpan(
       text: '$index',
       style: TextStyle(
-        color: completed ? Colors.white : Colors.white.withValues(alpha: 0.5),
+        color: completed ? Colors.white : primaryColor.withOpacity(0.5),
         fontSize: radius * 0.8,
         fontWeight: FontWeight.bold,
       ),

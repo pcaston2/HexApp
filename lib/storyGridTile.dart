@@ -35,7 +35,7 @@ class StoryGridTile extends StatelessWidget {
           Text(
             story.name,
             style: TextStyle(
-              color: Colors.black.withValues(alpha: completed ? 1.0 : 0.7),
+              color: Colors.blueGrey.shade900.withOpacity(completed ? 1.0 : 0.7),
               fontSize: 12,
               fontWeight: completed ? FontWeight.bold : FontWeight.normal,
             ),
@@ -63,9 +63,9 @@ class _StoryHexPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2 * 0.9;
 
-    // Use a generic color for stories - Amber/Gold theme
-    final Color primaryColor = Colors.amber.shade600;
-    final Color borderColor = Colors.amber.shade300;
+    // Navy Blue theme for stories
+    final Color primaryColor = Colors.indigo.shade900;
+    final Color borderColor = Colors.indigo.shade300;
 
     final path = Path();
     for (int i = 0; i < 6; i++) {
@@ -94,12 +94,17 @@ class _StoryHexPainter extends CustomPainter {
       canvas.drawPath(path, fillPaint);
       canvas.drawPath(path, borderPaint);
     } else {
-      // Ghost Hex
+      // Semi-filled Ghost Hex
+      final fillPaint = Paint()
+        ..color = primaryColor.withOpacity(0.1) // 10% fill
+        ..style = PaintingStyle.fill;
+
       final ghostPaint = Paint()
-        ..color = Colors.blueAccent.withValues(alpha: 0.2)
+        ..color = primaryColor.withOpacity(0.2)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2;
       
+      canvas.drawPath(path, fillPaint);
       canvas.drawPath(path, ghostPaint);
     }
 
@@ -107,7 +112,7 @@ class _StoryHexPainter extends CustomPainter {
     final textSpan = TextSpan(
       text: '$index',
       style: TextStyle(
-        color: completed ? Colors.blueAccent : Colors.blueAccent.withValues(alpha: 0.5),
+        color: completed ? Colors.white : primaryColor.withOpacity(0.5),
         fontSize: radius * 0.8,
         fontWeight: FontWeight.bold,
       ),

@@ -35,7 +35,7 @@ class FlowGridTile extends StatelessWidget {
           Text(
             flow.name,
             style: TextStyle(
-              color: Colors.white.withOpacity(completed ? 1.0 : 0.7),
+              color: Colors.blueGrey.shade900.withOpacity(completed ? 1.0 : 0.7),
               fontSize: 12,
               fontWeight: completed ? FontWeight.bold : FontWeight.normal,
             ),
@@ -63,9 +63,9 @@ class _FlowHexPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2 * 0.9;
 
-    // Use a generic color for flows - Teal/Cyan theme
-    final Color primaryColor = Colors.teal.shade400;
-    final Color borderColor = Colors.teal.shade200;
+    // Royal Red theme for flows
+    final Color primaryColor = Colors.red.shade800;
+    final Color borderColor = Colors.red.shade300;
 
     final path = Path();
     for (int i = 0; i < 6; i++) {
@@ -96,7 +96,7 @@ class _FlowHexPainter extends CustomPainter {
     } else {
       // Ghost Hex
       final ghostPaint = Paint()
-        ..color = Colors.white.withOpacity(0.2)
+        ..color = primaryColor.withOpacity(0.2)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2;
       
@@ -107,7 +107,7 @@ class _FlowHexPainter extends CustomPainter {
     final textSpan = TextSpan(
       text: '$index',
       style: TextStyle(
-        color: completed ? Colors.white : Colors.white.withOpacity(0.5),
+        color: completed ? Colors.white : primaryColor.withOpacity(0.5),
         fontSize: radius * 0.8,
         fontWeight: FontWeight.bold,
       ),

@@ -209,11 +209,11 @@ class Boards extends State<BoardSelection> {
                           children: [
                             Text("Flow Progress",
                                 style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.7),
+                                    color: Colors.blueGrey.shade900.withOpacity(0.7),
                                     fontSize: 14)),
                             Text("${(progress * 100).round()}%",
-                                style: const TextStyle(
-                                    color: Colors.tealAccent,
+                                style: TextStyle(
+                                    color: Colors.blueGrey.shade900,
                                     fontWeight: FontWeight.bold)),
                           ],
                         ),
@@ -222,9 +222,9 @@ class Boards extends State<BoardSelection> {
                           borderRadius: BorderRadius.circular(10),
                           child: LinearProgressIndicator(
                             value: progress,
-                            backgroundColor: Colors.white.withValues(alpha: 0.1),
-                            valueColor: const AlwaysStoppedAnimation<Color>(
-                                Colors.tealAccent),
+                            backgroundColor: Colors.black.withOpacity(0.1),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.black.withOpacity(0.8)),
                             minHeight: 8,
                           ),
                         ),
