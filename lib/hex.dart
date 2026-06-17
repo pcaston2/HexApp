@@ -138,12 +138,13 @@ class Hex {
     return offset.magnitude;
   }
 
-  static Hex getHexPartFromPoint(Point p) {
+  static Hex getHexPartFromPoint(Point p,
+      {bool allowHex = true, bool allowEdge = true, bool allowVertex = true}) {
     int q = ((2.0 / 3.0 * p.x) / hexSize).round();
     int r = ((-1.0 / 3.0 * p.x + math.sqrt(3) / 3 * p.y) / hexSize).round();
     Hex currHex = new Hex.position(q, r);
     var offset = new Point(-(currHex.point.x - p.x), currHex.point.y - p.y);
-    if (offset.magnitude < hexSize / 3) {
+    if (allowHex && offset.magnitude < hexSize / 3) {
       return currHex;
     } else {
       var closestEdge = offset.closest(edge.values.toList());
@@ -151,8 +152,23 @@ class Hex {
           edge.entries.firstWhere((e) => e.value == closestEdge).key;
       var hexOffset = new Hex.direction(closestEdgeDirection);
       var closestVertex = offset.closest(vertex.values.toList());
-      if ((offset - closestEdge).magnitude <
-          (offset - closestVertex).magnitude) {
+
+      bool pickEdge = false;
+      if (allowEdge && allowVertex) {
+        pickEdge = (offset - closestEdge).magnitude <
+            (offset - closestVertex).magnitude;
+      } else if (allowEdge) {
+        pickEdge = true;
+      } else if (allowVertex) {
+        pickEdge = false;
+      } else if (allowHex) {
+        return currHex;
+      } else {
+        // Fallback if nothing allowed? Should not happen with current pieces
+        return currHex;
+      }
+
+      if (pickEdge) {
         switch (closestEdgeDirection) {
           case EdgeDirection.NorthEast:
             return new Edge.position(EdgeType.East, currHex.q, currHex.r);
@@ -177,15 +193,19 @@ class Hex {
           case VertexDirection.East:
             return new Vertex.position(VertexType.East, currHex.q, currHex.r);
           case VertexDirection.NorthEast:
-            return new Vertex.position(VertexType.West, currHex.q + 1, currHex.r - 1);
+            return new Vertex.position(
+                VertexType.West, currHex.q + 1, currHex.r - 1);
           case VertexDirection.NorthWest:
-            return new Vertex.position(VertexType.East, currHex.q - 1, currHex.r);
+            return new Vertex.position(
+                VertexType.East, currHex.q - 1, currHex.r);
           case VertexDirection.West:
             return new Vertex.position(VertexType.West, currHex.q, currHex.r);
           case VertexDirection.SouthWest:
-            return new Vertex.position(VertexType.East, currHex.q - 1, currHex.r + 1);
+            return new Vertex.position(
+                VertexType.East, currHex.q - 1, currHex.r + 1);
           case VertexDirection.SouthEast:
-            return new Vertex.position(VertexType.West, currHex.q + 1, currHex.r);
+            return new Vertex.position(
+                VertexType.West, currHex.q + 1, currHex.r);
         }
       }
     }

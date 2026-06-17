@@ -125,6 +125,8 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
 
   double _hapticDistanceCounter = 0;
   Point? _lastTracePoint;
+  Hex? _lastDraggedPart;
+  bool _isDraggingToPlace = false;
 
   final List<Map<String, dynamic>> _undoHistory = [];
   final List<Map<String, dynamic>> _redoHistory = [];
@@ -163,6 +165,43 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
         _gameState.value.board = board;
       });
       _gameState.value.board.save();
+    }
+  }
+
+  Hex _getSnappedPart(Point p, Piece piece) {
+    if (piece is DotRule || piece is StartPiece || piece is EndPiece) {
+      return Hex.getHexPartFromPoint(p, allowHex: false);
+    } else if (piece is EdgeRule) {
+      return Hex.getHexPartFromPoint(p, allowHex: false, allowVertex: false);
+    } else if (piece is CornerRule) {
+      return Hex.getHexPartFromPoint(p, allowHex: false);
+    } else if (piece is SequenceRule) {
+      return Hex.getHexPartFromPoint(p, allowEdge: false, allowVertex: false);
+    }
+    return Hex.getHexPartFromPoint(p);
+  }
+
+  void _placePieceAtPointer() {
+    var snapshot = _gameState.value.board.toJson();
+    var piece = _gameState.value.lastUsed.first;
+    var clone = piece.clone();
+    if (clone is ColoredRule) {
+      ColoredRule rule = clone;
+      rule.color = _gameState.value.ruleColor;
+    } else if (clone is SequenceRule) {
+      SequenceRule rule = clone;
+      rule.colors.add(_gameState.value.ruleColor);
+    }
+    if (!_gameState.value.board.putPiece(_gameState.value.pointer, clone)) {
+      soundPlayer.play(audioSound.PANEL_FAILURE);
+    } else {
+      _undoHistory.add(snapshot);
+      if (_undoHistory.length > _maxHistory) {
+        _undoHistory.removeAt(0);
+      }
+      _redoHistory.clear();
+      _gameState.value.board.save();
+      setState(() {});
     }
   }
 
@@ -1297,37 +1336,17 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                       onDoubleTap: () {
                                         if (_gameState.value.board.mode ==
                                             BoardMode.designer) {
-                                          var snapshot = _gameState.value.board.toJson();
-                                          var clone =
-                                              _gameState.value.lastUsed.first.clone();
-                                          if (clone is ColoredRule) {
-                                            ColoredRule rule = clone;
-                                            rule.color =
-                                                _gameState.value.ruleColor;
-                                          } else if (clone is SequenceRule) {
-                                            SequenceRule rule = clone;
-                                            rule.colors.add(
-                                                _gameState.value.ruleColor);
-                                          }
-                                          if (!_gameState.value.board.putPiece(
-                                              _gameState.value.pointer,
-                                              clone)) {
-                                            soundPlayer
-                                                .play(audioSound.PANEL_FAILURE);
-                                          } else {
-                                            _undoHistory.add(snapshot);
-                                            if (_undoHistory.length > _maxHistory) {
-                                              _undoHistory.removeAt(0);
-                                            }
-                                            _redoHistory.clear();
-                                            _gameState.value.board.save();
-                                          }
-                                          setState(() => _gameState);
+                                          _placePieceAtPointer();
                                         }
                                       },
                                       onScaleEnd: (details) {
                                         setState(() => _gameState
                                             .value.board.crosshair = null);
+                                        _lastDraggedPart = null;
+                                        if (_isDraggingToPlace) {
+                                          _isDraggingToPlace = false;
+                                          _placePieceAtPointer();
+                                        }
                                         if (_gameState.value.board.mode ==
                                             BoardMode.play) {
                                           if (_gameState.value.board.hasEnded) {
@@ -1475,6 +1494,20 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                           }
                                           beckonController.reset();
                                           beckonController.forward();
+                                        } else if (_gameState.value.board.mode == BoardMode.designer) {
+                                          traceOffset = Point.origin();
+                                          var firstPiece = _gameState.value.lastUsed.first;
+                                          if (firstPiece is PathPiece || firstPiece is BreakPiece || firstPiece is ErasePiece) {
+                                            _captureState();
+                                            var p = _lastTracePoint! - _gameState.value.board.screenCenter;
+                                            _lastDraggedPart = Hex.getHexPartFromPoint(p);
+                                          } else {
+                                            _isDraggingToPlace = true;
+                                            var p = _lastTracePoint! - _gameState.value.board.screenCenter;
+                                            setState(() {
+                                              _gameState.value.pointer = _getSnappedPart(p, firstPiece);
+                                            });
+                                          }
                                         }
                                         setState(() {});
                                       },
@@ -1503,7 +1536,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                           // Trigger haptic every 30 pixels moved
                                           const double hapticInterval = 30.0;
                                           if (_hapticDistanceCounter >= hapticInterval) {
-                                            if (settings.haptic && tracing) {
+                                            if (settings.haptic && (tracing || _gameState.value.board.mode == BoardMode.designer)) {
                                               HapticFeedback.selectionClick();
                                             }
                                             _hapticDistanceCounter %= hapticInterval;
@@ -1513,17 +1546,63 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
 
                                         var p = currentPoint -
                                             _gameState.value.board.screenCenter;
-                                        p += traceOffset;
-                                        if (_gameState.value.board.crosshair !=
-                                            null) {
-                                          setState(() => _gameState
-                                              .value.board.crosshair = p);
-                                        }
-                                        var h = Hex.getHexPartFromPoint(p);
-                                        if (_gameState.value.board.moveTo(h)) {
-                                          if (settings.haptic) HapticFeedback.lightImpact();
-                                          setState(
-                                              () => _gameState.value.board);
+
+                                        if (_gameState.value.board.mode ==
+                                            BoardMode.play) {
+                                          p += traceOffset;
+                                          if (_gameState.value.board.crosshair !=
+                                              null) {
+                                            setState(() => _gameState
+                                                .value.board.crosshair = p);
+                                          }
+                                          var h = Hex.getHexPartFromPoint(p);
+                                          if (_gameState.value.board.moveTo(h)) {
+                                            if (settings.haptic) HapticFeedback.lightImpact();
+                                            setState(
+                                                () => _gameState.value.board);
+                                          }
+                                        } else if (_gameState.value.board.mode == BoardMode.designer) {
+                                          var firstPiece = _gameState.value.lastUsed.first;
+                                          if (firstPiece is PathPiece || firstPiece is BreakPiece || firstPiece is ErasePiece) {
+                                            var currentPart = Hex.getHexPartFromPoint(p);
+                                            var lastPart = _lastDraggedPart;
+                                            if (currentPart != lastPart) {
+                                              bool changed = false;
+                                              if (firstPiece is PathPiece || firstPiece is BreakPiece) {
+                                                if (lastPart is Vertex && currentPart is Vertex) {
+                                                  var edge = lastPart.edges.firstWhereOrNull((e) => e.vertices.contains(currentPart));
+                                                  if (edge != null) {
+                                                    if (_gameState.value.board.putPiece(edge, firstPiece.clone())) {
+                                                      changed = true;
+                                                    }
+                                                  }
+                                                } else if (currentPart is Edge) {
+                                                  if (_gameState.value.board.putPiece(currentPart, firstPiece.clone())) {
+                                                    changed = true;
+                                                  }
+                                                }
+                                              } else if (firstPiece is ErasePiece) {
+                                                if (_gameState.value.board.putPiece(currentPart, ErasePiece())) {
+                                                  changed = true;
+                                                }
+                                              }
+
+                                              if (changed) {
+                                                if (settings.haptic) HapticFeedback.lightImpact();
+                                                _gameState.value.board.save();
+                                                setState(() {});
+                                              }
+                                              _lastDraggedPart = currentPart;
+                                            }
+                                          } else if (_isDraggingToPlace) {
+                                            var currentPart = _getSnappedPart(p, firstPiece);
+                                            if (currentPart != _gameState.value.pointer) {
+                                              setState(() {
+                                                _gameState.value.pointer = currentPart;
+                                              });
+                                              if (settings.haptic) HapticFeedback.selectionClick();
+                                            }
+                                          }
                                         }
                                       },
                                       child: CustomPaint(
