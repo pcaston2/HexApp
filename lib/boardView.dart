@@ -456,10 +456,17 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
     return ValueListenableBuilder(
         valueListenable: _gameState,
         builder: (context, value, child) => Scaffold(
+            extendBodyBehindAppBar: true,
             appBar: AppBar(
+                backgroundColor: Colors.transparent,
+                surfaceTintColor: Colors.transparent,
+                elevation: 0,
+                centerTitle: true,
                 title: _gameState.value.board.mode == BoardMode.designer
                     ? Row(children: [
-                        Text(_gameState.value.board.name),
+                        Text(_gameState.value.board.name,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w900, fontSize: 22)),
                         IconButton(
                             onPressed: () {
                               TextEditingController _textFieldController =
@@ -518,7 +525,9 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                           tooltip: 'Redo',
                         ),
                       ])
-                    : Text(_gameState.value.board.name)),
+                    : Text(_gameState.value.board.name,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w900, fontSize: 22))),
             floatingActionButtonLocation:
                 FloatingActionButtonLocation.startFloat,
             floatingActionButton: Row(
@@ -1792,7 +1801,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                 child: Align(
                     alignment: Alignment.topLeft,
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 8.0, top: 16.0),
+                      padding: const EdgeInsets.only(left: 8.0, top: 80.0),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -1848,7 +1857,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                 child: Align(
                     alignment: Alignment.topRight,
                     child: Padding(
-                      padding: const EdgeInsets.only(right: 8.0, top: 16.0),
+                      padding: const EdgeInsets.only(right: 8.0, top: 80.0),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
