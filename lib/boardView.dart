@@ -126,6 +126,46 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
   double _hapticDistanceCounter = 0;
   Point? _lastTracePoint;
 
+  final List<Map<String, dynamic>> _undoHistory = [];
+  final List<Map<String, dynamic>> _redoHistory = [];
+  static const int _maxHistory = 10;
+
+  void _captureState() {
+    _undoHistory.add(_gameState.value.board.toJson());
+    if (_undoHistory.length > _maxHistory) {
+      _undoHistory.removeAt(0);
+    }
+    _redoHistory.clear();
+  }
+
+  void _undo() {
+    if (_undoHistory.isNotEmpty) {
+      var currentState = _gameState.value.board.toJson();
+      _redoHistory.add(currentState);
+      var previousState = _undoHistory.removeLast();
+      setState(() {
+        var board = Board.fromJson(previousState);
+        board.mode = BoardMode.designer;
+        _gameState.value.board = board;
+      });
+      _gameState.value.board.save();
+    }
+  }
+
+  void _redo() {
+    if (_redoHistory.isNotEmpty) {
+      var currentState = _gameState.value.board.toJson();
+      _undoHistory.add(currentState);
+      var nextState = _redoHistory.removeLast();
+      setState(() {
+        var board = Board.fromJson(nextState);
+        board.mode = BoardMode.designer;
+        _gameState.value.board = board;
+      });
+      _gameState.value.board.save();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -358,7 +398,18 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                     );
                                   });
                             },
-                            icon: Icon(Icons.edit_rounded))
+                            icon: Icon(Icons.edit_rounded)),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.undo_rounded),
+                          onPressed: _undoHistory.isEmpty ? null : _undo,
+                          tooltip: 'Undo',
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.redo_rounded),
+                          onPressed: _redoHistory.isEmpty ? null : _redo,
+                          tooltip: 'Redo',
+                        ),
                       ])
                     : Text(_gameState.value.board.name)),
             floatingActionButtonLocation:
@@ -556,6 +607,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                               ListTile(
                                 leading: IconButton(
                                     onPressed: () {
+                                      _captureState();
                                       setState(
                                           () => _gameState.value.board.size--);
                                       _gameState.value.board.save();
@@ -565,6 +617,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                     "Size: ${_gameState.value.board.size}"),
                                 trailing: IconButton(
                                     onPressed: () {
+                                      _captureState();
                                       setState(
                                           () => _gameState.value.board.size++);
                                       _gameState.value.board.save();
@@ -639,6 +692,24 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                             title: Text("Editing"),
                             leading: Icon(Icons.edit_rounded),
                             children: [
+                              ListTile(
+                                  leading: Icon(Icons.undo_rounded),
+                                  title: Text("Undo"),
+                                  onTap: _undoHistory.isEmpty
+                                      ? null
+                                      : () {
+                                          _undo();
+                                          Navigator.pop(context);
+                                        }),
+                              ListTile(
+                                  leading: Icon(Icons.redo_rounded),
+                                  title: Text("Redo"),
+                                  onTap: _redoHistory.isEmpty
+                                      ? null
+                                      : () {
+                                          _redo();
+                                          Navigator.pop(context);
+                                        }),
                               PieceTile(
                                   erasePiece,
                                   () => _choosePieceFromMenu(erasePiece)),
@@ -669,12 +740,14 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                                 TextButton(
                                                     child: Text('You bet!'),
                                                     onPressed: () {
+                                                      _captureState();
                                                       _gameState.value.board
                                                           .clear();
                                                       Navigator.of(context)
                                                           .pop();
                                                       _gameState.value.board
                                                           .save();
+                                                      setState(() {});
                                                     })
                                               ],
                                             ));
@@ -688,6 +761,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                   color:
                                       _gameState.value.board.theme.foreground,
                                   title: "Foreground", onSelect: () {
+                                _captureState();
                                 setState(() {});
                                 _gameState.value.board.save();
                               }),
@@ -695,24 +769,28 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                   color:
                                       _gameState.value.board.theme.background,
                                   title: "Background", onSelect: () {
+                                _captureState();
                                 setState(() {});
                                 _gameState.value.board.save();
                               }),
                               ColorTile(context,
                                   color: _gameState.value.board.theme.border,
                                   title: "Border", onSelect: () {
+                                _captureState();
                                 setState(() {});
                                 _gameState.value.board.save();
                               }),
                               ColorTile(context,
                                   color: _gameState.value.board.theme.path,
                                   title: "Path", onSelect: () {
+                                _captureState();
                                 setState(() {});
                                 _gameState.value.board.save();
                               }),
                               ColorTile(context,
                                   color: _gameState.value.board.theme.trail,
                                   title: "Trail", onSelect: () {
+                                _captureState();
                                 setState(() {});
                                 _gameState.value.board.save();
                               }),
@@ -724,6 +802,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                         color: _gameState.value.board.theme
                                             .ruleColors[RuleColorIndex.First]!,
                                         title: "First", onSelect: () {
+                                      _captureState();
                                       setState(() {});
                                       _gameState.value.board.save();
                                     }),
@@ -731,6 +810,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                         color: _gameState.value.board.theme
                                             .ruleColors[RuleColorIndex.Second]!,
                                         title: "Second", onSelect: () {
+                                      _captureState();
                                       setState(() {});
                                       _gameState.value.board.save();
                                     }),
@@ -738,6 +818,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                         color: _gameState.value.board.theme
                                             .ruleColors[RuleColorIndex.Third]!,
                                         title: "Third", onSelect: () {
+                                      _captureState();
                                       setState(() {});
                                       _gameState.value.board.save();
                                     }),
@@ -745,6 +826,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                         color: _gameState.value.board.theme
                                             .ruleColors[RuleColorIndex.Fourth]!,
                                         title: "Fourth", onSelect: () {
+                                      _captureState();
                                       setState(() {});
                                       _gameState.value.board.save();
                                     }),
@@ -752,6 +834,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                         color: _gameState.value.board.theme
                                             .ruleColors[RuleColorIndex.Fifth]!,
                                         title: "Fifth", onSelect: () {
+                                      _captureState();
                                       setState(() {});
                                       _gameState.value.board.save();
                                     }),
@@ -817,6 +900,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                       leading: Icon(Icons.brush_rounded, color: BoardTheme.yellow().foreground.value),
                                       title: Text('Yellow'),
                                       onTap: () {
+                                        _captureState();
                                         setState(() {
                                           _gameState.value.board.theme = BoardTheme.yellow();
                                           _gameState.value.board.save();
@@ -828,6 +912,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                       leading: Icon(Icons.brush_rounded, color: BoardTheme.red().foreground.value),
                                       title: Text('Red'),
                                       onTap: () {
+                                        _captureState();
                                         setState(() {
                                           _gameState.value.board.theme = BoardTheme.red();
                                           _gameState.value.board.save();
@@ -839,6 +924,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                       leading: Icon(Icons.brush_rounded, color: BoardTheme.blue().foreground.value),
                                       title: Text('Blue'),
                                       onTap: () {
+                                        _captureState();
                                         setState(() {
                                           _gameState.value.board.theme = BoardTheme.blue();
                                           _gameState.value.board.save();
@@ -850,225 +936,300 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                       leading: Icon(Icons.brush_rounded, color: BoardTheme.gray().foreground.value),
                                       title: Text('Gray'),
                                       onTap: () {
-                                        _gameState.value.board.theme = BoardTheme.gray();
-                                        _gameState.value.board.save();
-                                        Navigator.of(context).pop();
+                                        _captureState();
+                                        setState(() {
+                                          _gameState.value.board.theme = BoardTheme.gray();
+                                          _gameState.value.board.save();
+                                          Navigator.of(context).pop();
+                                        });
                                       }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.green().foreground.value),
                                         title: Text('Green'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.green();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.green();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.highContrast().foreground.value),
                                         title: Text('High Contrast'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.highContrast();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.highContrast();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.shale().foreground.value),
                                         title: Text('Shale'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.shale();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.shale();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.orangeAccent().border.value),
                                         title: Text('Orange Accent'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.orangeAccent();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.orangeAccent();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.purpleAccent().border.value),
                                         title: Text('Purple Accent'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.purpleAccent();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.purpleAccent();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.greenAccent().border.value),
                                         title: Text('Green Accent'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.greenAccent();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.greenAccent();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.mustard().border.value),
                                         title: Text('Mustard'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.mustard();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.mustard();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.brown().foreground.value),
                                         title: Text('Brown'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.brown();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.brown();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.darkBlue().foreground.value),
                                         title: Text('Dark Blue'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.darkBlue();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.darkBlue();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.antique().foreground.value),
                                         title: Text('Antique'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.antique();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.antique();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.adventure().foreground.value),
                                         title: Text('Adventure'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.adventure();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.adventure();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.fall().foreground.value),
                                         title: Text('Fall'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.fall();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.fall();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.desaturation().foreground.value),
                                         title: Text('Desaturation'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.desaturation();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.desaturation();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.vintage().foreground.value),
                                         title: Text('Vintage'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.vintage();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.vintage();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.contemporary().foreground.value),
                                         title: Text('Contemporary'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.contemporary();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.contemporary();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.woods().foreground.value),
                                         title: Text('Woods'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.woods();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.woods();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.marigold().path.value),
                                         title: Text('Marigold'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.marigold();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.marigold();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.pastel().foreground.value),
                                         title: Text('Pastel'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.pastel();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.pastel();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.neutral().foreground.value),
                                         title: Text('Neutral'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.neutral();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.neutral();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.army().foreground.value),
                                         title: Text('Army'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.army();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.army();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.cold().foreground.value),
                                         title: Text('Cold'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.cold();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.cold();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.mellow().foreground.value),
                                         title: Text('Mellow'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.mellow();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.mellow();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.greek().foreground.value),
                                         title: Text('Greek'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.greek();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.greek();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                     ListTile(
                                         leading: Icon(Icons.brush_rounded, color: BoardTheme.plain().foreground.value),
                                         title: Text('Plain'),
                                         onTap: () {
-                                          _gameState.value.board.theme = BoardTheme.plain();
-                                          _gameState.value.board.save();
-                                          Navigator.of(context).pop();
+                                          _captureState();
+                                          setState(() {
+                                            _gameState.value.board.theme = BoardTheme.plain();
+                                            _gameState.value.board.save();
+                                            Navigator.of(context).pop();
+                                          });
                                         }
                                     ),
                                   ]
@@ -1136,6 +1297,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                       onDoubleTap: () {
                                         if (_gameState.value.board.mode ==
                                             BoardMode.designer) {
+                                          var snapshot = _gameState.value.board.toJson();
                                           var clone =
                                               _gameState.value.lastUsed.first.clone();
                                           if (clone is ColoredRule) {
@@ -1153,6 +1315,11 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                             soundPlayer
                                                 .play(audioSound.PANEL_FAILURE);
                                           } else {
+                                            _undoHistory.add(snapshot);
+                                            if (_undoHistory.length > _maxHistory) {
+                                              _undoHistory.removeAt(0);
+                                            }
+                                            _redoHistory.clear();
                                             _gameState.value.board.save();
                                           }
                                           setState(() => _gameState);
@@ -1534,6 +1701,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                 ElevatedButton(
                   onPressed: () async {
                     Navigator.pop(context);
+                    _captureState();
                     await BoardGenerator().generate(_gameState.value.board, genSettings);
                     setState(() {});
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Puzzle Generated!")));
