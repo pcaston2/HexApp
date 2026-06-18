@@ -1620,9 +1620,12 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                           } else {
                                             _isDraggingToPlace = true;
                                             var p = _lastTracePoint! - _gameState.value.board.screenCenter;
-                                            setState(() {
-                                              _gameState.value.pointer = _getSnappedPart(p, firstPiece);
-                                            });
+                                            var currentPart = _getSnappedPart(p, firstPiece);
+                                            if (_gameState.value.board.canPutPiece(currentPart, firstPiece)) {
+                                              setState(() {
+                                                _gameState.value.pointer = currentPart;
+                                              });
+                                            }
                                           }
                                         }
                                         setState(() {});
@@ -1677,18 +1680,22 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                             _captureState();
                                             _lastDraggedPart = currentPart;
 
-                                            setState(() {
-                                              _gameState.value.pointer = currentPart;
-                                            });
+                                            if (_gameState.value.board.pieceOnBoard(currentPart)) {
+                                              setState(() {
+                                                _gameState.value.pointer = currentPart;
+                                              });
+                                            }
                                             if (_gameState.value.board.putPiece(currentPart, ErasePiece())) {
                                               if (settings.haptic) HapticFeedback.lightImpact();
                                               _gameState.value.board.save();
                                               setState(() {});
                                             }
                                           } else if (currentPart != _lastDraggedPart) {
-                                            setState(() {
-                                              _gameState.value.pointer = currentPart;
-                                            });
+                                            if (_gameState.value.board.pieceOnBoard(currentPart)) {
+                                              setState(() {
+                                                _gameState.value.pointer = currentPart;
+                                              });
+                                            }
                                             if (_gameState.value.board.putPiece(currentPart, ErasePiece())) {
                                               if (settings.haptic) HapticFeedback.lightImpact();
                                               _gameState.value.board.save();
@@ -1726,9 +1733,11 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                             var currentPart = Hex.getHexPartFromPoint(p);
                                             var lastPart = _lastDraggedPart;
                                             if (currentPart != lastPart) {
-                                              setState(() {
-                                                _gameState.value.pointer = currentPart;
-                                              });
+                                              if (_gameState.value.board.pieceOnBoard(currentPart)) {
+                                                setState(() {
+                                                  _gameState.value.pointer = currentPart;
+                                                });
+                                              }
                                               bool changed = false;
                                               if (firstPiece is PathPiece || firstPiece is BreakPiece) {
                                                 if (lastPart is Vertex && currentPart is Vertex) {
@@ -1758,7 +1767,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                                             }
                                           } else if (_isDraggingToPlace) {
                                             var currentPart = _getSnappedPart(p, firstPiece);
-                                            if (currentPart != _gameState.value.pointer) {
+                                            if (currentPart != _gameState.value.pointer && _gameState.value.board.canPutPiece(currentPart, firstPiece)) {
                                               setState(() {
                                                 _gameState.value.pointer = currentPart;
                                               });

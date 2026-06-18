@@ -16,6 +16,7 @@ enum BoardValidationErrorType {
   colorNotInOrder,
   colorNotSatisfied,
   noColorsRemaining,
+  timeout,
 }
 
 extension RulesEntryComparison on MapEntry<Hex, Rule> {
@@ -26,8 +27,12 @@ extension RulesEntryComparison on MapEntry<Hex, Rule> {
 
 class BoardValidator {
   Board _board;
+  Stopwatch? _stopwatch;
+  Duration? _timeout;
 
-  BoardValidator(this._board) {
+  BoardValidator(this._board, {Stopwatch? stopwatch, Duration? timeout})
+      : _stopwatch = stopwatch,
+        _timeout = timeout {
     errors = [];
     var trailErrors = validateTrail();
     errors.addAll(trailErrors);
@@ -35,18 +40,13 @@ class BoardValidator {
       return;
     } else {
       var trail = getColorTrail();
+      if (_stopwatch != null && _timeout != null && _stopwatch!.elapsed > _timeout!) {
+        errors.add(BoardValidationError(null, null, BoardValidationErrorType.timeout));
+      }
       errors.addAll(trail.errors);
       errors.addAll(validateDots());
       errors.addAll(validateEdges());
       errors.addAll(validateCorners());
-    }
-    if (errors.isNotEmpty) {
-      var index = 0;
-      print("Errors:");
-      for (var e in errors) {
-        index++;
-        print("${index}. ${e.toString()}");
-      }
     }
   }
 
@@ -72,6 +72,10 @@ class BoardValidator {
       List<MapEntry<Hex, Rule>>? rules,
       List<RuleColorIndex>? colorOrder,
       List<Hex>? previousFaces]) { //Initialize properties
+    if (_stopwatch != null && _timeout != null && _stopwatch!.elapsed > _timeout!) {
+       return ColorTrail(); // Return empty if timeout
+    }
+
     if (trail == null) {
       return getColorTrail(_board.trail, rules);
     }
@@ -130,13 +134,12 @@ class BoardValidator {
           if (colorOrder.isEmpty) {
             ColorTrail? best;
             for (var c in sequenceMap.value.colors) {
-              var newRules = rules
-                  .map((e) => MapEntry<Hex, Rule>(e.key, e.value.clone()))
-                  .toList();
-              var currentSequence = newRules
-                  .singleWhere((e) => e.equals(sequenceMap))
-                  .value as SequenceRule;
+              var newRules = rules.toList();
+              var index = newRules.indexWhere((e) => e.equals(sequenceMap));
+              var currentSequence = (newRules[index].value as SequenceRule).clone();
               currentSequence.colors.remove(c);
+              newRules[index] = MapEntry(newRules[index].key, currentSequence);
+
               var newColorOrder = [c];
               var currentTrail =
                   getColorTrail(trail, newRules, newColorOrder, faces);
@@ -154,13 +157,12 @@ class BoardValidator {
             return best!;
           } else {
             if (sequenceMap.value.colors.contains(colorOrder.last)) {
-              var newRules = rules
-                  .map((e) => MapEntry<Hex, Rule>(e.key, e.value.clone()))
-                  .toList();
-              var currentSequence = newRules
-                  .singleWhere((e) => e.equals(sequenceMap))
-                  .value as SequenceRule;
+              var newRules = rules.toList();
+              var index = newRules.indexWhere((e) => e.equals(sequenceMap));
+              var currentSequence = (newRules[index].value as SequenceRule).clone();
               currentSequence.colors.remove(colorOrder.last);
+              newRules[index] = MapEntry(newRules[index].key, currentSequence);
+
               return getColorTrail(trail, newRules, colorOrder, faces)
                 ..trail.add(ColorTrailItem(
                     ColorTrailReason.SequenceColorFound,
@@ -199,10 +201,7 @@ class BoardValidator {
         ColorTrail? best;
         for (var r in localColoredRules) {
           var newErrors = <BoardValidationError>[];
-          var newRules = rules
-              .map((e) => MapEntry<Hex, Rule>(e.key, e.value.clone()))
-              .toList();
-          newRules.removeWhere((e) => e.equals(r));
+          var newRules = rules.where((e) => !e.equals(r)).toList();
           var newColor = (r.value as ColoredRule).color;
           var newColorOrder = List<RuleColorIndex>.from(colorOrder);
           if (newColorOrder.contains(newColor)) {
@@ -213,9 +212,19 @@ class BoardValidator {
             }
           } else {
             newColorOrder.add(newColor);
-            var sequences = newRules.where((e) => faces.contains(e.key) && e.value is SequenceRule);
-            for (var s in sequences) {
-              (s.value as SequenceRule).colors.remove(newColor);
+            var sequencesIndices = <int>[];
+            for (int i = 0; i < newRules.length; i++) {
+              if (faces.contains(newRules[i].key) && newRules[i].value is SequenceRule) {
+                 sequencesIndices.add(i);
+              }
+            }
+            if (sequencesIndices.isNotEmpty) {
+              newRules = newRules.toList();
+              for (var idx in sequencesIndices) {
+                var seq = (newRules[idx].value as SequenceRule).clone();
+                seq.colors.remove(newColor);
+                newRules[idx] = MapEntry(newRules[idx].key, seq);
+              }
             }
           }
           var currentTrail =

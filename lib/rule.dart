@@ -39,6 +39,8 @@ abstract class ColoredRule extends Rule {
 
 @JsonSerializable()
 class DotRule extends ColoredRule {
+  @override
+  DotRule clone() => DotRule()..color = color;
 
   @override
   String get name => "Dot";
@@ -57,6 +59,8 @@ class DotRule extends ColoredRule {
 
 @JsonSerializable()
 class SequenceRule extends Rule {
+  @override
+  SequenceRule clone() => SequenceRule()..colors = List.from(colors);
   @override
   String get name => "Sequence";
   List<RuleColorIndex> colors = [];
@@ -93,6 +97,8 @@ class SequenceRule extends Rule {
 @JsonSerializable()
 class EdgeRule extends ColoredRule {
   @override
+  EdgeRule clone() => EdgeRule()..color = color..count = count;
+  @override
   String get name => "Edge";
 
   int _count = 1;
@@ -122,6 +128,8 @@ class EdgeRule extends ColoredRule {
 
 @JsonSerializable()
 class CornerRule extends ColoredRule {
+  @override
+  CornerRule clone() => CornerRule()..color = color..count = count;
   @override
   String get name => "Corner";
 

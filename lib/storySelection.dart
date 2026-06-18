@@ -40,86 +40,101 @@ class Stories extends State<StorySelection> {
             ),
           ),
           child: SafeArea(
-            child: FutureBuilder(
-                future: Story.getStories(),
-                builder: (BuildContext context, AsyncSnapshot snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                        child: Text("Getting your stories...",
-                            style: TextStyle(color: Colors.white)));
-                  } else {
-                    List<Story> stories = snapshot.data ?? [];
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                  child: Text("Experience a Story...",
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
+                          color: Colors.blueGrey.shade900)),
+                ),
+                Expanded(
+                  child: FutureBuilder(
+                      future: Story.getStories(),
+                      builder: (BuildContext context, AsyncSnapshot snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(
+                              child: Text("Getting your stories...",
+                                  style: TextStyle(color: Colors.white)));
+                        } else {
+                          List<Story> stories = snapshot.data ?? [];
 
-                    if (isDev) {
-                      return ListView(
-                          padding: const EdgeInsets.all(16),
-                          children: stories.isNotEmpty
-                              ? List<ListTile>.generate(stories.length,
-                                  (int index) {
-                                  return StoryTile(
-                                      story: stories[index],
-                                      completed: false,
-                                      title: Text(stories[index].name),
-                                      onTap: () async {
-                                              var result = await Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        FlowSelection(
-                                                            stories[index])),
-                                              );
-                                              if (!mounted) return;
-                                              setState(() {});
-                                              if (result != null && result) {
-                                                settings.setComplete(
-                                                    stories[index].guid);
-                                                stories[index].save();
-                                                setState(() {});
-                                              }
-                                            });
-                                      })
-                              : [
-                                  const Text(
-                                      "There aren't any stories yet, try adding one!")
-                                ]);
-                    } else {
-                      return GridView.builder(
-                        padding: const EdgeInsets.all(24),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 20,
-                          mainAxisSpacing: 24,
-                          childAspectRatio: 0.8,
-                        ),
-                        itemCount: stories.length,
-                        itemBuilder: (context, index) {
-                          return StoryGridTile(
-                            story: stories[index],
-                            completed:
-                                settings.isComplete(stories[index].guid),
-                            index: index,
-                            onTap: () async {
-                              var result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        FlowSelection(stories[index])),
-                              );
-                              if (!mounted) return;
-                              setState(() {});
-                              if (result != null && result) {
-                                settings.setComplete(stories[index].guid);
-                                stories[index].save();
-                                setState(() {});
-                              }
-                            },
-                          );
-                        },
-                      );
-                    }
-                  }
-                }),
+                          if (isDev) {
+                            return ListView(
+                                padding: const EdgeInsets.all(16),
+                                children: stories.isNotEmpty
+                                    ? List<ListTile>.generate(stories.length,
+                                        (int index) {
+                                        return StoryTile(
+                                            story: stories[index],
+                                            completed: false,
+                                            title: Text(stories[index].name),
+                                            onTap: () async {
+                                                    var result = await Navigator.push(
+                                                      context,
+                                                      SlideRoute(
+                                                          page:
+                                                              FlowSelection(
+                                                                  stories[index])),
+                                                    );
+                                                    if (!mounted) return;
+                                                    setState(() {});
+                                                    if (result != null && result) {
+                                                      settings.setComplete(
+                                                          stories[index].guid);
+                                                      stories[index].save();
+                                                      setState(() {});
+                                                    }
+                                                  });
+                                            })
+                                    : [
+                                        const Text(
+                                            "There aren't any stories yet, try adding one!")
+                                      ]);
+                          } else {
+                            return GridView.builder(
+                              padding: const EdgeInsets.all(24),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 20,
+                                mainAxisSpacing: 24,
+                                childAspectRatio: 0.8,
+                              ),
+                              itemCount: stories.length,
+                              itemBuilder: (context, index) {
+                                return StoryGridTile(
+                                  story: stories[index],
+                                  completed:
+                                      settings.isComplete(stories[index].guid),
+                                  index: index,
+                                  onTap: () async {
+                                    var result = await Navigator.push(
+                                      context,
+                                      SlideRoute(
+                                          page:
+                                              FlowSelection(stories[index])),
+                                    );
+                                    if (!mounted) return;
+                                    setState(() {});
+                                    if (result != null && result) {
+                                      settings.setComplete(stories[index].guid);
+                                      stories[index].save();
+                                      setState(() {});
+                                    }
+                                  },
+                                );
+                              },
+                            );
+                          }
+                        }
+                      }),
+                ),
+              ],
+            ),
           ),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,

@@ -34,7 +34,10 @@ class BoardGenerator {
   }
 
   Future<bool> generate(Board board, GeneratorSettings settings) async {
+    final stopwatch = Stopwatch()..start();
     for (int attempt = 0; attempt < 10; attempt++) {
+      if (stopwatch.elapsed > const Duration(seconds: 20)) return false;
+      await Future.delayed(Duration.zero);
       board.clear();
       board.resetTrail();
 
@@ -80,11 +83,11 @@ class BoardGenerator {
 
       // 5. Tighten if requested
       if (settings.tightness == Tightness.tight) {
-        _tighten(board, masterPath, settings);
+        await _tighten(board, masterPath, settings);
       }
 
       // 6. Final Validation
-      var solutions = board.solve(limit: 1);
+      var solutions = board.solve(limit: 1, timeout: const Duration(seconds: 1));
       if (solutions.isNotEmpty) {
         board.resetTrail();
         await board.save();
@@ -269,11 +272,12 @@ class BoardGenerator {
     }
   }
 
-  void _tighten(Board board, List<Hex> masterPath, GeneratorSettings settings) {
+  Future<void> _tighten(Board board, List<Hex> masterPath, GeneratorSettings settings) async {
     int maxAttempts = 20;
     while (maxAttempts > 0) {
       maxAttempts--;
-      var solutions = board.solve(limit: 5);
+      if (maxAttempts % 5 == 0) await Future.delayed(Duration.zero);
+      var solutions = board.solve(limit: 5, timeout: const Duration(milliseconds: 500));
       if (solutions.length <= 1) break;
 
       // Find an alternative solution

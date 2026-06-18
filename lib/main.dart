@@ -1,3 +1,4 @@
+import 'package:flutter_guid/flutter_guid.dart';
 import 'package:vibration/vibration.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:async';
@@ -43,6 +44,27 @@ part 'mainMenu.dart';
 
 late Settings settings;
 late SoundPlayer soundPlayer;
+
+class SlideRoute<T> extends PageRouteBuilder<T> {
+  final Widget page;
+  SlideRoute({required this.page})
+      : super(
+          pageBuilder: (context, animation, secondaryAnimation) => page,
+          transitionDuration: const Duration(milliseconds: 400),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(1.0, 0.0),
+                end: Offset.zero,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeInOut,
+              )),
+              child: child,
+            );
+          },
+        );
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

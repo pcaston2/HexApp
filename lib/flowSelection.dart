@@ -150,10 +150,17 @@ class Flows extends State<FlowSelection> {
                           _story.flowPaths.insert(newIndex, moved);
                           _story.save().then((data) => setState(() {}));
                         },
-                        header: flows.isEmpty
-                            ? const Text(
-                                "There aren't any flows yet, try adding one!")
-                            : const Text("Pick a flow or add some more!"),
+                        header: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                              flows.isEmpty
+                                  ? "There aren't any flows yet, try adding one!"
+                                  : "Follow a Flow...",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 18,
+                                  color: Colors.blueGrey.shade900)),
+                        ),
                         children: List<Dismissible>.generate(flows.length,
                             (int index) {
                           return Dismissible(
@@ -210,8 +217,8 @@ class Flows extends State<FlowSelection> {
                                   onTap: () async {
                                     var result = await Navigator.push(
                                       context,
-                                      MaterialPageRoute(
-                                          builder: (context) => BoardSelection(
+                                      SlideRoute(
+                                          page: BoardSelection(
                                               flows[index], _story)),
                                     );
                                     if (!mounted) return;
@@ -228,8 +235,17 @@ class Flows extends State<FlowSelection> {
                         }));
                   } else {
                     return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         progressHeader,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                          child: Text("Follow a Flow...",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 18,
+                                  color: Colors.blueGrey.shade900)),
+                        ),
                         Expanded(
                           child: GridView.builder(
                             padding: const EdgeInsets.all(20),
@@ -250,8 +266,8 @@ class Flows extends State<FlowSelection> {
                                 onTap: () async {
                                   var result = await Navigator.push(
                                     context,
-                                    MaterialPageRoute(
-                                        builder: (context) => BoardSelection(
+                                    SlideRoute(
+                                        page: BoardSelection(
                                             flows[index], _story)),
                                   );
                                   if (!mounted) return;

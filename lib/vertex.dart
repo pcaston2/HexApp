@@ -68,7 +68,7 @@ class Vertex extends Hex {
   }
 
   @override
-  get hashCode => super.hashCode + vertexType.index;
+  int get hashCode => Object.hash(runtimeType, q, r, vertexType);
 
   Vertex.position(this.vertexType, q, r) : super.position(q, r);
 

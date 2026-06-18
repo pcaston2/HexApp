@@ -105,6 +105,8 @@ class Board {
   }
 
   List<Hex> _trail = [];
+  @JsonKey(includeToJson: false, includeFromJson: false)
+  Set<Hex> _trailSet = {};
 
   List<Hex> get trail => _trail;
 
@@ -138,6 +140,7 @@ class Board {
         resetTrail();
       }
       _trail.add(start);
+      _trailSet.add(start);
       return true;
     } else {
       resetTrail();
@@ -162,8 +165,8 @@ class Board {
     return isSuccess;
   }
 
-  List<BoardValidationError> getErrors() {
-    var boardValidator = new BoardValidator(this);
+  List<BoardValidationError> getErrors({Stopwatch? stopwatch, Duration? timeout}) {
+    var boardValidator = new BoardValidator(this, stopwatch: stopwatch, timeout: timeout);
     return boardValidator.errors;
   }
 
@@ -182,18 +185,19 @@ class Board {
         return [];
       }
     }
-    if (tail.runtimeType == Edge) {
-      return tail!.vertices
-          .where((Vertex v) => !trail.contains(v) || v == previous)
+    var currentTail = tail;
+    if (currentTail == null) return [];
+    
+    if (currentTail is Edge) {
+      return currentTail.vertices
+          .where((Vertex v) => !_trailSet.contains(v) || v == previous)
           .toList();
-    } else if (tail.runtimeType == Vertex) {
-      var edges = tail!.edges;
+    } else if (currentTail is Vertex) {
+      var edges = currentTail.edges;
       for (Edge edge in edges) {
         if (_map.containsKey(edge)) {
-          if (_map[edge]!.any((Piece p) => p.runtimeType == PathPiece)) {
-            // var correspondingVertex =
-            //     edge.vertices.singleWhere((Vertex v) => v != tail);
-            if (!trail.contains(edge) || edge == previous) {
+          if (_map[edge]!.any((Piece p) => p is PathPiece)) {
+            if (!_trailSet.contains(edge) || edge == previous) {
               validMoves.add(edge);
             }
           }
@@ -223,6 +227,8 @@ class Board {
 
   void resetTrail() {
     _trail.clear();
+    _trailSet.clear();
+    _flattenedCache = null;
     errors = [];
     _finished = false;
   }
@@ -337,24 +343,45 @@ class Board {
     }
   }
 
-  bool putPiece(Hex hex, Piece piece) {
-    //TODO: Move this to the pieces
+  bool canPutPiece(Hex hex, Piece piece) {
     if (!pieceOnBoard(hex)) {
       return false;
     }
     //reject invalid placements
-    if (piece.runtimeType == SequenceRule && hex.runtimeType != Hex) {
+    if (piece is SequenceRule && hex.runtimeType != Hex) {
       return false;
     }
-    if (piece.runtimeType == EdgeRule && hex.runtimeType != Edge) {
-      return false;
+    if (piece is EdgeRule) {
+      if (hex.runtimeType != Edge) return false;
+      var faces = hex.faces;
+      bool f0On = pieceOnBoard(faces[0]);
+      bool f1On = pieceOnBoard(faces[1]);
+      if (!f0On || !f1On) {
+        Hex onBoard = f0On ? faces[0] : faces[1];
+        Hex offBoard = f0On ? faces[1] : faces[0];
+        if (offBoard.point.y > onBoard.point.y) {
+          return false;
+        }
+      }
     }
-    if ((piece.runtimeType == StartPiece ||
-            piece.runtimeType == EndPiece ||
-            piece.runtimeType == DotRule) &&
+    if ((piece is StartPiece ||
+            piece is EndPiece ||
+            piece is DotRule) &&
         hex.runtimeType == Hex) {
       return false;
-    } else if (piece.runtimeType == ErasePiece) {
+    }
+    return true;
+  }
+
+  bool putPiece(Hex hex, Piece piece) {
+    _flattenedCache = null;
+    //TODO: Move this to the pieces
+    if (!canPutPiece(hex, piece) && piece is! ErasePiece) {
+      return false;
+    }
+    
+    if (piece is ErasePiece) {
+      if (!pieceOnBoard(hex)) return false;
       if (_map.containsKey(hex)) {
         List<Piece> pieces = _map[hex]!;
         if (pieces.isNotEmpty) {
@@ -467,13 +494,18 @@ class Board {
     return board;
   }
 
+  @JsonKey(includeToJson: false, includeFromJson: false)
+  List<MapEntry<Hex, Piece>>? _flattenedCache;
+
   List<MapEntry<Hex, Piece>> flatten() {
+    if (_flattenedCache != null) return _flattenedCache!;
     var entries = new List<MapEntry<Hex, Piece>>.empty(growable: true);
     for (Hex hex in _map.keys) {
       for (Piece piece in getPiecesAt(hex)) {
         entries.add(new MapEntry<Hex, Piece>(hex, piece));
       }
     }
+    _flattenedCache = entries;
     return entries;
   }
 
@@ -486,6 +518,7 @@ class Board {
   }
 
   void clear() {
+    _flattenedCache = null;
     _map.clear();
   }
 
@@ -500,16 +533,18 @@ class Board {
 
     if (adjacent.contains(hex)) {
       if (hex == previous) {
-        trail.removeLast();
+        var last = _trail.removeLast();
+        _trailSet.remove(last);
       } else {
-        trail.add(hex);
+        _trail.add(hex);
+        _trailSet.add(hex);
       }
       return true;
     } else {
       // Backward jump: if we are hovering the one before previous, pop twice
       if (trail.length >= 3 && hex == trail[trail.length - 3]) {
-        trail.removeLast();
-        trail.removeLast();
+        _trailSet.remove(_trail.removeLast());
+        _trailSet.remove(_trail.removeLast());
         return true;
       }
 
@@ -519,12 +554,15 @@ class Board {
 
         // Temporarily simulate moving to the neighbor to check its adjacents
         _trail.add(neighbor);
-        bool canJump = adjacent.contains(hex) && !trail.sublist(0, trail.length - 1).contains(hex);
-        _trail.removeLast();
+        _trailSet.add(neighbor);
+        bool canJump = adjacent.contains(hex) && !_trailSet.contains(hex);
+        _trailSet.remove(_trail.removeLast());
 
         if (canJump) {
           _trail.add(neighbor);
+          _trailSet.add(neighbor);
           _trail.add(hex);
+          _trailSet.add(hex);
           return true;
         }
       }
@@ -532,10 +570,15 @@ class Board {
     }
   }
 
-  List<List<Hex>> solve({int limit = 100}) {
+  List<List<Hex>> solve({int limit = 100, Duration? timeout}) {
     List<List<Hex>> solutions = [];
     List<Hex> originalTrail = List.from(_trail);
+    Set<Hex> originalTrailSet = Set.from(_trailSet);
     bool originalFinished = _finished;
+    Stopwatch? stopwatch;
+    if (timeout != null) {
+      stopwatch = Stopwatch()..start();
+    }
 
     try {
       var startPieces = getPiece<StartPiece>();
@@ -547,23 +590,27 @@ class Board {
       for (var start in startPieces) {
         resetTrail();
         _trail.add(start.key);
-        _solveRecursive(solutions, limit);
+        _trailSet.add(start.key);
+        _solveRecursive(solutions, limit, stopwatch, timeout);
         if (solutions.length >= limit) break;
+        if (stopwatch != null && stopwatch.elapsed > timeout!) break;
       }
     } finally {
       _trail = originalTrail;
+      _trailSet = originalTrailSet;
       _finished = originalFinished;
     }
 
     return solutions;
   }
 
-  void _solveRecursive(List<List<Hex>> solutions, int limit) {
+  void _solveRecursive(List<List<Hex>> solutions, int limit, [Stopwatch? stopwatch, Duration? timeout]) {
     if (solutions.length >= limit) return;
+    if (stopwatch != null && timeout != null && stopwatch.elapsed > timeout) return;
 
     if (hasEnded) {
       _finished = true;
-      if (getErrors().isEmpty) {
+      if (getErrors(stopwatch: stopwatch, timeout: timeout).isEmpty) {
         solutions.add(List.from(_trail));
       }
       _finished = false;
@@ -575,9 +622,11 @@ class Board {
       if (move == previous) continue;
 
       _trail.add(move);
-      _solveRecursive(solutions, limit);
-      _trail.removeLast();
+      _trailSet.add(move);
+      _solveRecursive(solutions, limit, stopwatch, timeout);
+      _trailSet.remove(_trail.removeLast());
       if (solutions.length >= limit) break;
+      if (stopwatch != null && timeout != null && stopwatch.elapsed > timeout) break;
     }
   }
 

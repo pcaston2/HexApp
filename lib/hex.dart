@@ -276,7 +276,7 @@ class Hex {
   }
 
   @override
-  int get hashCode => q + r;
+  int get hashCode => Object.hash(runtimeType, q, r);
 
 
   factory Hex.fromJson(Map<String, dynamic> json) {

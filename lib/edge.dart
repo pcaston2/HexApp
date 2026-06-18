@@ -142,7 +142,7 @@ class Edge extends Hex {
   }
 
   @override
-  get hashCode => super.hashCode + edgeType.index;
+  int get hashCode => Object.hash(runtimeType, q, r, edgeType);
 
   fromJson(Map<String, dynamic> json) => _$EdgeFromJson(json);
 

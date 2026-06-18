@@ -84,7 +84,18 @@ class MainMenuWidget extends State<MainMenu> {
     while (true) {
       // 1. Setup a fresh temporary board
       Board board = Board.named("Random Puzzle");
-      board.size = random.nextInt(3) + 3; // Size 3 to 5
+      board.guid = Guid.newGuid.value; // Ensure unique GUID for every puzzle
+      
+      // Determine board size with weights: Small(2): 60%, Medium(3): 30%, Large(4): 10%
+      double rSize = random.nextDouble();
+      if (rSize < 0.6) {
+        board.size = 2;
+      } else if (rSize < 0.9) {
+        board.size = 3;
+      } else {
+        board.size = 4;
+      }
+
       board.mode = BoardMode.play;
       
       // 2. Randomize settings
@@ -106,13 +117,14 @@ class MainMenuWidget extends State<MainMenu> {
       bool success = await BoardGenerator().generate(board, genSettings);
       if (!success) {
         // If generation failed all attempts, try again from the start of the while loop
+        await Future.delayed(Duration(milliseconds: 100));
         continue;
       }
 
       // 4. Push view
       var result = await (first 
-        ? navigator.push(MaterialPageRoute(builder: (context) => BoardView([board], 0, BoardFlow(), Story())))
-        : navigator.pushReplacement(MaterialPageRoute(builder: (context) => BoardView([board], 0, BoardFlow(), Story()))));
+        ? navigator.push(SlideRoute(page: BoardView([board], 0, BoardFlow(), Story())))
+        : navigator.pushReplacement(SlideRoute(page: BoardView([board], 0, BoardFlow(), Story()))));
 
       first = false;
       if (!mounted) return;
@@ -173,11 +185,11 @@ class MainMenuWidget extends State<MainMenu> {
                     if (settings.haptic) HapticFeedback.mediumImpact();
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => StorySelection()),
+                      SlideRoute(page: StorySelection()),
                     );
                   },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 38),
                 ElevatedButton.icon(
                   style: menuButtonStyle,
                   icon: Icon((settings.sound ? Icons.volume_up_rounded : Icons.volume_mute_rounded)),

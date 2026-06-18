@@ -39,7 +39,9 @@ abstract class Piece {
     }
   }
 
-  N clone<N>() {
+  Piece clone();
+
+  N cloneGeneric<N>() {
     return Piece.fromJson(this.toJson()) as N;
   }
 
@@ -55,6 +57,8 @@ abstract class Piece {
 
 @JsonSerializable()
 class PathPiece extends Piece {
+  @override
+  PathPiece clone() => PathPiece();
   @override
   String get name => "Path";
   @override
@@ -72,6 +76,8 @@ class PathPiece extends Piece {
 @JsonSerializable()
 class ErasePiece extends Piece {
   @override
+  ErasePiece clone() => ErasePiece();
+  @override
   String get name => "Erase";
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -87,6 +93,8 @@ class ErasePiece extends Piece {
 
 @JsonSerializable()
 class StartPiece extends Piece {
+  @override
+  StartPiece clone() => StartPiece();
   @override
   String get name => "Start";
 
@@ -104,6 +112,8 @@ class StartPiece extends Piece {
 @JsonSerializable()
 class EndPiece extends Piece {
   @override
+  EndPiece clone() => EndPiece();
+  @override
   String get name => "End";
 
 
@@ -120,6 +130,8 @@ class EndPiece extends Piece {
 
 @JsonSerializable()
 class BreakPiece extends Piece {
+  @override
+  BreakPiece clone() => BreakPiece();
   @override
   String get name => "Break Path";
 
