@@ -81,14 +81,14 @@ class BoardGenerator {
       // 4. Populate Initial Rules based on frequencies
       _populateRules(board, masterPath, settings);
 
-      // 5. Tighten if requested
-      if (settings.tightness == Tightness.tight) {
-        await _tighten(board, masterPath, settings);
-      }
+      // 5. Tighten to meet solution count requirements
+      // Less than 5 for loose (target 4), less than 3 for tight (target 2)
+      int targetLimit = settings.tightness == Tightness.tight ? 3 : 5;
+      await _tighten(board, masterPath, targetLimit);
 
       // 6. Final Validation
-      var solutions = board.solve(limit: 1, timeout: const Duration(seconds: 1));
-      if (solutions.isNotEmpty) {
+      var solutions = board.solve(limit: targetLimit, timeout: const Duration(seconds: 1));
+      if (solutions.isNotEmpty && solutions.length < targetLimit) {
         board.resetTrail();
         await board.save();
         return true;
@@ -246,15 +246,40 @@ class BoardGenerator {
 
     // 4. Sequences (Simple implementation: pick a Hex and assign colors to path segments)
     if (settings.sequenceFreq != Frequency.none) {
-      var allHexes = _getAllValidLocations(board).whereType<Hex>().toList();
-      for (var h in allHexes) {
+      List<Hex> allTiles = [];
+      int range = board.size;
+      for (int q = -range; q <= range; q++) {
+        for (int r = -range; r <= range; r++) {
+          Hex h = Hex.position(q, r);
+          if (board.pieceOnBoard(h)) {
+            allTiles.add(h);
+          }
+        }
+      }
+
+      for (var h in allTiles) {
         if (_random.nextDouble() < sequenceProb) {
           // Find path steps that "touch" this hex
           var pathEdgesInHex = h.edges.where((e) => path.contains(e)).toList();
           if (pathEdgesInHex.length >= 2) {
              var rule = SequenceRule();
-             // Just give it some random colors for now to satisfy the "color trace" logic
-             rule.colors = [RuleColorIndex.First]; 
+             // Find which colors are used in the path to make the sequence meaningful
+             // For now, let's just use the colors of the dots we placed, in order.
+             // If no dots, fallback to First.
+             var pathVerticesInHex = h.vertices.where((v) => path.contains(v)).toList();
+             List<RuleColorIndex> colorsInHex = [];
+             for (var v in pathVerticesInHex) {
+                var piece = board.getPiecesAt(v).firstWhereOrNull((p) => p is DotRule) as DotRule?;
+                if (piece != null) {
+                  colorsInHex.add(piece.color);
+                }
+             }
+             
+             if (colorsInHex.isNotEmpty) {
+               rule.colors = colorsInHex;
+             } else {
+               rule.colors = [RuleColorIndex.First];
+             }
              board.putPiece(h, rule);
           }
         }
@@ -272,28 +297,34 @@ class BoardGenerator {
     }
   }
 
-  Future<void> _tighten(Board board, List<Hex> masterPath, GeneratorSettings settings) async {
-    int maxAttempts = 20;
+  Future<void> _tighten(Board board, List<Hex> masterPath, int targetLimit) async {
+    int maxAttempts = 40;
     while (maxAttempts > 0) {
       maxAttempts--;
       if (maxAttempts % 5 == 0) await Future.delayed(Duration.zero);
-      var solutions = board.solve(limit: 5, timeout: const Duration(milliseconds: 500));
-      if (solutions.length <= 1) break;
+      var solutions = board.solve(limit: targetLimit, timeout: const Duration(milliseconds: 500));
+      if (solutions.length < targetLimit) break;
 
-      // Find an alternative solution
+      // Find an alternative solution to block
       var alt = solutions.firstWhereOrNull((s) => !const ListEquality().equals(s, masterPath));
       if (alt == null) break;
 
-      // Find first point of divergence
+      // Find first point of divergence and try to block it
+      bool blocked = false;
       for (int i = 0; i < alt.length; i++) {
         if (i >= masterPath.length || alt[i] != masterPath[i]) {
-          // Try to block 'alt[i]' if it's an edge
-          if (alt[i] is Edge && !masterPath.contains(alt[i])) {
-             board.putPiece(alt[i], BreakPiece());
+          // Look for the first edge in the alternative path that isn't in the master path
+          for (int j = i; j < alt.length; j++) {
+            if (alt[j] is Edge && !masterPath.contains(alt[j])) {
+              board.putPiece(alt[j], BreakPiece());
+              blocked = true;
+              break;
+            }
           }
           break;
         }
       }
+      if (!blocked) break; // Could not find an edge to block
     }
   }
 }

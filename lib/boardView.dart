@@ -462,58 +462,63 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                 surfaceTintColor: Colors.transparent,
                 elevation: 0,
                 centerTitle: true,
-                title: _gameState.value.board.mode == BoardMode.designer
-                    ? Row(children: [
-                        Text(_gameState.value.board.name,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w900, fontSize: 22)),
-                        IconButton(
-                            onPressed: () {
-                              TextEditingController _textFieldController =
-                                  TextEditingController();
-                              _textFieldController.text =
-                                  _gameState.value.board.name;
-                              showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      title: Text('Please Rename Your Board:'),
-                                      content: TextField(
-                                        controller: _textFieldController,
-                                        decoration: InputDecoration(
-                                            hintText: "My Board"),
+                title: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(_gameState.value.board.name,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w900, fontSize: 22)),
+                    if (_gameState.value.board.mode == BoardMode.designer)
+                      IconButton(
+                          onPressed: () {
+                            TextEditingController _textFieldController =
+                                TextEditingController();
+                            _textFieldController.text =
+                                _gameState.value.board.name;
+                            showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text('Please Rename Your Board:'),
+                                    content: TextField(
+                                      controller: _textFieldController,
+                                      decoration: const InputDecoration(
+                                          hintText: "My Board"),
+                                    ),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        child: const Text('CANCEL'),
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        },
                                       ),
-                                      actions: <Widget>[
-                                        TextButton(
-                                          child: Text('CANCEL'),
+                                      TextButton(
+                                          child: const Text('OK'),
                                           onPressed: () {
+                                            _gameState.value.board.name =
+                                                _textFieldController.text;
+                                            _gameState.value.board
+                                                .save()
+                                                .then((value) =>
+                                                    setState(() {}));
+                                            final ScaffoldMessengerState
+                                                scaffoldMessenger =
+                                                ScaffoldMessenger.of(context);
+                                            scaffoldMessenger.showSnackBar(
+                                                SnackBar(
+                                                    content: Text(
+                                                        "Board renamed to ${_textFieldController.text}")));
                                             Navigator.pop(context);
-                                          },
-                                        ),
-                                        TextButton(
-                                            child: Text('OK'),
-                                            onPressed: () {
-                                              _gameState.value.board.name =
-                                                  _textFieldController.text;
-                                              _gameState.value.board
-                                                  .save()
-                                                  .then((value) =>
-                                                      setState(() {}));
-                                              final ScaffoldMessengerState
-                                                  scaffoldMessenger =
-                                                  ScaffoldMessenger.of(context);
-                                              scaffoldMessenger.showSnackBar(
-                                                  SnackBar(
-                                                      content: Text(
-                                                          "Board renamed to ${_textFieldController.text}")));
-                                              Navigator.pop(context);
-                                            })
-                                      ],
-                                    );
-                                  });
-                            },
-                            icon: Icon(Icons.edit_rounded)),
-                        const Spacer(),
+                                          })
+                                    ],
+                                  );
+                                });
+                          },
+                          icon: const Icon(Icons.edit_rounded)),
+                  ],
+                ),
+                actions: _gameState.value.board.mode == BoardMode.designer
+                    ? [
                         IconButton(
                           icon: const Icon(Icons.undo_rounded),
                           onPressed: _undoHistory.isEmpty ? null : _undo,
@@ -524,10 +529,9 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                           onPressed: _redoHistory.isEmpty ? null : _redo,
                           tooltip: 'Redo',
                         ),
-                      ])
-                    : Text(_gameState.value.board.name,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w900, fontSize: 22))),
+                      ]
+                    : null,
+            ),
             floatingActionButtonLocation:
                 FloatingActionButtonLocation.startFloat,
             floatingActionButton: Row(
@@ -616,11 +620,14 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                       // Important: Remove any padding from the ListView.
                       padding: EdgeInsets.zero,
                       children: <Widget>[
-                        DrawerHeader(
-                          child: Text('Tools'),
-                          decoration: BoxDecoration(
+                        Container(
+                          height: MediaQuery.of(context).padding.top + 56,
+                          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top, left: 16),
+                          alignment: Alignment.centerLeft,
+                          decoration: const BoxDecoration(
                             color: Colors.blue,
                           ),
+                          child: const Text('Tools', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                         ),
                         ExpansionTile(
                             title: Text("File"),
@@ -1810,7 +1817,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                 child: Align(
                     alignment: Alignment.topLeft,
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 8.0, top: 80.0),
+                      padding: EdgeInsets.only(left: 8.0, top: MediaQuery.of(context).padding.top + kToolbarHeight + 8.0),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -1866,7 +1873,7 @@ class _HexWidgetState extends State<_BoardItemView> with TickerProviderStateMixi
                 child: Align(
                     alignment: Alignment.topRight,
                     child: Padding(
-                      padding: const EdgeInsets.only(right: 8.0, top: 80.0),
+                      padding: EdgeInsets.only(right: 8.0, top: MediaQuery.of(context).padding.top + kToolbarHeight + 8.0),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [

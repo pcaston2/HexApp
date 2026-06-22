@@ -9,6 +9,26 @@ class MainMenu extends StatefulWidget {
 
 class MainMenuWidget extends State<MainMenu> {
   int _devClickCount = 0;
+  bool _hapticsAvailable = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkHaptics();
+  }
+
+  Future<void> _checkHaptics() async {
+    bool? hasVibrator = await Vibration.hasVibrator();
+    if (mounted) {
+      setState(() {
+        _hapticsAvailable = hasVibrator ?? false;
+        if (!_hapticsAvailable) {
+          settings.haptic = false;
+        }
+      });
+    }
+  }
+
   Future<void> _exportAll() async {
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -79,18 +99,17 @@ class MainMenuWidget extends State<MainMenu> {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     final Random random = Random();
-    bool first = true;
 
     while (true) {
       // 1. Setup a fresh temporary board
       Board board = Board.named("Random Puzzle");
       board.guid = Guid.newGuid.value; // Ensure unique GUID for every puzzle
       
-      // Determine board size with weights: Small(2): 60%, Medium(3): 30%, Large(4): 10%
+      // Determine board size with weights: Small(2): 80%, Medium(3): 15%, Large(4): 5%
       double rSize = random.nextDouble();
-      if (rSize < 0.6) {
+      if (rSize < 0.8) {
         board.size = 2;
-      } else if (rSize < 0.9) {
+      } else if (rSize < 0.95) {
         board.size = 3;
       } else {
         board.size = 4;
@@ -122,11 +141,8 @@ class MainMenuWidget extends State<MainMenu> {
       }
 
       // 4. Push view
-      var result = await (first 
-        ? navigator.push(SlideRoute(page: BoardView([board], 0, BoardFlow(), Story())))
-        : navigator.pushReplacement(SlideRoute(page: BoardView([board], 0, BoardFlow(), Story()))));
+      var result = await navigator.push(SlideRoute(page: BoardView([board], 0, BoardFlow(), Story())));
 
-      first = false;
       if (!mounted) return;
       
       if (result == true) {
@@ -222,12 +238,12 @@ class MainMenuWidget extends State<MainMenu> {
                   style: menuButtonStyle,
                   icon: Icon((settings.haptic ? Icons.vibration_rounded : Icons.phonelink_erase_rounded)),
                   iconAlignment: IconAlignment.end,
-                  onPressed: () {
+                  onPressed: _hapticsAvailable ? () {
                     setState(() {
                       settings.haptic = !settings.haptic;
                       if (settings.haptic) HapticFeedback.mediumImpact();
                     });
-                  },
+                  } : null,
                   label: Text(settings.haptic ? "Haptics" : "No Haptics"),
                 ),
                 if (settings.isDeveloperUnlocked) ...[
@@ -317,6 +333,7 @@ class MainMenuWidget extends State<MainMenu> {
                                       Navigator.pop(context);
                                       if (settings.haptic) HapticFeedback.heavyImpact();
                                       await settings.reset();
+                                      await _checkHaptics();
                                       await loadStories();
                                       setState(() {
                                         _devClickCount = 0;
